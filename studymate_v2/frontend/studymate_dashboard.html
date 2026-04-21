@@ -1,0 +1,708 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyMate</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.09);
+    --border-med: rgba(0,0,0,0.14);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-muted: #9a9a9a;
+    --accent: #4f46e5;
+    --accent-light: #ede9fe;
+    --accent-text: #3730a3;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --purple: #7c3aed;
+    --teal: #0d9488;
+    --orange: #ea580c;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 17px; color: var(--text-primary); text-decoration: none; }
+  .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+  .search-bar {
+    flex: 1; max-width: 400px; margin: 0 auto;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 0.5px solid var(--border-med);
+    border-radius: 8px; padding: 0 12px; height: 36px;
+  }
+  .search-bar input { border: none; background: transparent; font-family: inherit; font-size: 14px; color: var(--text-primary); outline: none; flex: 1; }
+  .search-bar input::placeholder { color: var(--text-muted); }
+  .nav-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .btn-primary {
+    background: var(--accent); color: white; border: none;
+    padding: 0 14px; height: 34px; border-radius: 8px;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #4338ca; }
+  .btn-ghost { background: transparent; border: 0.5px solid var(--border-med); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 17px; transition: background 0.15s; }
+  .btn-ghost:hover { background: var(--bg); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* VIEWS */
+  .view { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+  }
+  .stat-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .stat-value { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+
+  /* CHART */
+  .chart-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  .chart-title { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 16px; }
+  canvas { width: 100% !important; }
+
+  /* RECENT */
+  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  .recent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+  .recent-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px; box-shadow: var(--shadow); cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .recent-card:hover { border-color: var(--border-med); transform: translateY(-1px); }
+  .recent-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .course-icon-sm { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .recent-info { flex: 1; }
+  .recent-name { font-size: 13px; font-weight: 500; line-height: 1.3; }
+  .recent-when { font-size: 11px; color: var(--text-muted); }
+  .star-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: #d1d5db; padding: 0; }
+  .star-btn.active { color: #f59e0b; }
+  .progress-bar-wrap { margin-top: 8px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .progress-bar { height: 4px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--purple)); }
+  .trend { font-size: 10px; color: var(--success); margin-top: 4px; }
+
+  /* COURSE GRID */
+  .courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .course-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .course-card:hover { border-color: var(--border-med); transform: translateY(-1px); }
+  .course-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .course-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+  .course-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .course-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .progress-text { font-size: 12px; color: var(--text-secondary); }
+  .progress-pct { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .progress-bar-lg { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+  .progress-fill-lg { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--purple)); transition: width 0.4s; }
+  .course-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 4px; }
+  .course-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-open {
+    flex: 1; background: var(--accent); color: white; border: none;
+    height: 34px; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-open:hover { background: #4338ca; }
+  .btn-icon { background: transparent; border: 0.5px solid var(--border-med); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; transition: background 0.15s; }
+  .btn-icon:hover { background: var(--bg); }
+
+  /* LEARN VIEW */
+  .learn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .btn-back { background: var(--surface); border: 0.5px solid var(--border-med); border-radius: 8px; padding: 0 12px; height: 34px; font-family: inherit; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .btn-back:hover { background: var(--bg); }
+  .learn-progress-wrap { flex: 1; }
+  .learn-prog-bar { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
+  .learn-prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 99px; transition: width 0.3s; }
+  .card-count { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+
+  .flashcard-area { display: flex; flex-direction: column; align-items: center; }
+  .flashcard-scene { width: 100%; max-width: 560px; height: 300px; perspective: 1200px; cursor: pointer; margin-bottom: 16px; }
+  .flashcard {
+    width: 100%; height: 100%;
+    position: relative; transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute; inset: 0;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px; backface-visibility: hidden;
+  }
+  .card-face.back { transform: rotateY(180deg); background: var(--accent-light); border-color: rgba(79,70,229,0.15); }
+  .card-face-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 16px; }
+  .card-face.back .card-face-label { color: var(--accent-text); }
+  .card-face-text { font-size: 22px; font-weight: 500; text-align: center; line-height: 1.4; color: var(--text-primary); }
+  .card-face.back .card-face-text { color: var(--accent-text); }
+  .flip-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .rating-btns { display: flex; gap: 12px; }
+  .btn-rating {
+    flex: 1; height: 44px; border-radius: 10px;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    cursor: pointer; border: 0.5px solid; transition: background 0.15s, transform 0.1s;
+    max-width: 180px;
+  }
+  .btn-rating:active { transform: scale(0.97); }
+  .btn-again { background: #fef2f2; border-color: #fecaca; color: var(--danger); }
+  .btn-again:hover { background: #fee2e2; }
+  .btn-good { background: #f0fdf4; border-color: #bbf7d0; color: var(--success); }
+  .btn-good:hover { background: #dcfce7; }
+  .btn-easy { background: var(--accent-light); border-color: rgba(79,70,229,0.2); color: var(--accent-text); }
+  .btn-easy:hover { background: #ddd6fe; }
+
+  /* NEW COURSE MODAL */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-bg.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border-radius: 16px; padding: 28px; width: 480px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15); transform: translateY(8px); transition: transform 0.2s; }
+  .modal-bg.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; height: 38px; border: 0.5px solid var(--border-med);
+    border-radius: 8px; padding: 0 12px; font-family: inherit; font-size: 14px;
+    color: var(--text-primary); outline: none; background: var(--surface);
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+  .btn-cancel { background: transparent; border: 0.5px solid var(--border-med); border-radius: 8px; padding: 0 14px; height: 36px; font-family: inherit; font-size: 13px; cursor: pointer; color: var(--text-secondary); }
+
+  /* CARD EDITOR */
+  .editor-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .cards-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .card-item {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--shadow);
+  }
+  .card-num { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; min-width: 24px; }
+  .card-texts { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card-field-wrap { position: relative; }
+  .card-field-label { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; }
+  .card-field {
+    width: 100%; border: 0.5px solid var(--border-med); border-radius: 6px;
+    padding: 6px 10px; font-family: inherit; font-size: 13px;
+    color: var(--text-primary); outline: none; resize: none;
+    transition: border-color 0.15s; background: var(--surface);
+  }
+  .card-field:focus { border-color: var(--accent); }
+  .btn-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; padding: 4px; border-radius: 6px; transition: color 0.15s, background 0.15s; }
+  .btn-del:hover { color: var(--danger); background: #fef2f2; }
+  .btn-add-card {
+    width: 100%; height: 40px; border: 1.5px dashed var(--border-med);
+    border-radius: 8px; background: transparent; font-family: inherit;
+    font-size: 13px; color: var(--text-muted); cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .btn-add-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-title { font-size: 15px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+
+  /* DONE state */
+  .done-state { text-align: center; padding: 48px 24px; }
+  .done-icon { font-size: 52px; margin-bottom: 16px; }
+  .done-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .done-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#" onclick="showView('dashboard')">
+    <div class="logo-icon">📚</div>
+    StudyMate
+  </a>
+  <div class="search-bar">
+    <span style="color:var(--text-muted);font-size:14px;">🔍</span>
+    <input type="text" placeholder="Kurse durchsuchen..." id="searchInput" oninput="filterCourses()">
+  </div>
+  <div class="nav-actions">
+    <button class="btn-primary" onclick="openNewCourseModal()">+ Neuer Kurs</button>
+    <button class="btn-ghost" title="Einstellungen">⚙️</button>
+    <div class="avatar">M</div>
+  </div>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="view-dashboard" class="view active">
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#ede9fe;">🎯</div>
+      <div class="stat-label">Tagesziel</div>
+      <div class="stat-value" id="stat-daily">Noch 20 Karten</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fff7ed;">🔥</div>
+      <div class="stat-label">Streak</div>
+      <div class="stat-value" id="stat-streak">1 Tag in Folge</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#ecfdf5;">📖</div>
+      <div class="stat-label">Gesamt gelernt</div>
+      <div class="stat-value" id="stat-total">0 Karten</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff;">📈</div>
+      <div class="stat-label">Gesamtfortschritt</div>
+      <div class="stat-value" id="stat-progress">0%</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Lernverlauf der letzten Woche</div>
+    <canvas id="weekChart" height="120"></canvas>
+  </div>
+
+  <div class="section-title">Zuletzt gelernt</div>
+  <div class="recent-grid" id="recentGrid"></div>
+
+  <div class="section-title">Alle Kurse</div>
+  <div id="allCoursesGrid" class="courses-grid"></div>
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">Noch keine Kurse</div>
+    <p style="font-size:13px;">Erstelle deinen ersten Kurs mit "+ Neuer Kurs"</p>
+  </div>
+</div>
+
+<!-- EDITOR VIEW -->
+<div id="view-editor" class="view">
+  <div class="editor-header">
+    <button class="btn-back" onclick="showView('dashboard')">← Zurück</button>
+    <div>
+      <div style="font-size:17px;font-weight:600;" id="editorTitle">Kurs bearbeiten</div>
+      <div style="font-size:12px;color:var(--text-muted);" id="editorSub">Karteikarten bearbeiten</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn-primary" onclick="startLearning(currentEditId)">▶ Lernen</button>
+    </div>
+  </div>
+  <div class="cards-list" id="cardsList"></div>
+  <button class="btn-add-card" onclick="addCard()">+ Karteikarte hinzufügen</button>
+</div>
+
+<!-- LEARN VIEW -->
+<div id="view-learn" class="view">
+  <div class="learn-header">
+    <button class="btn-back" onclick="showView('editor')">← Zurück</button>
+    <div class="learn-progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+        <span id="learnCourseName">Kurs</span>
+        <span id="learnCardCount">0 / 0</span>
+      </div>
+      <div class="learn-prog-bar"><div class="learn-prog-fill" id="learnProgFill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="flashcard-area" id="flashcardArea">
+    <div class="flashcard-scene" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="card-face front">
+          <div class="card-face-label">Frage</div>
+          <div class="card-face-text" id="cardFront">—</div>
+        </div>
+        <div class="card-face back">
+          <div class="card-face-label">Antwort</div>
+          <div class="card-face-text" id="cardBack">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-hint" id="flipHint">Klicke auf die Karte, um sie umzudrehen</div>
+    <div class="rating-btns" id="ratingBtns" style="display:none;">
+      <button class="btn-rating btn-again" onclick="rateCard('again')">😕 Nochmal</button>
+      <button class="btn-rating btn-good" onclick="rateCard('good')">✓ Gut</button>
+      <button class="btn-rating btn-easy" onclick="rateCard('easy')">⚡ Leicht</button>
+    </div>
+    <div class="rating-btns" id="showAnswerRow">
+      <button class="btn-rating btn-good" style="max-width:200px;margin-top:0;" onclick="flipCard()">Antwort zeigen</button>
+    </div>
+  </div>
+  <div id="doneState" class="done-state" style="display:none;">
+    <div class="done-icon">🎉</div>
+    <div class="done-title">Einheit abgeschlossen!</div>
+    <div class="done-sub" id="doneStats">Du hast alle Karten durchgegangen.</div>
+    <button class="btn-primary" onclick="showView('editor')" style="margin:0 auto;">← Zurück zum Kurs</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modalTitle">Neuer Kurs</div>
+    <div class="form-group">
+      <label class="form-label">Kursname</label>
+      <input class="form-input" id="courseName" type="text" placeholder="z. B. Spanisch Vokabeln" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beschreibung (optional)</label>
+      <input class="form-input" id="courseDesc" type="text" placeholder="Kurze Beschreibung..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Emoji-Icon</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="iconPicker">
+        <span>📚</span><span>🧪</span><span>🧬</span><span>💻</span><span>🔢</span><span>🌍</span><span>🎸</span><span>🏛️</span><span>✍️</span><span>🎨</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="createCourse()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+let courses = [
+  { id:1, name:'Spanisch Vokabeln', icon:'🇪🇸', desc:'', color:'#fef3c7', starred:true, lastStudied:'Heute', cards:[
+    {q:'Hola',a:'Hallo'},{q:'Gracias',a:'Danke'},{q:'Buenos días',a:'Guten Morgen'},
+    {q:'Por favor',a:'Bitte'},{q:'Lo siento',a:'Entschuldigung'}
+  ], learned:3, total:5 },
+  { id:2, name:'JavaScript Grundlagen', icon:'💻', desc:'', color:'#eff6ff', starred:false, lastStudied:'Gestern', cards:[
+    {q:'Was ist eine Variable?',a:'Ein benannter Speicherplatz für Daten'},
+    {q:'Was ist eine Funktion?',a:'Wiederverwendbarer Codeblock'}
+  ], learned:1, total:2 },
+  { id:3, name:'Biologie Prüfung', icon:'🧬', desc:'', color:'#f0fdf4', starred:true, lastStudied:'Vor 2 Tagen', cards:[
+    {q:'Was ist Photosynthese?',a:'Umwandlung von Lichtenergie in chemische Energie durch Pflanzen'},
+    {q:'Was ist eine Zelle?',a:'Die kleinste Einheit des Lebens'}
+  ], learned:1, total:2 }
+];
+let nextId = 4;
+let currentEditId = null;
+let learnQueue = [];
+let learnIdx = 0;
+let learnFlipped = false;
+let learnResults = {again:0, good:0, easy:0};
+let selectedIcon = '📚';
+let weekData = [14, 22, 12, 30, 18, 8, 16];
+let totalLearned = 0;
+let streak = 1;
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if (name==='dashboard') renderDashboard();
+}
+
+function renderDashboard() {
+  totalLearned = courses.reduce((s,c)=>s+c.learned,0);
+  const totalCards = courses.reduce((s,c)=>s+c.total,0);
+  const pct = totalCards ? Math.round(totalLearned/totalCards*100) : 0;
+  document.getElementById('stat-total').textContent = totalLearned + ' Karten';
+  document.getElementById('stat-progress').textContent = pct + '%';
+  document.getElementById('stat-daily').textContent = 'Noch ' + Math.max(0,20-totalLearned) + ' Karten';
+
+  const sorted = [...courses].sort((a,b)=>{
+    const t = {Heute:0,Gestern:1};
+    const ta = t[a.lastStudied]??2, tb = t[b.lastStudied]??2;
+    return ta-tb;
+  });
+  const recent = sorted.slice(0,4);
+  const rg = document.getElementById('recentGrid');
+  rg.innerHTML = recent.map(c=>`
+    <div class="recent-card" onclick="openEditor(${c.id})">
+      <div class="recent-header">
+        <div class="course-icon-sm" style="background:${c.color};">${c.icon}</div>
+        <div class="recent-info">
+          <div class="recent-name">${c.name}</div>
+          <div class="recent-when">${c.lastStudied}</div>
+        </div>
+        <button class="star-btn ${c.starred?'active':''}" onclick="event.stopPropagation();toggleStar(${c.id})">${c.starred?'★':'☆'}</button>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-label"><span>${c.total?Math.round(c.learned/c.total*100):0}% abgeschlossen</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${c.total?Math.round(c.learned/c.total*100):0}%"></div></div>
+      </div>
+      <div class="trend">↗ aktiv</div>
+    </div>
+  `).join('');
+
+  renderCoursesGrid(courses);
+  renderChart();
+}
+
+function renderCoursesGrid(list) {
+  const grid = document.getElementById('allCoursesGrid');
+  const empty = document.getElementById('emptyState');
+  if (!list.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  grid.innerHTML = list.map(c=>{
+    const pct = c.total ? Math.round(c.learned/c.total*100) : 0;
+    return `
+    <div class="course-card">
+      <div class="course-card-header">
+        <div class="course-icon" style="background:${c.color};">${c.icon}</div>
+        <div style="flex:1">
+          <div class="course-name">${c.name}</div>
+          <div class="course-count">${c.total} Karten</div>
+        </div>
+        <button class="star-btn ${c.starred?'active':''}" onclick="toggleStar(${c.id})">${c.starred?'★':'☆'}</button>
+      </div>
+      <div class="progress-row">
+        <span class="progress-text">Fortschritt</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+      <div class="progress-bar-lg"><div class="progress-fill-lg" style="width:${pct}%"></div></div>
+      <div class="course-meta">📅 Zuletzt gelernt: ${c.lastStudied}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">${c.learned} von ${c.total} gelernt</div>
+      <div class="course-actions">
+        <button class="btn-open" onclick="startLearning(${c.id})">Öffnen</button>
+        <button class="btn-icon" onclick="openEditor(${c.id})" title="Bearbeiten">✏️</button>
+        <button class="btn-icon" onclick="deleteCourse(${c.id})" title="Löschen">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let chartInst = null;
+function renderChart() {
+  const ctx = document.getElementById('weekChart').getContext('2d');
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:['Mo','Di','Mi','Do','Fr','Sa','So'],
+      datasets:[{
+        data: weekData,
+        borderColor:'#4f46e5',
+        borderWidth:2,
+        pointBackgroundColor:'#4f46e5',
+        pointRadius:4,
+        pointHoverRadius:6,
+        tension:0.4,
+        fill:true,
+        backgroundColor:'rgba(79,70,229,0.07)'
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.raw} Karten`}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:11},color:'#9a9a9a'}},
+        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:11},color:'#9a9a9a'}, beginAtZero:true}
+      }
+    }
+  });
+}
+
+function filterCourses() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = courses.filter(c=>c.name.toLowerCase().includes(q));
+  renderCoursesGrid(filtered);
+}
+
+function toggleStar(id) {
+  const c = courses.find(x=>x.id===id);
+  if (c) { c.starred=!c.starred; renderDashboard(); }
+}
+
+function deleteCourse(id) {
+  courses = courses.filter(x=>x.id!==id);
+  renderDashboard();
+}
+
+function openEditor(id) {
+  currentEditId = id;
+  const c = courses.find(x=>x.id===id);
+  document.getElementById('editorTitle').textContent = c.name;
+  document.getElementById('editorSub').textContent = c.total + ' Karten';
+  renderCardsList(c);
+  showView('editor');
+}
+
+function renderCardsList(c) {
+  const list = document.getElementById('cardsList');
+  list.innerHTML = c.cards.map((card,i)=>`
+    <div class="card-item">
+      <span class="card-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="card-texts">
+        <div>
+          <div class="card-field-label">Vorderseite (Frage)</div>
+          <textarea class="card-field" rows="2" oninput="updateCard(${i},'q',this.value)">${card.q}</textarea>
+        </div>
+        <div>
+          <div class="card-field-label">Rückseite (Antwort)</div>
+          <textarea class="card-field" rows="2" oninput="updateCard(${i},'a',this.value)">${card.a}</textarea>
+        </div>
+      </div>
+      <button class="btn-del" onclick="deleteCard(${i})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function updateCard(idx, field, val) {
+  const c = courses.find(x=>x.id===currentEditId);
+  if (c) { c.cards[idx][field]=val; }
+}
+
+function addCard() {
+  const c = courses.find(x=>x.id===currentEditId);
+  if (!c) return;
+  c.cards.push({q:'',a:''});
+  c.total = c.cards.length;
+  document.getElementById('editorSub').textContent = c.total + ' Karten';
+  renderCardsList(c);
+}
+
+function deleteCard(idx) {
+  const c = courses.find(x=>x.id===currentEditId);
+  if (!c) return;
+  c.cards.splice(idx,1);
+  c.total = c.cards.length;
+  if (c.learned > c.total) c.learned = c.total;
+  document.getElementById('editorSub').textContent = c.total + ' Karten';
+  renderCardsList(c);
+}
+
+function startLearning(id) {
+  const c = courses.find(x=>x.id===id);
+  if (!c || !c.cards.length) return;
+  currentEditId = id;
+  learnQueue = [...c.cards].sort(()=>Math.random()-0.5);
+  learnIdx = 0;
+  learnFlipped = false;
+  learnResults = {again:0,good:0,easy:0};
+  document.getElementById('learnCourseName').textContent = c.name;
+  document.getElementById('doneState').style.display='none';
+  document.getElementById('flashcardArea').style.display='flex';
+  showCard();
+  showView('learn');
+}
+
+function showCard() {
+  if (learnIdx >= learnQueue.length) { showDone(); return; }
+  const card = learnQueue[learnIdx];
+  document.getElementById('cardFront').textContent = card.q || '—';
+  document.getElementById('cardBack').textContent = card.a || '—';
+  document.getElementById('flashcard').classList.remove('flipped');
+  learnFlipped = false;
+  document.getElementById('ratingBtns').style.display = 'none';
+  document.getElementById('showAnswerRow').style.display = 'flex';
+  document.getElementById('flipHint').style.display = 'block';
+  const total = learnQueue.length;
+  document.getElementById('learnCardCount').textContent = `${learnIdx+1} / ${total}`;
+  document.getElementById('learnProgFill').style.width = (learnIdx/total*100)+'%';
+}
+
+function flipCard() {
+  if (learnFlipped) return;
+  learnFlipped = true;
+  document.getElementById('flashcard').classList.add('flipped');
+  document.getElementById('ratingBtns').style.display = 'flex';
+  document.getElementById('showAnswerRow').style.display = 'none';
+  document.getElementById('flipHint').style.display = 'none';
+}
+
+function rateCard(rating) {
+  learnResults[rating]++;
+  const c = courses.find(x=>x.id===currentEditId);
+  if (c && rating !== 'again') {
+    c.learned = Math.min(c.learned+1, c.total);
+    c.lastStudied = 'Heute';
+    weekData[6]++;
+  }
+  if (rating === 'again') {
+    learnQueue.push(learnQueue[learnIdx]);
+  }
+  learnIdx++;
+  showCard();
+}
+
+function showDone() {
+  document.getElementById('flashcardArea').style.display = 'none';
+  document.getElementById('doneState').style.display = 'block';
+  const {again,good,easy} = learnResults;
+  document.getElementById('doneStats').textContent =
+    `✓ Gut: ${good}  ·  ⚡ Leicht: ${easy}  ·  😕 Nochmal: ${again}`;
+}
+
+/* MODAL */
+function openNewCourseModal() {
+  document.getElementById('courseName').value='';
+  document.getElementById('courseDesc').value='';
+  selectedIcon = '📚';
+  highlightIcon('📚');
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('courseName').focus();
+}
+function closeModal(e) {
+  if (!e || e.target===document.getElementById('modalBg'))
+    document.getElementById('modalBg').classList.remove('open');
+}
+function createCourse() {
+  const name = document.getElementById('courseName').value.trim();
+  if (!name) { document.getElementById('courseName').focus(); return; }
+  const colors = ['#fef3c7','#eff6ff','#f0fdf4','#fdf2f8','#fff7ed','#ecfdf5'];
+  const color = colors[Math.floor(Math.random()*colors.length)];
+  courses.push({
+    id:nextId++, name, icon:selectedIcon,
+    desc: document.getElementById('courseDesc').value,
+    color, starred:false, lastStudied:'Noch nie',
+    cards:[], learned:0, total:0
+  });
+  document.getElementById('modalBg').classList.remove('open');
+  renderDashboard();
+}
+document.getElementById('iconPicker').querySelectorAll('span').forEach(el=>{
+  el.style.cssText='font-size:22px;cursor:pointer;padding:6px;border-radius:8px;border:2px solid transparent;transition:border-color 0.1s;';
+  el.onclick=()=>{ selectedIcon=el.textContent; highlightIcon(el.textContent); };
+});
+function highlightIcon(icon) {
+  document.getElementById('iconPicker').querySelectorAll('span').forEach(el=>{
+    el.style.borderColor = el.textContent===icon ? '#4f46e5' : 'transparent';
+    el.style.background = el.textContent===icon ? '#ede9fe' : '';
+  });
+}
+
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape') closeModal();
+  if (document.getElementById('view-learn').classList.contains('active')) {
+    if (e.key===' ' && !learnFlipped) { e.preventDefault(); flipCard(); }
+    if (e.key==='1' && learnFlipped) rateCard('again');
+    if (e.key==='2' && learnFlipped) rateCard('good');
+    if (e.key==='3' && learnFlipped) rateCard('easy');
+  }
+});
+
+renderDashboard();
+</script>
+</body>
+</html>
