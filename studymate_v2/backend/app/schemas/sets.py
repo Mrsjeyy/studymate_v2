@@ -1,19 +1,14 @@
-from pydantic import BaseModel
 from typing import Optional
+from pydantic import BaseModel, Field
 
 
 class StudySetCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
+    title: str = Field(min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=1000)
     is_public: bool = False
 
 
 class StudySetUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=1000)
     is_public: Optional[bool] = None
-
-
-class FlashcardCreate(BaseModel):
-    question: str
-    answer: str
