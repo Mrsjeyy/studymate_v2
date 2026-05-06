@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StudyMate</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 
   <style>
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -17,8 +22,8 @@
     :root {
       --bg: #f7f6f3;
       --surface: #ffffff;
-      --border: rgba(0,0,0,0.09);
-      --border-med: rgba(0,0,0,0.14);
+      --border: rgba(0, 0, 0, 0.09);
+      --border-med: rgba(0, 0, 0, 0.14);
       --text-primary: #1a1a1a;
       --text-secondary: #6b6b6b;
       --text-muted: #9a9a9a;
@@ -28,7 +33,7 @@
       --danger: #dc2626;
       --success: #16a34a;
       --radius: 12px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
     body {
@@ -59,6 +64,7 @@
       font-size: 17px;
       color: var(--text-primary);
       text-decoration: none;
+      cursor: pointer;
     }
 
     .logo-icon {
@@ -95,6 +101,10 @@
       color: var(--text-primary);
       outline: none;
       flex: 1;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-muted);
     }
 
     .nav-actions {
@@ -141,7 +151,7 @@
     .btn-secondary:hover {
       background: var(--accent-light);
       color: var(--accent-text);
-      border-color: rgba(79,70,229,0.25);
+      border-color: rgba(79, 70, 229, 0.25);
     }
 
     .btn-danger:hover {
@@ -161,6 +171,7 @@
       color: white;
       font-size: 13px;
       font-weight: 600;
+      user-select: none;
     }
 
     main {
@@ -186,6 +197,7 @@
     .page-subtitle {
       font-size: 14px;
       color: var(--text-secondary);
+      line-height: 1.5;
     }
 
     .status-pill {
@@ -193,7 +205,7 @@
       font-weight: 500;
       color: var(--accent-text);
       background: var(--accent-light);
-      border: 0.5px solid rgba(79,70,229,0.18);
+      border: 0.5px solid rgba(79, 70, 229, 0.18);
       padding: 6px 10px;
       border-radius: 999px;
       white-space: nowrap;
@@ -244,6 +256,7 @@
       padding: 18px;
       box-shadow: var(--shadow);
       transition: transform 0.1s, border-color 0.15s;
+      cursor: pointer;
     }
 
     .set-card:hover {
@@ -303,6 +316,12 @@
       border: 0.5px solid #bbf7d0;
     }
 
+    .badge.private {
+      background: #fef2f2;
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+
     .empty-state {
       text-align: center;
       padding: 60px 24px;
@@ -328,7 +347,7 @@
     .modal-bg {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0, 0, 0, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -349,7 +368,7 @@
       padding: 28px;
       width: 480px;
       max-width: 90vw;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     }
 
     .modal-title {
@@ -424,7 +443,12 @@
       color: var(--text-secondary);
     }
 
+    .btn-cancel:hover {
+      background: var(--bg);
+    }
+
     @media (max-width: 850px) {
+
       .stat-grid,
       .sets-grid {
         grid-template-columns: 1fr;
@@ -447,7 +471,7 @@
 
 <body>
   <nav>
-    <a class="logo" href="#">
+    <a class="logo" href="index.html">
       <div class="logo-icon">📚</div>
       StudyMate
     </a>
@@ -460,7 +484,9 @@
     <div class="nav-actions">
       <button class="btn-secondary" id="loginBtn" onclick="login()">Login</button>
       <button class="btn-secondary btn-danger" id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
-      <button class="btn-primary" onclick="openNewSetModal()">+ Neues Lernset</button>
+      <button class="btn-primary" id="newSetBtn" onclick="openNewSetModal()" style="display:none;">
+        + Neues Lernset
+      </button>
       <div class="avatar" id="avatar">?</div>
     </div>
   </nav>
@@ -468,9 +494,9 @@
   <main>
     <div class="top-row">
       <div>
-        <h1 class="page-title">Deine Lernsets</h1>
+        <h1 class="page-title" id="pageTitle">Lernsets entdecken</h1>
         <p class="page-subtitle" id="pageSubtitle">
-          Melde dich an, um deine eigenen Lernsets zu sehen.
+          Öffentliche Lernsets ansehen und lernen. Zum Erstellen bitte anmelden.
         </p>
       </div>
 
@@ -542,16 +568,28 @@
       return localStorage.getItem("access_token");
     }
 
-    function setToken(token) {
+    function setToken(token, userEmail) {
       localStorage.setItem("access_token", token);
+      localStorage.setItem("user_email", userEmail || "");
     }
 
     function clearToken() {
       localStorage.removeItem("access_token");
+      localStorage.removeItem("user_email");
     }
 
     function isLoggedIn() {
       return Boolean(getToken());
+    }
+
+    function getAvatarLetter() {
+      const email = localStorage.getItem("user_email");
+
+      if (!email) {
+        return "?";
+      }
+
+      return email.trim().charAt(0).toUpperCase();
     }
 
     function updateAuthUi() {
@@ -559,12 +597,15 @@
 
       document.getElementById("loginBtn").style.display = loggedIn ? "none" : "inline-flex";
       document.getElementById("logoutBtn").style.display = loggedIn ? "inline-flex" : "none";
-      document.getElementById("avatar").textContent = loggedIn ? "U" : "?";
+      document.getElementById("newSetBtn").style.display = loggedIn ? "inline-flex" : "none";
+
+      document.getElementById("avatar").textContent = loggedIn ? getAvatarLetter() : "?";
       document.getElementById("statStatus").textContent = loggedIn ? "Eingeloggt" : "Gast";
       document.getElementById("statusPill").textContent = loggedIn ? "Meine Lernsets" : "Öffentliche Lernsets";
+      document.getElementById("pageTitle").textContent = loggedIn ? "Deine Lernsets" : "Lernsets entdecken";
       document.getElementById("pageSubtitle").textContent = loggedIn
-        ? "Hier siehst du deine eigenen Lernsets."
-        : "Melde dich an, um eigene Lernsets zu erstellen und zu verwalten.";
+        ? "Hier siehst du deine eigenen Lernsets. Öffne ein Lernset, um Karten zu verwalten."
+        : "Öffentliche Lernsets ansehen und lernen. Zum Erstellen bitte anmelden.";
     }
 
     async function login() {
@@ -591,7 +632,7 @@
           return;
         }
 
-        setToken(data.access_token);
+        setToken(data.access_token, data.user?.email || email);
         updateAuthUi();
         await loadMySets();
 
@@ -646,7 +687,12 @@
 
         if (!response.ok) {
           console.error(data);
-          alert(data.detail || "Eigene Lernsets konnten nicht geladen werden");
+
+          clearToken();
+          updateAuthUi();
+
+          alert(data.detail || "Deine Anmeldung ist abgelaufen. Bitte neu einloggen.");
+          await loadPublicSets();
           return;
         }
 
@@ -724,16 +770,17 @@
       grid.innerHTML = list.map((set, index) => {
         const colors = ["#ede9fe", "#eff6ff", "#ecfdf5", "#fff7ed"];
         const color = colors[index % colors.length];
+        const isPublic = Boolean(set.ispublic);
 
         return `
-          <div class="set-card">
+          <div class="set-card" onclick="openSet('${set.id}')">
             <div class="set-header">
               <div class="set-icon" style="background:${color};">📚</div>
 
               <div>
                 <div class="set-title">${escapeHtml(set.title || "Ohne Titel")}</div>
                 <div style="font-size:12px;color:var(--text-muted);">
-                  ${set.ispublic ? "Öffentlich" : "Privat"}
+                  ${isPublic ? "Öffentlich" : "Privat"}
                 </div>
               </div>
             </div>
@@ -744,11 +791,15 @@
 
             <div class="set-meta">
               <span>${formatDate(set.createdat)}</span>
-              <span class="badge">${set.ispublic ? "Public" : "Private"}</span>
+              <span class="badge ${isPublic ? "" : "private"}">${isPublic ? "Public" : "Private"}</span>
             </div>
           </div>
         `;
       }).join("");
+    }
+
+    function openSet(setId) {
+      window.location.href = `set-detail.html?id=${setId}`;
     }
 
     function filterSets() {
@@ -764,7 +815,7 @@
 
     function openNewSetModal() {
       if (!isLoggedIn()) {
-        alert("Bitte zuerst einloggen.");
+        alert("Bitte zuerst einloggen, um ein Lernset zu erstellen.");
         return;
       }
 
@@ -815,4 +866,5 @@
     }
   </script>
 </body>
+
 </html>
