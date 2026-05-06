@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyMate | Lernset</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --border: rgba(0, 0, 0, 0.09);
+      --border-med: rgba(0, 0, 0, 0.14);
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-muted: #9a9a9a;
+      --accent: #4f46e5;
+      --accent-light: #ede9fe;
+      --accent-text: #3730a3;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    nav {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 17px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0 14px;
+      height: 36px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    .btn-secondary {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 0.5px solid var(--border-med);
+      background: var(--surface);
+      color: var(--text-secondary);
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: var(--accent-light);
+      color: var(--accent-text);
+      border-color: rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-danger {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 0.5px solid #fecaca;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .btn-danger:hover {
+      background: #fee2e2;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    main {
+      padding: 28px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .status-pill {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-text);
+      background: var(--accent-light);
+      border: 0.5px solid rgba(79, 70, 229, 0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .form-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      border: 0.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      background: var(--surface);
+    }
+
+    .form-input {
+      height: 38px;
+    }
+
+    .form-textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .flashcard-row {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .flashcard-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .flashcard-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .empty-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 850px) {
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .flashcard-row {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        height: auto;
+        padding: 12px;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <a class="logo" href="index.html">
+      <div class="logo-icon">📚</div>
+      StudyMate
+    </a>
+
+    <div class="nav-actions">
+      <button class="btn-secondary" onclick="goBack()">← Dashboard</button>
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="top-row">
+      <div>
+        <h1 class="page-title" id="setTitle">Lernset wird geladen...</h1>
+        <p class="page-subtitle" id="setDescription">Bitte warten.</p>
+      </div>
+
+      <div class="status-pill" id="visibilityPill">Lernset</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Karten</div>
+        <div class="stat-value" id="cardCount">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" id="setStatus">Aktiv</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Lernmodus</div>
+        <div class="stat-value">Bereit</div>
+      </div>
+    </div>
+
+    <div class="form-card" id="cardCreateBox">
+      <div class="section-title">Neue Karte hinzufügen</div>
+
+      <div class="form-group">
+        <label class="form-label">Frage</label>
+        <input class="form-input" id="questionInput" type="text" placeholder="z. B. Was ist Phishing?">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Antwort</label>
+        <textarea class="form-textarea" id="answerInput" placeholder="Antwort eingeben..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="createCard()">+ Karte hinzufügen</button>
+    </div>
+
+    <div class="top-row">
+      <div>
+        <h2 class="section-title" style="margin-bottom:4px;">Karteikarten</h2>
+        <p class="page-subtitle">Alle Karten in diesem Lernset</p>
+      </div>
+    </div>
+
+    <div id="cardsList" class="cards-list"></div>
+  </main>
+
+  <script>
+    const API_URL = "https://studymatebackend.vercel.app";
+
+    let setId = null;
+    let currentSet = null;
+    let cards = [];
+
+    function getToken() {
+      return localStorage.getItem("access_token");
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    function getSetIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id");
+    }
+
+    function updateAvatar() {
+      const email = localStorage.getItem("user_email");
+      const avatar = document.getElementById("avatar");
+
+      if (!avatar) return;
+
+      avatar.textContent = email ? email.trim().charAt(0).toUpperCase() : "?";
+    }
+
+    function updatePermissionUi() {
+      const loggedIn = Boolean(getToken());
+      const createBox = document.getElementById("cardCreateBox");
+
+      if (createBox) {
+        createBox.style.display = loggedIn ? "block" : "none";
+      }
+    }
+
+    async function initPage() {
+      setId = getSetIdFromUrl();
+
+      if (!setId) {
+        alert("Keine Lernset-ID gefunden.");
+        goBack();
+        return;
+      }
+
+      await loadSetInfo();
+
+      if (currentSet) {
+        await loadCards();
+      }
+    }
+
+    async function loadSetInfo() {
+      const token = getToken();
+
+      try {
+        let response = await fetch(`${API_URL}/sets/public`);
+        let data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          alert(data.detail || "Öffentliche Lernsets konnten nicht geladen werden");
+          goBack();
+          return;
+        }
+
+        currentSet = data.find(item => item.id === setId);
+
+        if (!currentSet && token) {
+          response = await fetch(`${API_URL}/sets/my`, {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+
+          data = await response.json();
+
+          if (!response.ok) {
+            console.error(data);
+
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("user_email");
+
+            alert("Deine Anmeldung ist abgelaufen. Bitte neu einloggen.");
+            goBack();
+            return;
+          }
+
+          currentSet = data.find(item => item.id === setId);
+        }
+
+        if (!currentSet) {
+          alert("Dieses Lernset wurde nicht gefunden oder ist privat.");
+          goBack();
+          return;
+        }
+
+        document.getElementById("setTitle").textContent =
+          currentSet.title || "Lernset";
+
+        document.getElementById("setDescription").textContent =
+          currentSet.description || "Keine Beschreibung vorhanden.";
+
+        document.getElementById("visibilityPill").textContent =
+          currentSet.ispublic ? "Öffentlich" : "Privat";
+
+        document.getElementById("setStatus").textContent =
+          currentSet.ispublic ? "Public" : "Privat";
+
+        updatePermissionUi();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Laden des Lernsets");
+        goBack();
+      }
+    }
+
+    async function loadCards() {
+      try {
+        let headers = {};
+
+        if (currentSet && !currentSet.ispublic) {
+          const token = getToken();
+
+          if (!token) {
+            alert("Bitte einloggen, um dieses private Lernset zu sehen.");
+            goBack();
+            return;
+          }
+
+          headers = {
+            "Authorization": `Bearer ${token}`
+          };
+        }
+
+        const response = await fetch(`${API_URL}/sets/${setId}/cards`, {
+          headers: headers
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          alert(data.detail || "Karten konnten nicht geladen werden");
+          return;
+        }
+
+        cards = data;
+        renderCards();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Laden der Karten");
+      }
+    }
+
+    function renderCards() {
+      const list = document.getElementById("cardsList");
+
+      document.getElementById("cardCount").textContent = cards.length;
+
+      if (!cards.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🗂️</div>
+            <div class="empty-title">Noch keine Karten</div>
+            <p style="font-size:13px;">Für dieses Lernset wurden noch keine Karten erstellt.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = cards.map(card => `
+        <div class="flashcard-row">
+          <div>
+            <div class="flashcard-label">Frage</div>
+            <div class="flashcard-text">${escapeHtml(card.question)}</div>
+          </div>
+
+          <div>
+            <div class="flashcard-label">Antwort</div>
+            <div class="flashcard-text">${escapeHtml(card.answer)}</div>
+          </div>
+
+          ${currentSet && getToken() && !currentSet.ispublic ? `
+            <button class="btn-danger" onclick="deleteCard('${card.id}')">
+              Löschen
+            </button>
+          ` : ""}
+        </div>
+      `).join("");
+    }
+
+    async function createCard() {
+      const token = getToken();
+
+      if (!token) {
+        alert("Bitte zuerst einloggen.");
+        goBack();
+        return;
+      }
+
+      const question = document.getElementById("questionInput").value.trim();
+      const answer = document.getElementById("answerInput").value.trim();
+
+      if (!question) {
+        document.getElementById("questionInput").focus();
+        return;
+      }
+
+      if (!answer) {
+        document.getElementById("answerInput").focus();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/sets/${setId}/cards`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            question: question,
+            answer: answer,
+            position: cards.length
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          alert(data.detail || "Karte konnte nicht erstellt werden");
+          return;
+        }
+
+        document.getElementById("questionInput").value = "";
+        document.getElementById("answerInput").value = "";
+
+        await loadCards();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Erstellen der Karte");
+      }
+    }
+
+    async function deleteCard(cardId) {
+      const token = getToken();
+
+      if (!token) {
+        alert("Bitte zuerst einloggen.");
+        goBack();
+        return;
+      }
+
+      if (!confirm("Diese Karte wirklich löschen?")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/cards/${cardId}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          alert(data.detail || "Karte konnte nicht gelöscht werden");
+          return;
+        }
+
+        await loadCards();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Löschen der Karte");
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    updateAvatar();
+    initPage();
+  </script>
+</body>
+
+</html>
