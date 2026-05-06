@@ -1,0 +1,743 @@
+import { useState, useEffect } from "react";
+import {
+  BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
+  RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
+  Sparkles, Target, FlipHorizontal, Lock,
+} from "lucide-react";
+
+const SETS = [
+  {
+    id: 1, title: "OSI-Modell", description: "Die 7 Schichten des Referenzmodells und ihre Protokolle",
+    isPublic: true, author: "admin", authorInitial: "A", accent: "#00d4aa",
+    tags: ["Netzwerk", "Grundlagen"],
+    cards: [
+      { id: 1, q: "Was ist die Physical Layer?", a: "Schicht 1 – überträgt Bits über physische Medien (Kabel, Funk). Geräte: Hub, Repeater, NIC." },
+      { id: 2, q: "Was ist die Data Link Layer?", a: "Schicht 2 – MAC-Adressierung, Fehlererkennung, Framing. Geräte: Switch, Bridge." },
+      { id: 3, q: "Was ist die Network Layer?", a: "Schicht 3 – IP-Adressierung und Routing. Geräte: Router. Protokolle: IP, ICMP, ARP." },
+      { id: 4, q: "Was ist die Transport Layer?", a: "Schicht 4 – Ende-zu-Ende Kommunikation. TCP (zuverlässig, verbindungsorientiert) vs. UDP (schnell, verbindungslos)." },
+      { id: 5, q: "Was ist die Session Layer?", a: "Schicht 5 – Verwaltung von Verbindungen, Sitzungsaufbau, -erhaltung und -abbau." },
+      { id: 6, q: "Was ist die Presentation Layer?", a: "Schicht 6 – Datendarstellung, Kodierung, Verschlüsselung (SSL/TLS) und Kompression." },
+      { id: 7, q: "Was ist die Application Layer?", a: "Schicht 7 – Anwendungsprotokolle: HTTP, HTTPS, FTP, SMTP, DNS, SSH." },
+    ],
+  },
+  {
+    id: 2, title: "Kryptographie", description: "Symmetrische & asymmetrische Verfahren, Hashing, PKI",
+    isPublic: true, author: "admin", authorInitial: "A", accent: "#8b5cf6",
+    tags: ["Crypto", "Security"],
+    cards: [
+      { id: 1, q: "Was ist AES?", a: "Advanced Encryption Standard – symmetrisches Blockchiffre. 128 Bit Blockgröße, Schlüssellängen: 128/192/256 Bit. Standard seit 2001." },
+      { id: 2, q: "Was ist RSA?", a: "Asymmetrisches Verfahren basierend auf der Schwierigkeit, große Zahlen zu faktorisieren. Typisch: 2048–4096 Bit Schlüssel." },
+      { id: 3, q: "Was ist SHA-256?", a: "Kryptographische Hashfunktion der SHA-2-Familie. Gibt einen 256-Bit Fingerabdruck aus. Kollisionsresistent – Standard für Zertifikate." },
+      { id: 4, q: "Was ist eine digitale Signatur?", a: "Mit dem privaten Schlüssel erstellt, mit dem öffentlichen verifiziert. Gewährleistet Integrität, Authentizität und Nicht-Abstreitbarkeit." },
+      { id: 5, q: "Was ist PKI?", a: "Public Key Infrastructure – Rahmenwerk zur Verwaltung digitaler Zertifikate. Bestandteile: CA, RA, CRL, Zertifikat (X.509)." },
+    ],
+  },
+  {
+    id: 3, title: "OWASP Top 10", description: "Kritischste Sicherheitsrisiken für Webanwendungen 2021",
+    isPublic: true, author: "sec_teach", authorInitial: "S", accent: "#ef4444",
+    tags: ["Web Security", "Angriffe"],
+    cards: [
+      { id: 1, q: "A01: Broken Access Control", a: "Nutzer greifen auf nicht autorisierte Ressourcen zu. Häufigste Schwachstelle. Gegenmaßnahme: Least-Privilege-Prinzip, serverseitige Prüfung." },
+      { id: 2, q: "A02: Cryptographic Failures", a: "Schwache oder fehlende Verschlüsselung sensibler Daten. Passwörter im Klartext, veraltete Cipher (MD5, SHA-1)." },
+      { id: 3, q: "A03: Injection", a: "SQL-, NoSQL-, LDAP-, OS-Injection durch unvalidierte Eingaben. Gegenmaßnahme: Prepared Statements, Input Validation." },
+      { id: 4, q: "A07: Identification Failures", a: "Schwache Authentifizierung, fehlendes Session-Management, kein MFA. Ermöglicht Credential Stuffing und Brute Force." },
+    ],
+  },
+  {
+    id: 4, title: "Linux Hardening", description: "Sicherheitsmaßnahmen und Best Practices für Linux-Server",
+    isPublic: false, author: "demo@studymate.dev", authorInitial: "D", accent: "#f59e0b",
+    tags: ["Linux", "Server"],
+    cards: [
+      { id: 1, q: "Was bedeutet chmod 644?", a: "Besitzer: lesen+schreiben (6), Gruppe: lesen (4), Andere: lesen (4). Standard für Konfigurationsdateien." },
+      { id: 2, q: "Was ist fail2ban?", a: "Tool, das IP-Adressen nach wiederholten fehlgeschlagenen Login-Versuchen automatisch sperrt. Schützt vor Brute-Force-Angriffen." },
+      { id: 3, q: "Was ist UFW?", a: "Uncomplicated Firewall – vereinfachtes Frontend für iptables. Einfache Regel-Verwaltung: ufw allow 22/tcp." },
+    ],
+  },
+];
+
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  .sm * { box-sizing: border-box; }
+  .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 600px; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
+
+  .sm-grid {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(rgba(0,212,170,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,170,.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .sm-glow { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+
+  .sm-z { position: relative; z-index: 1; }
+
+  .sm-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,.07);
+    background: rgba(8,12,24,.8); backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .sm-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; color: #f1f5f9; cursor: pointer; }
+  .sm-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #00d4aa, #00b894); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+  .sm-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #00d4aa33, #8b5cf633); border: 1px solid rgba(0,212,170,.3); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #00d4aa; cursor: pointer; }
+
+  .sm-input {
+    width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px; color: #f1f5f9; padding: 11px 16px; font-size: 14px;
+    font-family: 'Sora', sans-serif; outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .sm-input:focus { border-color: rgba(0,212,170,.5); box-shadow: 0 0 0 3px rgba(0,212,170,.08); }
+  .sm-input::placeholder { color: #475569; }
+
+  .sm-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 10px; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all .18s; }
+  .sm-btn-primary { background: linear-gradient(135deg, #00d4aa, #00b894); color: #080c18; font-weight: 600; }
+  .sm-btn-primary:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,212,170,.3); }
+  .sm-btn-ghost { background: rgba(255,255,255,.05); color: #94a3b8; border: 1px solid rgba(255,255,255,.1); }
+  .sm-btn-ghost:hover { background: rgba(255,255,255,.08); color: #e2e8f0; }
+  .sm-btn-danger { background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+  .sm-btn-danger:hover { background: rgba(239,68,68,.25); }
+
+  .sm-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 20px; cursor: pointer; transition: all .2s; }
+  .sm-card:hover { background: rgba(255,255,255,.06); border-color: rgba(0,212,170,.2); transform: translateY(-2px); }
+
+  .sm-tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(0,212,170,.1); color: #00d4aa; border: 1px solid rgba(0,212,170,.2); }
+
+  .sm-tab { padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all .2s; color: #64748b; background: transparent; font-family: 'Sora', sans-serif; }
+  .sm-tab.active { background: rgba(0,212,170,.12); color: #00d4aa; }
+  .sm-tab:hover:not(.active) { color: #94a3b8; background: rgba(255,255,255,.04); }
+
+  .sm-progress-bar { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
+  .sm-progress-fill { height: 100%; background: linear-gradient(90deg, #00d4aa, #8b5cf6); border-radius: 2px; transition: width .4s ease; }
+
+  .sm-flip-scene { perspective: 1200px; width: 100%; }
+  .sm-flip-card { position: relative; width: 100%; transition: transform .55s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; }
+  .sm-flip-card.flipped { transform: rotateY(180deg); }
+  .sm-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .sm-flip-back { position: absolute; inset: 0; transform: rotateY(180deg); }
+
+  .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .sm-badge-public { background: rgba(0,212,170,.12); color: #00d4aa; }
+  .sm-badge-private { background: rgba(255,255,255,.07); color: #64748b; }
+
+  .sm-answer-btn { width: 100%; text-align: left; padding: 14px 18px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); color: #cbd5e1; font-family: 'Sora', sans-serif; font-size: 14px; cursor: pointer; transition: all .2s; line-height: 1.5; }
+  .sm-answer-btn:hover:not(:disabled) { background: rgba(0,212,170,.08); border-color: rgba(0,212,170,.3); color: #f1f5f9; }
+  .sm-answer-btn.correct { background: rgba(0,212,170,.15); border-color: rgba(0,212,170,.5); color: #00d4aa; }
+  .sm-answer-btn.wrong { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.3); color: #f87171; }
+
+  .sm-mono { font-family: 'JetBrains Mono', monospace; }
+
+  @keyframes sm-fadeup { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .sm-fadeup { animation: sm-fadeup .3s ease forwards; }
+
+  @keyframes sm-pulse { 0%,100% { opacity: .5; transform: scale(1); } 50% { opacity: .8; transform: scale(1.05); } }
+  .sm-pulse { animation: sm-pulse 3s ease-in-out infinite; }
+
+  .sm-divider { height: 1px; background: rgba(255,255,255,.07); margin: 8px 0; }
+
+  .sm-section-title { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #475569; padding: 0 0 8px; }
+
+  .sm-stat { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 16px; text-align: center; }
+  .sm-stat-num { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .sm-stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+`;
+
+function NavBar({ user, onHome, onLogout }) {
+  return (
+    <nav className="sm-nav">
+      <div className="sm-logo" onClick={onHome}>
+        <div className="sm-logo-icon">
+          <Shield size={16} color="#080c18" strokeWidth={2.5} />
+        </div>
+        <span>Study<span style={{ color: "#00d4aa" }}>Mate</span></span>
+        <span className="sm-mono" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {user ? (
+          <>
+            <div className="sm-avatar">{user.initial}</div>
+            <button className="sm-btn sm-btn-ghost" style={{ padding: "7px 14px", fontSize: 13 }} onClick={onLogout}>
+              <LogOut size={14} />
+              Logout
+            </button>
+          </>
+        ) : (
+          <span style={{ fontSize: 13, color: "#475569" }}>Gastmodus</span>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+function AuthView({ onLogin, onGuest }) {
+  const [tab, setTab] = useState("login");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [name, setName] = useState("");
+  const [err, setErr] = useState("");
+
+  const handleLogin = () => {
+    if (!email || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
+    onLogin({ email, name: email.split("@")[0], initial: email[0].toUpperCase() });
+  };
+
+  const handleRegister = () => {
+    if (!email || !pass || !name) { setErr("Bitte alle Felder ausfüllen."); return; }
+    if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
+    onLogin({ email, name, initial: name[0].toUpperCase() });
+  };
+
+  return (
+    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="sm-glow sm-pulse" style={{ width: 400, height: 400, background: "rgba(0,212,170,.06)", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
+      <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ width: 56, height: 56, background: "linear-gradient(135deg, #00d4aa, #00b894)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Shield size={26} color="#080c18" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, margin: "0 0 6px" }}>StudyMate</h1>
+          <p style={{ color: "#64748b", fontSize: 14 }}>Lernplattform für Cybersecurity</p>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 20, padding: 28 }}>
+          <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 4, marginBottom: 24, gap: 4 }}>
+            {["login", "register"].map(t => (
+              <button
+                key={t}
+                onClick={() => { setTab(t); setErr(""); }}
+                style={{ flex: 1, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                <span className={`sm-tab ${tab === t ? "active" : ""}`} style={{ display: "block", padding: "7px 0", textAlign: "center" }}>
+                  {t === "login" ? "Anmelden" : "Registrieren"}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {tab === "register" && (
+              <div>
+                <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Name</label>
+                <input className="sm-input" placeholder="Max Mustermann" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+            )}
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>E-Mail</label>
+              <input className="sm-input" type="email" placeholder="deine@email.de" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort</label>
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
+            </div>
+
+            {err && <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>{err}</div>}
+
+            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={tab === "login" ? handleLogin : handleRegister}>
+              {tab === "login" ? <><LogIn size={15} /> Anmelden</> : <><Check size={15} /> Konto erstellen</>}
+            </button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0" }}>
+            <div className="sm-divider" style={{ flex: 1 }} />
+            <span style={{ fontSize: 12, color: "#475569" }}>oder</span>
+            <div className="sm-divider" style={{ flex: 1 }} />
+          </div>
+
+          <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center" }} onClick={onGuest}>
+            <Globe size={14} />
+            Als Gast fortfahren
+          </button>
+
+          {tab === "login" && (
+            <p style={{ fontSize: 12, color: "#475569", textAlign: "center", marginTop: 12 }}>
+              Demo: <span className="sm-mono" style={{ color: "#00d4aa" }}>demo@studymate.dev</span> / <span className="sm-mono" style={{ color: "#00d4aa" }}>demo123</span>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardView({ user, onOpenSet, onCreateSet }) {
+  const [tab, setTab] = useState("discover");
+  const [search, setSearch] = useState("");
+
+  const filtered = SETS.filter(s => {
+    if (!user && !s.isPublic) return false;
+    if (tab === "mine" && s.author !== (user?.email || "") && s.author !== "demo@studymate.dev") return false;
+    if (search && !s.title.toLowerCase().includes(search.toLowerCase()) && !s.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))) return false;
+    return true;
+  });
+
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
+            {user ? `Hey, ${user.name} 👾` : "Lernsets entdecken"}
+          </h2>
+          <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>
+            {user ? "Bereit für deine nächste Session?" : "Melde dich an, um eigene Sets zu erstellen"}
+          </p>
+        </div>
+        {user && (
+          <button className="sm-btn sm-btn-primary" onClick={onCreateSet}>
+            <Plus size={15} />
+            Neues Set
+          </button>
+        )}
+      </div>
+
+      {user && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+          {[
+            { n: SETS.filter(s => s.author === user.email || s.author === "demo@studymate.dev").length || 2, l: "Meine Sets" },
+            { n: SETS.reduce((a, b) => a + b.cards.length, 0), l: "Karten gesamt" },
+            { n: "7", l: "Streak-Tage 🔥" },
+          ].map((s, i) => (
+            <div key={i} className="sm-stat">
+              <div className="sm-stat-num" style={{ color: i === 0 ? "#00d4aa" : i === 1 ? "#8b5cf6" : "#f59e0b" }}>{s.n}</div>
+              <div className="sm-stat-label">{s.l}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <Search size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#475569" }} />
+          <input className="sm-input" style={{ paddingLeft: 40 }} placeholder="Sets suchen..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3 }}>
+          {["discover", "mine"].map(t => (
+            <button key={t} className={`sm-tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={{ padding: "6px 14px", fontSize: 13 }}>
+              {t === "discover" ? "Entdecken" : "Meine Sets"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+          <BookOpen size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
+          <p style={{ fontSize: 15 }}>Keine Sets gefunden</p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+          {filtered.map(set => (
+            <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`}>
+                  {set.isPublic ? <Globe size={10} /> : <Lock size={10} />}
+                  {set.isPublic ? "Öffentlich" : "Privat"}
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#64748b", fontSize: 12 }}>
+                  <BookOpen size={12} />
+                  {set.cards.length} Karten
+                </div>
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px" }}>{set.title}</h3>
+              <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 14px", lineHeight: 1.5 }}>{set.description}</p>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+                {set.tags.map(t => <span key={t} className="sm-tag">{t}</span>)}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#475569" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: `${set.accent}22`, border: `1px solid ${set.accent}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: set.accent }}>
+                    {set.authorInitial}
+                  </div>
+                  {set.author}
+                </div>
+                <ChevronRight size={16} style={{ color: "#475569" }} />
+              </div>
+            </div>
+          ))}
+          {user && tab === "mine" && (
+            <div
+              style={{ border: "1.5px dashed rgba(0,212,170,.2)", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", minHeight: 180, transition: "all .2s" }}
+              onClick={onCreateSet}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(0,212,170,.5)"; e.currentTarget.style.background = "rgba(0,212,170,.04)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(0,212,170,.2)"; e.currentTarget.style.background = "transparent"; }}
+            >
+              <Plus size={28} style={{ color: "#00d4aa", opacity: .6 }} />
+              <span style={{ fontSize: 14, color: "#64748b" }}>Neues Set erstellen</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailView({ set, user, onBack, onLearn, onQuiz }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newQ, setNewQ] = useState("");
+  const [newA, setNewA] = useState("");
+  const [cards, setCards] = useState(set.cards);
+
+  const addCard = () => {
+    if (newQ && newA) {
+      setCards([...cards, { id: cards.length + 1, q: newQ, a: newA }]);
+      setNewQ(""); setNewA(""); setShowAdd(false);
+    }
+  };
+
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}>
+          <ArrowLeft size={15} />
+        </button>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{set.title}</h2>
+            <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`} style={{ fontSize: 11 }}>
+              {set.isPublic ? <><Globe size={10} /> Öffentlich</> : <><Lock size={10} /> Privat</>}
+            </span>
+          </div>
+          <p style={{ color: "#64748b", fontSize: 13, margin: "3px 0 0" }}>{set.description}</p>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <button className="sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn}>
+          <Brain size={15} />
+          Lernen starten
+        </button>
+        <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz}>
+          <Zap size={15} />
+          Quiz starten
+        </button>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
+        {user && (
+          <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => setShowAdd(!showAdd)}>
+            <Plus size={13} />
+            Karte hinzufügen
+          </button>
+        )}
+      </div>
+
+      {showAdd && (
+        <div style={{ background: "rgba(0,212,170,.05)", border: "1px solid rgba(0,212,170,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Neue Karte</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input className="sm-input" placeholder="Frage..." value={newQ} onChange={e => setNewQ(e.target.value)} />
+            <textarea className="sm-input" placeholder="Antwort..." value={newA} onChange={e => setNewA(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={addCard}><Check size={13} /> Speichern</button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowAdd(false)}><X size={13} /> Abbrechen</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {cards.map((c, i) => (
+          <div key={c.id} style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <div style={{ width: 28, height: 28, minWidth: 28, borderRadius: 8, background: `${set.accent}18`, border: `1px solid ${set.accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: set.accent, fontFamily: "JetBrains Mono, monospace" }}>{String(i + 1).padStart(2, "0")}</div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 14, fontWeight: 500, margin: "0 0 5px", color: "#e2e8f0" }}>{c.q}</p>
+              <p style={{ fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5 }}>{c.a}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LearnView({ set, onBack }) {
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [done, setDone] = useState([]);
+
+  const card = set.cards[idx];
+  const progress = (idx / set.cards.length) * 100;
+
+  const next = (knew) => {
+    setFlipped(false);
+    if (knew) setDone([...done, idx]);
+    setTimeout(() => {
+      if (idx + 1 >= set.cards.length) setIdx(-1);
+      else setIdx(idx + 1);
+    }, 100);
+  };
+
+  if (idx === -1) {
+    return (
+      <div className="sm-z sm-fadeup" style={{ padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 500 }}>
+        <div style={{ textAlign: "center", maxWidth: 340 }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Session beendet!</h2>
+          <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>Du hast alle {set.cards.length} Karten in <strong style={{ color: "#00d4aa" }}>{set.title}</strong> durchgearbeitet.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
+            <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#00d4aa" }}>{done.length}</div><div className="sm-stat-label">Gewusst ✓</div></div>
+            <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#ef4444" }}>{set.cards.length - done.length}</div><div className="sm-stat-label">Noch lernen</div></div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setIdx(0); setFlipped(false); setDone([]); }}>
+              <RotateCcw size={14} />
+              Nochmal
+            </button>
+            <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onBack}>
+              <ArrowLeft size={14} />
+              Zurück
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 540, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}><ArrowLeft size={15} /></button>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#64748b" }}>{set.title}</span>
+            <span className="sm-mono" style={{ fontSize: 13, color: "#00d4aa" }}>{idx + 1} / {set.cards.length}</span>
+          </div>
+          <div className="sm-progress-bar"><div className="sm-progress-fill" style={{ width: `${progress}%` }} /></div>
+        </div>
+      </div>
+
+      <div className="sm-flip-scene" style={{ marginBottom: 16 }}>
+        <div className={`sm-flip-card ${flipped ? "flipped" : ""}`} style={{ height: 280 }} onClick={() => setFlipped(!flipped)}>
+          <div className="sm-flip-face" style={{
+            height: "100%", background: "rgba(255,255,255,.05)", border: `1px solid ${flipped ? "rgba(255,255,255,.08)" : `${set.accent}30`}`,
+            borderRadius: 20, padding: 32, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", cursor: "pointer",
+          }}>
+            <div style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: set.accent, display: "inline-block" }} />
+              Frage
+            </div>
+            <p style={{ fontSize: 18, fontWeight: 600, color: "#f1f5f9", lineHeight: 1.5, margin: 0 }}>{card.q}</p>
+            <p style={{ fontSize: 12, color: "#475569", marginTop: 24, display: "flex", alignItems: "center", gap: 6 }}>
+              <FlipHorizontal size={13} /> Klicken zum Umdrehen
+            </p>
+          </div>
+          <div className="sm-flip-face sm-flip-back" style={{
+            height: "100%", background: `${set.accent}10`, border: `1px solid ${set.accent}40`,
+            borderRadius: 20, padding: 32, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 11, color: set.accent, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>
+              <Check size={12} /> Antwort
+            </div>
+            <p style={{ fontSize: 15, color: "#e2e8f0", lineHeight: 1.7, margin: 0 }}>{card.a}</p>
+          </div>
+        </div>
+      </div>
+
+      {flipped ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <button className="sm-btn sm-btn-danger" style={{ justifyContent: "center" }} onClick={() => next(false)}>
+            <X size={15} /> Nicht gewusst
+          </button>
+          <button className="sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={() => next(true)}>
+            <Check size={15} /> Gewusst!
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
+          <button className="sm-btn sm-btn-ghost" style={{ padding: "10px 20px" }} onClick={() => setIdx(Math.max(0, idx - 1))} disabled={idx === 0}>
+            <ChevronLeft size={15} /> Zurück
+          </button>
+          <button className="sm-btn sm-btn-ghost" style={{ padding: "10px 20px" }} onClick={() => setFlipped(true)}>
+            Aufdecken
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuizView({ set, onBack }) {
+  const [phase, setPhase] = useState("intro");
+  const [qIdx, setQIdx] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore] = useState(0);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const shuffled = set.cards.slice(0, 4);
+  const q = shuffled[qIdx];
+
+  const getAnswers = (card) => {
+    const wrong = set.cards.filter(c => c.id !== card.id).slice(0, 3).map(c => ({ text: c.a, correct: false }));
+    return [...wrong, { text: card.a, correct: true }].sort(() => Math.random() - .5);
+  };
+
+  const [answers] = useState(() => shuffled.map(c => getAnswers(c)));
+
+  const pick = (i) => {
+    if (selected !== null) return;
+    setSelected(i);
+    if (answers[qIdx][i].correct) setScore(s => s + 1);
+    setTimeout(() => {
+      if (qIdx + 1 >= shuffled.length) setPhase("result");
+      else { setQIdx(q => q + 1); setSelected(null); }
+    }, 1200);
+  };
+
+  const simulateAI = () => {
+    setAiLoading(true);
+    setTimeout(() => setAiLoading(false), 2000);
+  };
+
+  if (phase === "intro") return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 500, margin: "0 auto" }}>
+      <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px", marginBottom: 20 }} onClick={onBack}><ArrowLeft size={15} /></button>
+      <div style={{ background: "rgba(139,92,246,.08)", border: "1px solid rgba(139,92,246,.25)", borderRadius: 20, padding: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <div style={{ width: 44, height: 44, background: "rgba(139,92,246,.2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Target size={22} color="#a78bfa" />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Quiz – {set.title}</h3>
+            <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{shuffled.length} Fragen · Multiple Choice</p>
+          </div>
+        </div>
+        <div style={{ background: "rgba(255,255,255,.04)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Sparkles size={14} color="#a78bfa" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>KI-Quizgenerierung (Beta)</span>
+          </div>
+          <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>Lass KI neue Quizfragen auf Basis deiner Karten erstellen – mit Erklärungen und variablen Schwierigkeitsstufen.</p>
+          <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={simulateAI}>
+            {aiLoading
+              ? <><span style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid #a78bfa", borderTopColor: "transparent", display: "inline-block", animation: "spin .8s linear infinite" }} /> Generiere...</>
+              : <><Sparkles size={13} /> KI-Quiz erstellen</>}
+          </button>
+        </div>
+        <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => setPhase("quiz")}>
+          <Zap size={15} /> Quiz starten
+        </button>
+      </div>
+    </div>
+  );
+
+  if (phase === "result") return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 440, margin: "0 auto", textAlign: "center" }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 52, marginBottom: 12 }}>{score === shuffled.length ? "🏆" : score >= shuffled.length / 2 ? "💪" : "😞"}</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{score === shuffled.length ? "Perfekt!" : "Quiz abgeschlossen!"}</h2>
+        <p style={{ color: "#64748b", fontSize: 14 }}>{score} von {shuffled.length} Fragen richtig</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
+        <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#00d4aa" }}>{score}</div><div className="sm-stat-label">Richtig</div></div>
+        <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#ef4444" }}>{shuffled.length - score}</div><div className="sm-stat-label">Falsch</div></div>
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setPhase("quiz"); setQIdx(0); setSelected(null); setScore(0); }}>
+          <RotateCcw size={14} /> Nochmal
+        </button>
+        <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onBack}>
+          <ArrowLeft size={14} /> Zurück
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}><ArrowLeft size={15} /></button>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#64748b" }}>Frage {qIdx + 1} von {shuffled.length}</span>
+            <span className="sm-mono" style={{ fontSize: 13, color: "#8b5cf6" }}>+{score} Punkte</span>
+          </div>
+          <div className="sm-progress-bar"><div className="sm-progress-fill" style={{ width: `${(qIdx / shuffled.length) * 100}%`, background: "linear-gradient(90deg, #8b5cf6, #a78bfa)" }} /></div>
+        </div>
+      </div>
+
+      <div style={{ background: "rgba(139,92,246,.06)", border: "1px solid rgba(139,92,246,.2)", borderRadius: 16, padding: "24px 28px", marginBottom: 16, minHeight: 100, display: "flex", alignItems: "center" }}>
+        <p style={{ fontSize: 16, fontWeight: 600, margin: 0, lineHeight: 1.6 }}>{q.q}</p>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {answers[qIdx].map((ans, i) => {
+          let cls = "sm-answer-btn";
+          if (selected !== null) {
+            if (ans.correct) cls += " correct";
+            else if (i === selected && !ans.correct) cls += " wrong";
+          }
+          return (
+            <button key={i} className={cls} onClick={() => pick(i)} disabled={selected !== null}>
+              <span className="sm-mono" style={{ color: selected !== null && ans.correct ? "#00d4aa" : selected !== null && i === selected ? "#f87171" : "#475569", marginRight: 10 }}>
+                {String.fromCharCode(65 + i)}.
+              </span>
+              {ans.text}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function StudyMate() {
+  const [view, setView] = useState("auth");
+  const [user, setUser] = useState(null);
+  const [currentSet, setCurrentSet] = useState(null);
+
+  useEffect(() => {
+    const el = document.createElement("style");
+    el.textContent = styles;
+    document.head.appendChild(el);
+    return () => { document.head.removeChild(el); };
+  }, []);
+
+  const goHome = () => setView("dashboard");
+
+  return (
+    <div className="sm">
+      <div className="sm-grid" />
+      <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
+      <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
+
+      {view !== "auth" && (
+        <NavBar user={user} onHome={goHome} onLogout={() => { setUser(null); setView("auth"); }} />
+      )}
+
+      {view === "auth" && (
+        <AuthView
+          onLogin={(u) => { setUser(u); setView("dashboard"); }}
+          onGuest={() => setView("dashboard")}
+        />
+      )}
+
+      {view === "dashboard" && (
+        <DashboardView
+          user={user}
+          onOpenSet={(s) => { setCurrentSet(s); setView("detail"); }}
+          onCreateSet={() => alert("Neues Lernset – Backend-Anbindung hier einsetzen (POST /api/sets)")}
+        />
+      )}
+
+      {view === "detail" && currentSet && (
+        <DetailView
+          set={currentSet}
+          user={user}
+          onBack={() => setView("dashboard")}
+          onLearn={() => setView("learn")}
+          onQuiz={() => setView("quiz")}
+        />
+      )}
+
+      {view === "learn" && currentSet && (
+        <LearnView set={currentSet} onBack={() => setView("detail")} />
+      )}
+
+      {view === "quiz" && currentSet && (
+        <QuizView set={currentSet} onBack={() => setView("detail")} />
+      )}
+    </div>
+  );
+}

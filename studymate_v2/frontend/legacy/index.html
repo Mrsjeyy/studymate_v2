@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyMate</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --border: rgba(0, 0, 0, 0.09);
+      --border-med: rgba(0, 0, 0, 0.14);
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-muted: #9a9a9a;
+      --accent: #4f46e5;
+      --accent-light: #ede9fe;
+      --accent-text: #3730a3;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    nav {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 17px;
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 420px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 0 12px;
+      height: 36px;
+    }
+
+    .search-bar input {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      flex: 1;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0 14px;
+      height: 34px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    .btn-secondary {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 0.5px solid var(--border-med);
+      background: var(--surface);
+      color: var(--text-secondary);
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: var(--accent-light);
+      color: var(--accent-text);
+      border-color: rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-danger:hover {
+      background: #fef2f2;
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    main {
+      padding: 28px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .status-pill {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-text);
+      background: var(--accent-light);
+      border: 0.5px solid rgba(79, 70, 229, 0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .sets-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .set-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      transition: transform 0.1s, border-color 0.15s;
+      cursor: pointer;
+    }
+
+    .set-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-med);
+    }
+
+    .set-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .set-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-light);
+      font-size: 19px;
+      flex-shrink: 0;
+    }
+
+    .set-title {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+
+    .set-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      min-height: 36px;
+      margin-bottom: 14px;
+    }
+
+    .set-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f0fdf4;
+      color: var(--success);
+      border: 0.5px solid #bbf7d0;
+    }
+
+    .badge.private {
+      background: #fef2f2;
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .empty-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-bg.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 28px;
+      width: 480px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      border: 0.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      background: var(--surface);
+    }
+
+    .form-input {
+      height: 38px;
+    }
+
+    .form-textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 0.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 0 14px;
+      height: 36px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .btn-cancel:hover {
+      background: var(--bg);
+    }
+
+    @media (max-width: 850px) {
+
+      .stat-grid,
+      .sets-grid {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        height: auto;
+        padding: 12px;
+        flex-wrap: wrap;
+      }
+
+      .search-bar {
+        order: 3;
+        max-width: none;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <a class="logo" href="index.html">
+      <div class="logo-icon">📚</div>
+      StudyMate
+    </a>
+
+    <div class="search-bar">
+      <span style="color:var(--text-muted);font-size:14px;">🔍</span>
+      <input type="text" placeholder="Lernsets durchsuchen..." id="searchInput" oninput="filterSets()">
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-secondary" id="loginBtn" onclick="login()">Login</button>
+      <button class="btn-secondary btn-danger" id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+      <button class="btn-primary" id="newSetBtn" onclick="openNewSetModal()" style="display:none;">
+        + Neues Lernset
+      </button>
+      <div class="avatar" id="avatar">?</div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="top-row">
+      <div>
+        <h1 class="page-title" id="pageTitle">Lernsets entdecken</h1>
+        <p class="page-subtitle" id="pageSubtitle">
+          Öffentliche Lernsets ansehen und lernen. Zum Erstellen bitte anmelden.
+        </p>
+      </div>
+
+      <div class="status-pill" id="statusPill">
+        Öffentliche Lernsets
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Angezeigte Lernsets</div>
+        <div class="stat-value" id="statSets">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" id="statStatus">Gast</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Backend</div>
+        <div class="stat-value">Online</div>
+      </div>
+    </div>
+
+    <div class="section-title" id="setsTitle">Lernsets</div>
+
+    <div id="setsGrid" class="sets-grid"></div>
+
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">Keine Lernsets gefunden</div>
+      <p style="font-size:13px;">Erstelle ein neues Lernset oder prüfe deine Suche.</p>
+    </div>
+  </main>
+
+  <div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">Neues Lernset erstellen</div>
+
+      <div class="form-group">
+        <label class="form-label">Titel</label>
+        <input class="form-input" id="setTitleInput" type="text" placeholder="z. B. Netzwerkgrundlagen">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Beschreibung</label>
+        <textarea class="form-textarea" id="setDescInput" placeholder="Kurze Beschreibung des Lernsets..."></textarea>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="setPublicInput" checked>
+        Öffentlich sichtbar
+      </label>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+        <button class="btn-primary" onclick="createSet()">Erstellen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://studymatebackend.vercel.app";
+
+    let sets = [];
+
+    function getToken() {
+      return localStorage.getItem("access_token");
+    }
+
+    function setToken(token, userEmail) {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("user_email", userEmail || "");
+    }
+
+    function clearToken() {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user_email");
+    }
+
+    function isLoggedIn() {
+      return Boolean(getToken());
+    }
+
+    function getAvatarLetter() {
+      const email = localStorage.getItem("user_email");
+
+      if (!email) {
+        return "?";
+      }
+
+      return email.trim().charAt(0).toUpperCase();
+    }
+
+    function updateAuthUi() {
+      const loggedIn = isLoggedIn();
+
+      document.getElementById("loginBtn").style.display = loggedIn ? "none" : "inline-flex";
+      document.getElementById("logoutBtn").style.display = loggedIn ? "inline-flex" : "none";
+      document.getElementById("newSetBtn").style.display = loggedIn ? "inline-flex" : "none";
+
+      document.getElementById("avatar").textContent = loggedIn ? getAvatarLetter() : "?";
+      document.getElementById("statStatus").textContent = loggedIn ? "Eingeloggt" : "Gast";
+      document.getElementById("statusPill").textContent = loggedIn ? "Meine Lernsets" : "Öffentliche Lernsets";
+      document.getElementById("pageTitle").textContent = loggedIn ? "Deine Lernsets" : "Lernsets entdecken";
+      document.getElementById("pageSubtitle").textContent = loggedIn
+        ? "Hier siehst du deine eigenen Lernsets. Öffne ein Lernset, um Karten zu verwalten."
+        : "Öffentliche Lernsets ansehen und lernen. Zum Erstellen bitte anmelden.";
+    }
+
+    async function login() {
+      const email = prompt("E-Mail:");
+      if (!email) return;
+
+      const password = prompt("Passwort:");
+      if (!password) return;
+
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.detail || "Login fehlgeschlagen");
+          console.error(data);
+          return;
+        }
+
+        setToken(data.access_token, data.user?.email || email);
+        updateAuthUi();
+        await loadMySets();
+
+      } catch (error) {
+        console.error(error);
+        alert("Backend nicht erreichbar");
+      }
+    }
+
+    async function logout() {
+      clearToken();
+      updateAuthUi();
+      await loadPublicSets();
+    }
+
+    async function loadPublicSets() {
+      try {
+        const response = await fetch(`${API_URL}/sets/public`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          alert("Öffentliche Lernsets konnten nicht geladen werden");
+          return;
+        }
+
+        sets = data;
+        renderSets();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Laden der öffentlichen Lernsets");
+      }
+    }
+
+    async function loadMySets() {
+      const token = getToken();
+
+      if (!token) {
+        await loadPublicSets();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/sets/my`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+
+          clearToken();
+          updateAuthUi();
+
+          alert(data.detail || "Deine Anmeldung ist abgelaufen. Bitte neu einloggen.");
+          await loadPublicSets();
+          return;
+        }
+
+        sets = data;
+        renderSets();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Laden deiner Lernsets");
+      }
+    }
+
+    async function createSet() {
+      const token = getToken();
+
+      if (!token) {
+        alert("Bitte zuerst einloggen.");
+        return;
+      }
+
+      const title = document.getElementById("setTitleInput").value.trim();
+      const description = document.getElementById("setDescInput").value.trim();
+      const isPublic = document.getElementById("setPublicInput").checked;
+
+      if (!title) {
+        document.getElementById("setTitleInput").focus();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/sets`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title: title,
+            description: description,
+            is_public: isPublic
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data);
+          alert(data.detail || "Lernset konnte nicht erstellt werden");
+          return;
+        }
+
+        closeModal();
+        await loadMySets();
+
+      } catch (error) {
+        console.error(error);
+        alert("Fehler beim Erstellen des Lernsets");
+      }
+    }
+
+    function renderSets(list = sets) {
+      const grid = document.getElementById("setsGrid");
+      const empty = document.getElementById("emptyState");
+
+      document.getElementById("statSets").textContent = list.length;
+
+      if (!list.length) {
+        grid.innerHTML = "";
+        empty.style.display = "block";
+        return;
+      }
+
+      empty.style.display = "none";
+
+      grid.innerHTML = list.map((set, index) => {
+        const colors = ["#ede9fe", "#eff6ff", "#ecfdf5", "#fff7ed"];
+        const color = colors[index % colors.length];
+        const isPublic = Boolean(set.ispublic);
+
+        return `
+          <div class="set-card" onclick="openSet('${set.id}')">
+            <div class="set-header">
+              <div class="set-icon" style="background:${color};">📚</div>
+
+              <div>
+                <div class="set-title">${escapeHtml(set.title || "Ohne Titel")}</div>
+                <div style="font-size:12px;color:var(--text-muted);">
+                  ${isPublic ? "Öffentlich" : "Privat"}
+                </div>
+              </div>
+            </div>
+
+            <div class="set-desc">
+              ${escapeHtml(set.description || "Keine Beschreibung vorhanden.")}
+            </div>
+
+            <div class="set-meta">
+              <span>${formatDate(set.createdat)}</span>
+              <span class="badge ${isPublic ? "" : "private"}">${isPublic ? "Public" : "Private"}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openSet(setId) {
+      window.location.href = `set-detail.html?id=${setId}`;
+    }
+
+    function filterSets() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+
+      const filtered = sets.filter(set =>
+        (set.title || "").toLowerCase().includes(query) ||
+        (set.description || "").toLowerCase().includes(query)
+      );
+
+      renderSets(filtered);
+    }
+
+    function openNewSetModal() {
+      if (!isLoggedIn()) {
+        alert("Bitte zuerst einloggen, um ein Lernset zu erstellen.");
+        return;
+      }
+
+      document.getElementById("setTitleInput").value = "";
+      document.getElementById("setDescInput").value = "";
+      document.getElementById("setPublicInput").checked = true;
+      document.getElementById("modalBg").classList.add("open");
+      document.getElementById("setTitleInput").focus();
+    }
+
+    function closeModal(event) {
+      if (!event || event.target === document.getElementById("modalBg")) {
+        document.getElementById("modalBg").classList.remove("open");
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "Gerade erstellt";
+
+      try {
+        return new Date(value).toLocaleDateString("de-DE");
+      } catch {
+        return "Unbekannt";
+      }
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    });
+
+    updateAuthUi();
+
+    if (isLoggedIn()) {
+      loadMySets();
+    } else {
+      loadPublicSets();
+    }
+  </script>
+</body>
+
+</html>
