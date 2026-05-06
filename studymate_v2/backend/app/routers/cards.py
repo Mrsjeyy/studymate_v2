@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.schemas.cards import FlashcardCreate
+from app.schemas.cards import FlashcardCreate, FlashcardUpdate
 from app.db.supabase_client import get_supabase_admin
 from app.core.security import (
     get_current_user_id,
@@ -43,9 +43,29 @@ def create_card(
                 "setid": set_id,
                 "question": payload.question,
                 "answer": payload.answer,
-                "position": payload.position if hasattr(payload, "position") else 0,
+                "position": payload.position,
             }
         )
+        .execute()
+    )
+    return result.data
+
+
+@router.put("/cards/{card_id}")
+def update_card(
+    card_id: str,
+    payload: FlashcardUpdate,
+    user_id: str = Depends(get_current_user_id),
+):
+    require_card_owner(card_id, user_id)
+
+    update_data = payload.model_dump(exclude_none=True)
+
+    supabase = get_supabase_admin()
+    result = (
+        supabase.table("flashcards")
+        .update(update_data)
+        .eq("id", card_id)
         .execute()
     )
     return result.data
