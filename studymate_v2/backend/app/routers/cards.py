@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.schemas.sets import FlashcardCreate
+from app.schemas.cards import FlashcardCreate
 from app.db.supabase_client import get_supabase_admin
 from app.core.security import (
     get_current_user_id,
