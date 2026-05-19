@@ -176,15 +176,18 @@ function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
   const [pass, setPass] = useState("");
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const attempt = async (fn) => {
     setErr("");
+    setSuccess("");
     setLoading(true);
     try {
       await fn();
     } catch (e) {
-      setErr(e.message || "Ein Fehler ist aufgetreten.");
+      if (e.isInfo) setSuccess(e.message);
+      else setErr(e.message || "Ein Fehler ist aufgetreten.");
     } finally {
       setLoading(false);
     }
@@ -256,6 +259,11 @@ function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
             {err && (
               <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>
                 {err}
+              </div>
+            )}
+            {success && (
+              <div style={{ fontSize: 13, color: "#00d4aa", background: "rgba(0,212,170,.08)", border: "1px solid rgba(0,212,170,.25)", borderRadius: 8, padding: "8px 12px" }}>
+                {success}
               </div>
             )}
 
@@ -958,14 +966,22 @@ export default function StudyMate() {
   };
 
   const handleRegister = async (email, pass, name) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password: pass,
       options: { data: { displayname: name } },
     });
     if (error) throw error;
-    // Supabase sends a confirmation email by default; show feedback
-    throw Object.assign(new Error("Bestätigungs-E-Mail wurde versendet. Bitte E-Mail bestätigen und dann anmelden."), { isInfo: true });
+    if (data.session) {
+      // E-Mail-Bestätigung deaktiviert → direkt eingeloggt
+      await initUser(data.session.user);
+    } else {
+      // E-Mail-Bestätigung aktiv → Hinweis anzeigen
+      throw Object.assign(
+        new Error("Bestätigungs-E-Mail gesendet! Bitte Postfach (inkl. Spam) prüfen und dann anmelden."),
+        { isInfo: true }
+      );
+    }
   };
 
   const handleGuest = async () => {
