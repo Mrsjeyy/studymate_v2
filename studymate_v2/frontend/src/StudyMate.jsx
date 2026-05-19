@@ -39,7 +39,10 @@ function normalizeSet(raw) {
 const STREAK_STORAGE_KEY = "studymate-streaks";
 
 function toISODate(date = new Date()) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function readStreakStore() {
@@ -54,7 +57,9 @@ function readStreakStore() {
 
 function writeStreakStore(store) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(store));
+  try {
+    window.localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(store));
+  } catch {}
 }
 
 function getStreakState(userKey) {
@@ -64,7 +69,9 @@ function getStreakState(userKey) {
 
 function awardDailyStreak(userKey) {
   const today = toISODate();
-  const yesterday = toISODate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = toISODate(yesterdayDate);
   const store = readStreakStore();
   const current = store[userKey] || { count: 0, lastCompletedDate: null };
 
