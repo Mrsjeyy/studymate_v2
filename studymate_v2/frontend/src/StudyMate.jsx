@@ -135,7 +135,7 @@ const styles = `
   .sm-btn-danger { background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.25); }
   .sm-btn-danger:hover { background: rgba(239,68,68,.25); }
 
-  .sm-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 20px; cursor: pointer; transition: all .2s; }
+  .sm-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 20px; padding-top: 44px; cursor: pointer; transition: all .2s; position: relative; }
   .sm-card:hover { background: rgba(255,255,255,.06); border-color: rgba(0,212,170,.2); transform: translateY(-2px); }
 
   .sm-tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(0,212,170,.1); color: #00d4aa; border: 1px solid rgba(0,212,170,.2); }
