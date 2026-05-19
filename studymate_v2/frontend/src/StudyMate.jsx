@@ -1287,7 +1287,6 @@ export default function StudyMate() {
     const key = user?.id || "guest";
     setStreak(getStreakState(key).count);
   }, [user?.id]);
-
   useEffect(() => {
     try { localStorage.setItem('sm_theme', theme); } catch (e) {}
   }, [theme]);
