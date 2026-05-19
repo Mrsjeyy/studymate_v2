@@ -170,10 +170,11 @@ function NavBar({ user, onHome, onLogout, onGoToLogin }) {
   );
 }
 
-function AuthView({ onLogin, onRegister, onGuest }) {
+function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
   const [tab, setTab] = useState("login");
   const [username, setUsername] = useState("");
   const [pass, setPass] = useState("");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -199,7 +200,7 @@ function AuthView({ onLogin, onRegister, onGuest }) {
     if (username.length < 3) { setErr("Benutzername mindestens 3 Zeichen."); return; }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) { setErr("Benutzername darf nur Buchstaben, Zahlen und _ enthalten."); return; }
     if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
-    attempt(() => onRegister(username, pass));
+    attempt(() => onRegister(username, pass, recoveryEmail || null));
   };
 
   return (
@@ -234,11 +235,28 @@ function AuthView({ onLogin, onRegister, onGuest }) {
                 onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <label style={{ fontSize: 12, color: "#64748b" }}>Passwort</label>
+                {tab === "login" && (
+                  <button onClick={onForgotPassword} style={{ fontSize: 12, color: "#475569", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                    Passwort vergessen?
+                  </button>
+                )}
+              </div>
               <input className="sm-input" type="password" placeholder="••••••••" value={pass}
                 onChange={e => setPass(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
+            {tab === "register" && (
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, color: "#64748b" }}>Recovery-Email</label>
+                  <span style={{ fontSize: 11, color: "#475569" }}>optional – für Passwort-Reset</span>
+                </div>
+                <input className="sm-input" type="email" placeholder="deine@email.de" value={recoveryEmail}
+                  onChange={e => setRecoveryEmail(e.target.value)} />
+              </div>
+            )}
 
             {err && (
               <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>
@@ -273,20 +291,28 @@ function AuthView({ onLogin, onRegister, onGuest }) {
 }
 
 function ForgotPasswordView({ onBack }) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
   const handleSubmit = async () => {
-    if (!email) { setErr("Bitte E-Mail eingeben."); return; }
+    if (!username) { setErr("Bitte Benutzername eingeben."); return; }
     setLoading(true);
     setErr("");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
-    });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (!res.ok) throw new Error("Fehler beim Senden.");
+    } catch (e) {
+      setErr(e.message);
+      setLoading(false);
+      return;
+    }
     setLoading(false);
-    if (error) { setErr(error.message); return; }
     setSent(true);
   };
 
@@ -294,9 +320,9 @@ function ForgotPasswordView({ onBack }) {
     <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontSize: 52, marginBottom: 16 }}>📧</div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>E-Mail gesendet!</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>Link gesendet!</h2>
         <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
-          Prüfe dein Postfach und klicke den Link um dein Passwort zurückzusetzen.
+          Falls du eine Recovery-Email hinterlegt hast, prüfe dein Postfach (inkl. Spam).
         </p>
         <button className="sm-btn sm-btn-ghost" style={{ margin: "0 auto" }} onClick={onBack}>
           <ArrowLeft size={14} /> Zurück zum Login
@@ -314,14 +340,14 @@ function ForgotPasswordView({ onBack }) {
             <Shield size={26} color="#080c18" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Passwort zurücksetzen</h1>
-          <p style={{ color: "#64748b", fontSize: 14 }}>Wir senden dir einen Reset-Link per E-Mail</p>
+          <p style={{ color: "#64748b", fontSize: 14 }}>Reset-Link wird an deine Recovery-Email gesendet</p>
         </div>
         <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 20, padding: 28 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
-              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>E-Mail</label>
-              <input className="sm-input" type="email" placeholder="deine@email.de" value={email}
-                onChange={e => setEmail(e.target.value)}
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Benutzername</label>
+              <input className="sm-input sm-mono" placeholder="dein_username" value={username}
+                onChange={e => setUsername(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSubmit()} />
             </div>
             {err && <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>{err}</div>}
@@ -947,11 +973,11 @@ export default function StudyMate() {
     if (session) await initUser(session.user);
   };
 
-  const handleRegister = async (username, pass) => {
+  const handleRegister = async (username, pass, recoveryEmail) => {
     const { data, error } = await supabase.auth.signUp({
       email: toFakeEmail(username),
       password: pass,
-      options: { data: { username, displayname: username } },
+      options: { data: { username, displayname: username, recovery_email: recoveryEmail || null } },
     });
     if (error) {
       if (error.message.includes("already registered")) throw new Error("Benutzername bereits vergeben.");
@@ -1009,7 +1035,7 @@ export default function StudyMate() {
       <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
       <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
-      {view !== "auth" && (
+      {view !== "auth" && view !== "forgot" && view !== "reset" && (
         <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} />
       )}
 
@@ -1018,7 +1044,12 @@ export default function StudyMate() {
           onLogin={handleLogin}
           onRegister={handleRegister}
           onGuest={handleGuest}
+          onForgotPassword={() => setView("forgot")}
         />
+      )}
+
+      {view === "forgot" && (
+        <ForgotPasswordView onBack={() => setView("auth")} />
       )}
 
       {view === "reset" && (
