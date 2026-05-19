@@ -573,12 +573,12 @@ function ResetPasswordView({ onDone }) {
 }
 
 function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak }) {
-  const [tab, setTab] = useState(initialTab || "dashboard");
+  const [tab, setTab] = useState(initialTab || "discover");
   const [search, setSearch] = useState("");
   const searchRef = useRef(null);
 
   useEffect(() => {
-    setTab(initialTab || "dashboard");
+    setTab(initialTab || "discover");
   }, [initialTab]);
 
   useEffect(() => {
