@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import health, auth, sets, cards
+from app.routers import health, auth, sets, cards, quiz
 from app.core.config import settings
 
 app = FastAPI(
@@ -22,3 +22,4 @@ app.include_router(health.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(sets.router, prefix="/sets", tags=["sets"])
 app.include_router(cards.router, tags=["cards"])
+app.include_router(quiz.router, tags=["quiz"])
