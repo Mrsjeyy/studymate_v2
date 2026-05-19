@@ -35,6 +35,49 @@ function normalizeSet(raw) {
   };
 }
 
+const STREAK_STORAGE_KEY = "studymate-streaks";
+
+function toISODate(date = new Date()) {
+  return date.toISOString().slice(0, 10);
+}
+
+function readStreakStore() {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STREAK_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStreakStore(store) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(store));
+}
+
+function getStreakState(userKey) {
+  const store = readStreakStore();
+  return store[userKey] || { count: 0, lastCompletedDate: null };
+}
+
+function awardDailyStreak(userKey) {
+  const today = toISODate();
+  const yesterday = toISODate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const store = readStreakStore();
+  const current = store[userKey] || { count: 0, lastCompletedDate: null };
+
+  if (current.lastCompletedDate === today) {
+    return current;
+  }
+
+  const nextCount = current.lastCompletedDate === yesterday ? current.count + 1 : 1;
+  const nextState = { count: nextCount, lastCompletedDate: today };
+  store[userKey] = nextState;
+  writeStreakStore(store);
+  return nextState;
+}
+
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = `
@@ -428,7 +471,7 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading }) {
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, streak }) {
   const [tab, setTab] = useState("discover");
   const [search, setSearch] = useState("");
 
@@ -465,7 +508,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
           {[
             { n: mineSets.length, l: "Meine Sets", color: "#00d4aa" },
             { n: totalCards, l: "Karten gesamt", color: "#8b5cf6" },
-            { n: "7", l: "Streak-Tage 🔥", color: "#f59e0b" },
+            { n: streak, l: "Streak-Tage 🔥", color: "#f59e0b" },
           ].map((s, i) => (
             <div key={i} className="sm-stat">
               <div className="sm-stat-num" style={{ color: s.color }}>{s.n}</div>
@@ -646,7 +689,7 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard }) {
   );
 }
 
-function LearnView({ set, onBack }) {
+function LearnView({ set, onBack, onCompleteSet }) {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState([]);
@@ -658,7 +701,10 @@ function LearnView({ set, onBack }) {
     setFlipped(false);
     if (knew) setDone([...done, idx]);
     setTimeout(() => {
-      if (idx + 1 >= set.cards.length) setIdx(-1);
+      if (idx + 1 >= set.cards.length) {
+        onCompleteSet?.(set.id);
+        setIdx(-1);
+      }
       else setIdx(idx + 1);
     }, 100);
   };
@@ -990,6 +1036,7 @@ export default function StudyMate() {
   const [setsLoading, setSetsLoading] = useState(false);
   const [currentSet, setCurrentSet] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
+  const [streak, setStreak] = useState(0);
   const recoveryMode = useRef(false);
 
   useEffect(() => {
@@ -998,6 +1045,11 @@ export default function StudyMate() {
     document.head.appendChild(el);
     return () => { document.head.removeChild(el); };
   }, []);
+
+  useEffect(() => {
+    const key = user?.id || "guest";
+    setStreak(getStreakState(key).count);
+  }, [user?.id]);
 
   useEffect(() => {
     // onAuthStateChange muss VOR getSession registriert sein
@@ -1107,6 +1159,12 @@ export default function StudyMate() {
     await supabase.auth.signOut();
   };
 
+  const handleCompleteSet = () => {
+    const key = user?.id || "guest";
+    const updated = awardDailyStreak(key);
+    setStreak(updated.count);
+  };
+
   const handleAddCard = async (setId, q, a) => {
     const targetSet = sets.find(s => s.id === setId);
     const position = (targetSet?.cards.length ?? 0) + 1;
@@ -1210,6 +1268,7 @@ export default function StudyMate() {
           onOpenSet={(s) => { setCurrentSet(s); setView("detail"); }}
           onCreateSet={handleCreateSet}
           createLoading={createLoading}
+          streak={streak}
         />
       )}
 
@@ -1225,7 +1284,7 @@ export default function StudyMate() {
       )}
 
       {view === "learn" && currentSet && (
-        <LearnView set={currentSet} onBack={() => setView("detail")} />
+        <LearnView set={currentSet} onBack={() => setView("detail")} onCompleteSet={handleCompleteSet} />
       )}
 
       {view === "quiz" && currentSet && (
