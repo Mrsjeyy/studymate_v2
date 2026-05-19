@@ -40,8 +40,10 @@ function normalizeSet(raw) {
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+  html, body, #root { min-height: 100%; height: 100%; margin: 0; background: #080c18; }
+  body { min-height: 100vh; }
   .sm * { box-sizing: border-box; }
-  .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 600px; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
+  .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 100vh; height: 100%; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
 
   .sm-grid {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
@@ -121,6 +123,15 @@ const styles = `
   .sm-stat { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 16px; text-align: center; }
   .sm-stat-num { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
   .sm-stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+  .sm-modal-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index: 250; padding: 20px; }
+  .sm-modal { width: min(100%, 480px); background: rgba(15,23,42,.98); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 26px; box-shadow: 0 32px 80px rgba(0,0,0,.35); }
+  .sm-modal h3 { margin: 0 0 8px; font-size: 18px; }
+  .sm-modal .sm-toggle-group { display: flex; gap: 10px; margin-bottom: 14px; }
+  .sm-modal .sm-toggle-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: #cbd5e1; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .18s; }
+  .sm-modal .sm-toggle-btn.active { background: rgba(0,212,170,.12); border-color: rgba(0,212,170,.45); color: #00d4aa; }
+  .sm-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .sm-modal-error { color: #f87171; font-size: 13px; margin-top: -6px; margin-bottom: 10px; }
 
   @keyframes spin { to { transform: rotate(360deg); } }
 `;
@@ -551,7 +562,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
   );
 }
 
-function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard }) {
+function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
@@ -602,13 +613,22 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard }) {
         </button>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
         <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
         {user && user.id === set.owneruserid && (
-          <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => setShowAdd(!showAdd)}>
-            <Plus size={13} />
-            Karte hinzufügen
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onToggleVisibility(set.id, set.isPublic)}>
+              {set.isPublic ? <Lock size={13} /> : <Globe size={13} />}
+              {set.isPublic ? "Privat machen" : "Öffentlich machen"}
+            </button>
+            <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onDeleteSet(set.id)}>
+              <X size={13} /> Set löschen
+            </button>
+            <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => setShowAdd(!showAdd)}>
+              <Plus size={13} />
+              Karte hinzufügen
+            </button>
+          </div>
         )}
       </div>
 
@@ -990,6 +1010,11 @@ export default function StudyMate() {
   const [setsLoading, setSetsLoading] = useState(false);
   const [currentSet, setCurrentSet] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
+  const [showCreateSetDialog, setShowCreateSetDialog] = useState(false);
+  const [createTitle, setCreateTitle] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+  const [createIsPublic, setCreateIsPublic] = useState(false);
+  const [createError, setCreateError] = useState("");
   const recoveryMode = useRef(false);
 
   useEffect(() => {
@@ -1124,26 +1149,39 @@ export default function StudyMate() {
     return newCard;
   };
 
-  const handleCreateSet = async () => {
+  const handleCreateSet = () => {
     if (!user) {
       alert("Bitte melde dich an, um ein neues Set zu erstellen.");
       setView("auth");
       return;
     }
 
-    const title = window.prompt("Titel für dein neues Set eingeben:");
-    if (!title?.trim()) return;
+    setCreateTitle("");
+    setCreateDescription("");
+    setCreateIsPublic(false);
+    setCreateError("");
+    setShowCreateSetDialog(true);
+  };
+
+  const submitCreateSet = async () => {
+    const title = createTitle.trim();
+    const description = createDescription.trim();
+    if (!title) {
+      setCreateError("Bitte gib einen Titel für dein Set ein.");
+      return;
+    }
 
     setCreateLoading(true);
+    setCreateError("");
 
     try {
       const { data, error } = await supabase
         .from("flashcard_sets")
         .insert({
           owneruserid: user.id,
-          title: title.trim(),
-          description: "",
-          ispublic: false,
+          title,
+          description,
+          ispublic: createIsPublic,
         })
         .select("*, flashcards(*)")
         .single();
@@ -1153,12 +1191,51 @@ export default function StudyMate() {
       const newSet = normalizeSet({ ...data, profiles: { username: user.name, displayname: user.name } });
       setSets(prev => [newSet, ...prev]);
       setCurrentSet(newSet);
+      setShowCreateSetDialog(false);
       setView("detail");
     } catch (e) {
-      const message = e?.message || String(e) || "Fehler beim Erstellen des Sets.";
-      alert(message);
+      setCreateError(e?.message || String(e) || "Fehler beim Erstellen des Sets.");
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  const handleToggleSetVisibility = async (setId, currentVisibility) => {
+    if (!window.confirm(`Möchtest du dieses Set wirklich ${currentVisibility ? "privat" : "öffentlich"} machen?`)) return;
+    const { data, error } = await supabase
+      .from("flashcard_sets")
+      .update({ ispublic: !currentVisibility })
+      .eq("id", setId)
+      .select()
+      .single();
+
+    if (error) {
+      alert(error.message || "Fehler beim Aktualisieren der Sichtbarkeit.");
+      return;
+    }
+
+    const updatedSet = normalizeSet({ ...data, profiles: { username: user?.name || "Unbekannt", displayname: user?.name || "Unbekannt" } });
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, isPublic: updatedSet.isPublic } : s));
+    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, isPublic: updatedSet.isPublic } : prev);
+  };
+
+  const handleDeleteSet = async (setId) => {
+    if (!window.confirm("Möchtest du dieses Set wirklich endgültig löschen?")) return;
+
+    const { error } = await supabase
+      .from("flashcard_sets")
+      .delete()
+      .eq("id", setId);
+
+    if (error) {
+      alert(error.message || "Fehler beim Löschen des Sets.");
+      return;
+    }
+
+    setSets(prev => prev.filter(s => s.id !== setId));
+    if (currentSet?.id === setId) {
+      setCurrentSet(null);
+      setView("dashboard");
     }
   };
 
@@ -1183,6 +1260,44 @@ export default function StudyMate() {
 
       {view !== "auth" && view !== "forgot" && view !== "reset" && (
         <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} />
+      )}
+
+      {showCreateSetDialog && (
+        <div className="sm-modal-overlay" onClick={() => setShowCreateSetDialog(false)}>
+          <div className="sm-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div>
+                <h3>Neues Set erstellen</h3>
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>Wähle Titel, Beschreibung und Sichtbarkeit.</p>
+              </div>
+              <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 10px" }} onClick={() => setShowCreateSetDialog(false)}>
+                <X size={14} /> Abbrechen
+              </button>
+            </div>
+            <label>Titel</label>
+            <input className="sm-input" placeholder="Titel eingeben" value={createTitle} onChange={e => setCreateTitle(e.target.value)} />
+            <label>Beschreibung</label>
+            <textarea className="sm-input" rows={4} placeholder="Beschreibung (optional)" value={createDescription} onChange={e => setCreateDescription(e.target.value)} style={{ resize: "vertical" }} />
+            <label>Sichtbarkeit</label>
+            <div className="sm-toggle-group">
+              <button type="button" className={`sm-toggle-btn ${!createIsPublic ? "active" : ""}`} onClick={() => setCreateIsPublic(false)}>
+                Privat
+              </button>
+              <button type="button" className={`sm-toggle-btn ${createIsPublic ? "active" : ""}`} onClick={() => setCreateIsPublic(true)}>
+                Öffentlich
+              </button>
+            </div>
+            {createError && <div className="sm-modal-error">{createError}</div>}
+            <div className="sm-modal-actions">
+              <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={submitCreateSet} disabled={createLoading}>
+                {createLoading ? <><Spinner size={14} color="#080c18" /> Erstellen...</> : "Set erstellen"}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => setShowCreateSetDialog(false)}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {view === "auth" && (
@@ -1221,6 +1336,8 @@ export default function StudyMate() {
           onLearn={() => setView("learn")}
           onQuiz={() => setView("quiz")}
           onAddCard={handleAddCard}
+          onToggleVisibility={handleToggleSetVisibility}
+          onDeleteSet={handleDeleteSet}
         />
       )}
 
