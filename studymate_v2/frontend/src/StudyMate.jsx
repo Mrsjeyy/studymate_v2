@@ -702,7 +702,7 @@ function LearnView({ set, onBack, onCompleteSet }) {
     if (knew) setDone([...done, idx]);
     setTimeout(() => {
       if (idx + 1 >= set.cards.length) {
-        onCompleteSet?.(set.id);
+        onCompleteSet?.();
         setIdx(-1);
       }
       else setIdx(idx + 1);
