@@ -4,56 +4,38 @@ import {
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
   Sparkles, Target, FlipHorizontal, Lock,
 } from "lucide-react";
+import { supabase } from "./supabase";
 
-const SETS = [
-  {
-    id: 1, title: "OSI-Modell", description: "Die 7 Schichten des Referenzmodells und ihre Protokolle",
-    isPublic: true, author: "admin", authorInitial: "A", accent: "#00d4aa",
-    tags: ["Netzwerk", "Grundlagen"],
-    cards: [
-      { id: 1, q: "Was ist die Physical Layer?", a: "Schicht 1 – überträgt Bits über physische Medien (Kabel, Funk). Geräte: Hub, Repeater, NIC." },
-      { id: 2, q: "Was ist die Data Link Layer?", a: "Schicht 2 – MAC-Adressierung, Fehlererkennung, Framing. Geräte: Switch, Bridge." },
-      { id: 3, q: "Was ist die Network Layer?", a: "Schicht 3 – IP-Adressierung und Routing. Geräte: Router. Protokolle: IP, ICMP, ARP." },
-      { id: 4, q: "Was ist die Transport Layer?", a: "Schicht 4 – Ende-zu-Ende Kommunikation. TCP (zuverlässig, verbindungsorientiert) vs. UDP (schnell, verbindungslos)." },
-      { id: 5, q: "Was ist die Session Layer?", a: "Schicht 5 – Verwaltung von Verbindungen, Sitzungsaufbau, -erhaltung und -abbau." },
-      { id: 6, q: "Was ist die Presentation Layer?", a: "Schicht 6 – Datendarstellung, Kodierung, Verschlüsselung (SSL/TLS) und Kompression." },
-      { id: 7, q: "Was ist die Application Layer?", a: "Schicht 7 – Anwendungsprotokolle: HTTP, HTTPS, FTP, SMTP, DNS, SSH." },
-    ],
-  },
-  {
-    id: 2, title: "Kryptographie", description: "Symmetrische & asymmetrische Verfahren, Hashing, PKI",
-    isPublic: true, author: "admin", authorInitial: "A", accent: "#8b5cf6",
-    tags: ["Crypto", "Security"],
-    cards: [
-      { id: 1, q: "Was ist AES?", a: "Advanced Encryption Standard – symmetrisches Blockchiffre. 128 Bit Blockgröße, Schlüssellängen: 128/192/256 Bit. Standard seit 2001." },
-      { id: 2, q: "Was ist RSA?", a: "Asymmetrisches Verfahren basierend auf der Schwierigkeit, große Zahlen zu faktorisieren. Typisch: 2048–4096 Bit Schlüssel." },
-      { id: 3, q: "Was ist SHA-256?", a: "Kryptographische Hashfunktion der SHA-2-Familie. Gibt einen 256-Bit Fingerabdruck aus. Kollisionsresistent – Standard für Zertifikate." },
-      { id: 4, q: "Was ist eine digitale Signatur?", a: "Mit dem privaten Schlüssel erstellt, mit dem öffentlichen verifiziert. Gewährleistet Integrität, Authentizität und Nicht-Abstreitbarkeit." },
-      { id: 5, q: "Was ist PKI?", a: "Public Key Infrastructure – Rahmenwerk zur Verwaltung digitaler Zertifikate. Bestandteile: CA, RA, CRL, Zertifikat (X.509)." },
-    ],
-  },
-  {
-    id: 3, title: "OWASP Top 10", description: "Kritischste Sicherheitsrisiken für Webanwendungen 2021",
-    isPublic: true, author: "sec_teach", authorInitial: "S", accent: "#ef4444",
-    tags: ["Web Security", "Angriffe"],
-    cards: [
-      { id: 1, q: "A01: Broken Access Control", a: "Nutzer greifen auf nicht autorisierte Ressourcen zu. Häufigste Schwachstelle. Gegenmaßnahme: Least-Privilege-Prinzip, serverseitige Prüfung." },
-      { id: 2, q: "A02: Cryptographic Failures", a: "Schwache oder fehlende Verschlüsselung sensibler Daten. Passwörter im Klartext, veraltete Cipher (MD5, SHA-1)." },
-      { id: 3, q: "A03: Injection", a: "SQL-, NoSQL-, LDAP-, OS-Injection durch unvalidierte Eingaben. Gegenmaßnahme: Prepared Statements, Input Validation." },
-      { id: 4, q: "A07: Identification Failures", a: "Schwache Authentifizierung, fehlendes Session-Management, kein MFA. Ermöglicht Credential Stuffing und Brute Force." },
-    ],
-  },
-  {
-    id: 4, title: "Linux Hardening", description: "Sicherheitsmaßnahmen und Best Practices für Linux-Server",
-    isPublic: false, author: "demo@studymate.dev", authorInitial: "D", accent: "#f59e0b",
-    tags: ["Linux", "Server"],
-    cards: [
-      { id: 1, q: "Was bedeutet chmod 644?", a: "Besitzer: lesen+schreiben (6), Gruppe: lesen (4), Andere: lesen (4). Standard für Konfigurationsdateien." },
-      { id: 2, q: "Was ist fail2ban?", a: "Tool, das IP-Adressen nach wiederholten fehlgeschlagenen Login-Versuchen automatisch sperrt. Schützt vor Brute-Force-Angriffen." },
-      { id: 3, q: "Was ist UFW?", a: "Uncomplicated Firewall – vereinfachtes Frontend für iptables. Einfache Regel-Verwaltung: ufw allow 22/tcp." },
-    ],
-  },
-];
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const ACCENTS = ["#00d4aa", "#8b5cf6", "#ef4444", "#f59e0b", "#3b82f6", "#ec4899"];
+
+function accentFor(id) {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+  return ACCENTS[Math.abs(h) % ACCENTS.length];
+}
+
+function normalizeSet(raw) {
+  const profile = raw.profiles;
+  const author = profile?.displayname || profile?.username || "Unbekannt";
+  return {
+    id: raw.id,
+    title: raw.title,
+    description: raw.description || "",
+    isPublic: raw.ispublic,
+    author,
+    authorInitial: (author[0] || "?").toUpperCase(),
+    accent: accentFor(raw.id),
+    tags: [],
+    owneruserid: raw.owneruserid,
+    cards: (raw.flashcards || [])
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      .map(c => ({ id: c.id, q: c.question, a: c.answer })),
+  };
+}
+
+// ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -143,6 +125,18 @@ const styles = `
   @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
+// ── Components ────────────────────────────────────────────────────────────────
+
+function Spinner({ size = 14, color = "#00d4aa" }) {
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: "50%",
+      border: `2px solid ${color}`, borderTopColor: "transparent",
+      display: "inline-block", animation: "spin .8s linear infinite",
+    }} />
+  );
+}
+
 function NavBar({ user, onHome, onLogout }) {
   return (
     <nav className="sm-nav">
@@ -170,22 +164,35 @@ function NavBar({ user, onHome, onLogout }) {
   );
 }
 
-function AuthView({ onLogin, onGuest }) {
+function AuthView({ onLogin, onRegister, onGuest }) {
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const attempt = async (fn) => {
+    setErr("");
+    setLoading(true);
+    try {
+      await fn();
+    } catch (e) {
+      setErr(e.message || "Ein Fehler ist aufgetreten.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = () => {
     if (!email || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
-    onLogin({ email, name: email.split("@")[0], initial: email[0].toUpperCase() });
+    attempt(() => onLogin(email, pass));
   };
 
   const handleRegister = () => {
     if (!email || !pass || !name) { setErr("Bitte alle Felder ausfüllen."); return; }
     if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
-    onLogin({ email, name, initial: name[0].toUpperCase() });
+    attempt(() => onRegister(email, pass, name));
   };
 
   return (
@@ -224,17 +231,33 @@ function AuthView({ onLogin, onGuest }) {
             )}
             <div>
               <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>E-Mail</label>
-              <input className="sm-input" type="email" placeholder="deine@email.de" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
+              <input className="sm-input" type="email" placeholder="deine@email.de" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
             <div>
               <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort</label>
-              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
 
-            {err && <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>{err}</div>}
+            {err && (
+              <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>
+                {err}
+              </div>
+            )}
 
-            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={tab === "login" ? handleLogin : handleRegister}>
-              {tab === "login" ? <><LogIn size={15} /> Anmelden</> : <><Check size={15} /> Konto erstellen</>}
+            <button
+              className="sm-btn sm-btn-primary"
+              style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
+              onClick={tab === "login" ? handleLogin : handleRegister}
+              disabled={loading}
+            >
+              {loading
+                ? <><Spinner size={14} color="#080c18" /> Bitte warten...</>
+                : tab === "login"
+                  ? <><LogIn size={15} /> Anmelden</>
+                  : <><Check size={15} /> Konto erstellen</>
+              }
             </button>
           </div>
 
@@ -244,32 +267,28 @@ function AuthView({ onLogin, onGuest }) {
             <div className="sm-divider" style={{ flex: 1 }} />
           </div>
 
-          <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center" }} onClick={onGuest}>
+          <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center" }} onClick={onGuest} disabled={loading}>
             <Globe size={14} />
             Als Gast fortfahren
           </button>
-
-          {tab === "login" && (
-            <p style={{ fontSize: 12, color: "#475569", textAlign: "center", marginTop: 12 }}>
-              Demo: <span className="sm-mono" style={{ color: "#00d4aa" }}>demo@studymate.dev</span> / <span className="sm-mono" style={{ color: "#00d4aa" }}>demo123</span>
-            </p>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-function DashboardView({ user, onOpenSet, onCreateSet }) {
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet }) {
   const [tab, setTab] = useState("discover");
   const [search, setSearch] = useState("");
 
-  const filtered = SETS.filter(s => {
-    if (!user && !s.isPublic) return false;
-    if (tab === "mine" && s.author !== (user?.email || "") && s.author !== "demo@studymate.dev") return false;
-    if (search && !s.title.toLowerCase().includes(search.toLowerCase()) && !s.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))) return false;
+  const filtered = sets.filter(s => {
+    if (tab === "mine" && s.owneruserid !== user?.id) return false;
+    if (search && !s.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const mineSets = sets.filter(s => s.owneruserid === user?.id);
+  const totalCards = sets.reduce((acc, s) => acc + s.cards.length, 0);
 
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
@@ -293,12 +312,12 @@ function DashboardView({ user, onOpenSet, onCreateSet }) {
       {user && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
           {[
-            { n: SETS.filter(s => s.author === user.email || s.author === "demo@studymate.dev").length || 2, l: "Meine Sets" },
-            { n: SETS.reduce((a, b) => a + b.cards.length, 0), l: "Karten gesamt" },
-            { n: "7", l: "Streak-Tage 🔥" },
+            { n: mineSets.length, l: "Meine Sets", color: "#00d4aa" },
+            { n: totalCards, l: "Karten gesamt", color: "#8b5cf6" },
+            { n: "7", l: "Streak-Tage 🔥", color: "#f59e0b" },
           ].map((s, i) => (
             <div key={i} className="sm-stat">
-              <div className="sm-stat-num" style={{ color: i === 0 ? "#00d4aa" : i === 1 ? "#8b5cf6" : "#f59e0b" }}>{s.n}</div>
+              <div className="sm-stat-num" style={{ color: s.color }}>{s.n}</div>
               <div className="sm-stat-label">{s.l}</div>
             </div>
           ))}
@@ -310,16 +329,23 @@ function DashboardView({ user, onOpenSet, onCreateSet }) {
           <Search size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#475569" }} />
           <input className="sm-input" style={{ paddingLeft: 40 }} placeholder="Sets suchen..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3 }}>
-          {["discover", "mine"].map(t => (
-            <button key={t} className={`sm-tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={{ padding: "6px 14px", fontSize: 13 }}>
-              {t === "discover" ? "Entdecken" : "Meine Sets"}
-            </button>
-          ))}
-        </div>
+        {user && (
+          <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3 }}>
+            {["discover", "mine"].map(t => (
+              <button key={t} className={`sm-tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={{ padding: "6px 14px", fontSize: 13 }}>
+                {t === "discover" ? "Entdecken" : "Meine Sets"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {filtered.length === 0 ? (
+      {setsLoading ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+          <Spinner size={28} />
+          <p style={{ fontSize: 14, marginTop: 16 }}>Sets werden geladen...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
           <BookOpen size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
           <p style={{ fontSize: 15 }}>Keine Sets gefunden</p>
@@ -341,9 +367,11 @@ function DashboardView({ user, onOpenSet, onCreateSet }) {
               </div>
               <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px" }}>{set.title}</h3>
               <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 14px", lineHeight: 1.5 }}>{set.description}</p>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                {set.tags.map(t => <span key={t} className="sm-tag">{t}</span>)}
-              </div>
+              {set.tags.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+                  {set.tags.map(t => <span key={t} className="sm-tag">{t}</span>)}
+                </div>
+              )}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#475569" }}>
                   <div style={{ width: 22, height: 22, borderRadius: "50%", background: `${set.accent}22`, border: `1px solid ${set.accent}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: set.accent }}>
@@ -372,16 +400,26 @@ function DashboardView({ user, onOpenSet, onCreateSet }) {
   );
 }
 
-function DetailView({ set, user, onBack, onLearn, onQuiz }) {
+function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
   const [cards, setCards] = useState(set.cards);
+  const [saving, setSaving] = useState(false);
+  const [addErr, setAddErr] = useState("");
 
-  const addCard = () => {
-    if (newQ && newA) {
-      setCards([...cards, { id: cards.length + 1, q: newQ, a: newA }]);
+  const addCard = async () => {
+    if (!newQ || !newA) return;
+    setSaving(true);
+    setAddErr("");
+    try {
+      const newCard = await onAddCard(set.id, newQ, newA);
+      setCards(prev => [...prev, newCard]);
       setNewQ(""); setNewA(""); setShowAdd(false);
+    } catch (e) {
+      setAddErr(e.message || "Fehler beim Speichern.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -415,7 +453,7 @@ function DetailView({ set, user, onBack, onLearn, onQuiz }) {
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
-        {user && (
+        {user && user.id === set.owneruserid && (
           <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => setShowAdd(!showAdd)}>
             <Plus size={13} />
             Karte hinzufügen
@@ -429,9 +467,14 @@ function DetailView({ set, user, onBack, onLearn, onQuiz }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <input className="sm-input" placeholder="Frage..." value={newQ} onChange={e => setNewQ(e.target.value)} />
             <textarea className="sm-input" placeholder="Antwort..." value={newA} onChange={e => setNewA(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+            {addErr && <div style={{ fontSize: 13, color: "#f87171" }}>{addErr}</div>}
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={addCard}><Check size={13} /> Speichern</button>
-              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowAdd(false)}><X size={13} /> Abbrechen</button>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={addCard} disabled={saving}>
+                {saving ? <><Spinner size={12} color="#080c18" /> Speichern...</> : <><Check size={13} /> Speichern</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowAdd(false)}>
+                <X size={13} /> Abbrechen
+              </button>
             </div>
           </div>
         </div>
@@ -482,12 +525,10 @@ function LearnView({ set, onBack }) {
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setIdx(0); setFlipped(false); setDone([]); }}>
-              <RotateCcw size={14} />
-              Nochmal
+              <RotateCcw size={14} /> Nochmal
             </button>
             <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onBack}>
-              <ArrowLeft size={14} />
-              Zurück
+              <ArrowLeft size={14} /> Zurück
             </button>
           </div>
         </div>
@@ -565,7 +606,7 @@ function QuizView({ set, onBack }) {
   const [score, setScore] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const shuffled = set.cards.slice(0, 4);
+  const shuffled = set.cards.slice(0, Math.min(4, set.cards.length));
   const q = shuffled[qIdx];
 
   const getAnswers = (card) => {
@@ -611,7 +652,7 @@ function QuizView({ set, onBack }) {
           <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>Lass KI neue Quizfragen auf Basis deiner Karten erstellen – mit Erklärungen und variablen Schwierigkeitsstufen.</p>
           <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={simulateAI}>
             {aiLoading
-              ? <><span style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid #a78bfa", borderTopColor: "transparent", display: "inline-block", animation: "spin .8s linear infinite" }} /> Generiere...</>
+              ? <><Spinner size={12} color="#a78bfa" /> Generiere...</>
               : <><Sparkles size={13} /> KI-Quiz erstellen</>}
           </button>
         </div>
@@ -682,9 +723,13 @@ function QuizView({ set, onBack }) {
   );
 }
 
+// ── Root ──────────────────────────────────────────────────────────────────────
+
 export default function StudyMate() {
-  const [view, setView] = useState("auth");
+  const [view, setView] = useState("loading");
   const [user, setUser] = useState(null);
+  const [sets, setSets] = useState([]);
+  const [setsLoading, setSetsLoading] = useState(false);
   const [currentSet, setCurrentSet] = useState(null);
 
   useEffect(() => {
@@ -694,7 +739,121 @@ export default function StudyMate() {
     return () => { document.head.removeChild(el); };
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        initUser(session.user);
+      } else {
+        setView("auth");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setUser(null);
+        setSets([]);
+        setView("auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const initUser = async (authUser) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, displayname")
+      .eq("id", authUser.id)
+      .single();
+
+    const name = profile?.displayname || profile?.username || authUser.email.split("@")[0];
+    setUser({ id: authUser.id, email: authUser.email, name, initial: name[0].toUpperCase() });
+    setView("dashboard");
+    await fetchSets(authUser.id);
+  };
+
+  const fetchSets = async (userId = null) => {
+    setSetsLoading(true);
+    let query = supabase
+      .from("flashcard_sets")
+      .select("*, flashcards(*)")
+      .order("createdat", { ascending: false });
+
+    if (userId) {
+      query = query.or(`ispublic.eq.true,owneruserid.eq.${userId}`);
+    } else {
+      query = query.eq("ispublic", true);
+    }
+
+    const { data: rows, error } = await query;
+    if (error || !rows) { setSetsLoading(false); return; }
+
+    const ownerIds = [...new Set(rows.map(s => s.owneruserid).filter(Boolean))];
+    const { data: profiles } = ownerIds.length
+      ? await supabase.from("profiles").select("id, username, displayname").in("id", ownerIds)
+      : { data: [] };
+
+    const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+    setSets(rows.map(r => normalizeSet({ ...r, profiles: profileMap[r.owneruserid] || null })));
+    setSetsLoading(false);
+  };
+
+  const handleLogin = async (email, pass) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) await initUser(session.user);
+  };
+
+  const handleRegister = async (email, pass, name) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { displayname: name } },
+    });
+    if (error) throw error;
+    // Supabase sends a confirmation email by default; show feedback
+    throw Object.assign(new Error("Bestätigungs-E-Mail wurde versendet. Bitte E-Mail bestätigen und dann anmelden."), { isInfo: true });
+  };
+
+  const handleGuest = async () => {
+    setView("dashboard");
+    await fetchSets(null);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleAddCard = async (setId, q, a) => {
+    const targetSet = sets.find(s => s.id === setId);
+    const position = (targetSet?.cards.length ?? 0) + 1;
+
+    const { data, error } = await supabase
+      .from("flashcards")
+      .insert({ setid: setId, question: q, answer: a, position })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    const newCard = { id: data.id, q: data.question, a: data.answer };
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, cards: [...s.cards, newCard] } : s));
+    return newCard;
+  };
+
   const goHome = () => setView("dashboard");
+
+  if (view === "loading") {
+    return (
+      <div className="sm" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 600 }}>
+        <div style={{ color: "#64748b", textAlign: "center" }}>
+          <Spinner size={32} />
+          <p style={{ marginTop: 16, fontSize: 14 }}>Wird geladen...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="sm">
@@ -703,21 +862,24 @@ export default function StudyMate() {
       <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
       {view !== "auth" && (
-        <NavBar user={user} onHome={goHome} onLogout={() => { setUser(null); setView("auth"); }} />
+        <NavBar user={user} onHome={goHome} onLogout={handleLogout} />
       )}
 
       {view === "auth" && (
         <AuthView
-          onLogin={(u) => { setUser(u); setView("dashboard"); }}
-          onGuest={() => setView("dashboard")}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+          onGuest={handleGuest}
         />
       )}
 
       {view === "dashboard" && (
         <DashboardView
           user={user}
+          sets={sets}
+          setsLoading={setsLoading}
           onOpenSet={(s) => { setCurrentSet(s); setView("detail"); }}
-          onCreateSet={() => alert("Neues Lernset – Backend-Anbindung hier einsetzen (POST /api/sets)")}
+          onCreateSet={() => alert("Set-Erstellung kommt bald!")}
         />
       )}
 
@@ -728,6 +890,7 @@ export default function StudyMate() {
           onBack={() => setView("dashboard")}
           onLearn={() => setView("learn")}
           onQuiz={() => setView("quiz")}
+          onAddCard={handleAddCard}
         />
       )}
 
