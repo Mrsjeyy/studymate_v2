@@ -92,10 +92,10 @@ const styles = `
   .sm-progress-fill { height: 100%; background: linear-gradient(90deg, #00d4aa, #8b5cf6); border-radius: 2px; transition: width .4s ease; }
 
   .sm-flip-scene { perspective: 1200px; width: 100%; }
-  .sm-flip-card { position: relative; width: 100%; transition: transform .55s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; }
+  .sm-flip-card { position: relative; width: 100%; transition: transform .55s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; will-change: transform; }
   .sm-flip-card.flipped { transform: rotateY(180deg); }
-  .sm-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-  .sm-flip-back { position: absolute; inset: 0; transform: rotateY(180deg); }
+  .sm-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0); }
+  .sm-flip-back { position: absolute; inset: 0; transform: rotateY(180deg) translateZ(1px); }
 
   .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
   .sm-badge-public { background: rgba(0,212,170,.12); color: #00d4aa; }
