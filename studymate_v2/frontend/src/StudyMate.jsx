@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
-  Sparkles, Target, FlipHorizontal, Lock, Menu,
+  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon,
 } from "lucide-react";
 import { Star } from "lucide-react";
 import { supabase } from "./supabase";
@@ -163,6 +163,25 @@ const styles = `
   .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.32); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.04); color: #94a3b8; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
   .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; }
   .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.12); }
+
+  /* Light theme overrides */
+  .sm.light { color: #0f172a; background: #f8fafc; }
+  .sm.light .sm-grid { background-image: linear-gradient(rgba(0,0,0,.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.02) 1px, transparent 1px); }
+  .sm.light .sm-nav { background: rgba(255,255,255,.92); border-bottom: 1px solid rgba(15,23,42,.06); }
+  .sm.light .sm-logo { color: #0f172a; }
+  .sm.light .sm-mono { color: #475569; }
+  .sm.light .sm-input { background: #ffffff; color: #0f172a; border: 1px solid rgba(15,23,42,.06); }
+  .sm.light .sm-input::placeholder { color: #94a3b8; }
+  .sm.light .sm-btn-ghost { background: rgba(15,23,42,.03); color: #0f172a; border: 1px solid rgba(15,23,42,.04); }
+  .sm.light .sm-btn-primary { background: linear-gradient(135deg, #00d4aa, #8b5cf6); color: #ffffff; }
+  .sm.light .sm-card { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
+  .sm.light .sm-badge { background: rgba(0,212,170,.08); color: #0f172a; }
+  .sm.light .sm-tab { color: #475569; }
+  .sm.light .sm-divider { background: rgba(15,23,42,.06); }
+  .sm.light .sm-sidebar { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
+  .sm.light .sm-modal { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
+  .sm.light .sm-fav-btn { background: rgba(0,0,0,.03); color: #475569; border: 1px solid rgba(0,0,0,.04); }
+
 `;
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -177,7 +196,7 @@ function Spinner({ size = 14, color = "#00d4aa" }) {
   );
 }
 
-function NavBar({ user, onHome, onLogout, onGoToLogin }) {
+function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onToggleTheme }) {
   return (
     <nav className="sm-nav">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -193,6 +212,9 @@ function NavBar({ user, onHome, onLogout, onGoToLogin }) {
         <span className="sm-mono" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button className="sm-btn sm-btn-ghost" onClick={onToggleTheme} title="Theme umschalten" style={{ padding: "7px 10px", fontSize: 13 }}>
+          {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+        </button>
         {user ? (
           <>
             <div className="sm-avatar">{user.initial}</div>
@@ -1203,6 +1225,9 @@ export default function StudyMate() {
   const [dashboardTab, setDashboardTab] = useState('discover');
   const [favorites, setFavorites] = useState([]);
   const recoveryMode = useRef(false);
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('sm_theme') || 'dark'; } catch (e) { return 'dark'; }
+  });
 
   useEffect(() => {
     const el = document.createElement("style");
@@ -1210,6 +1235,10 @@ export default function StudyMate() {
     document.head.appendChild(el);
     return () => { document.head.removeChild(el); };
   }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('sm_theme', theme); } catch (e) {}
+  }, [theme]);
 
   useEffect(() => {
     // onAuthStateChange muss VOR getSession registriert sein
@@ -1473,16 +1502,16 @@ export default function StudyMate() {
   }
 
   return (
-    <div className="sm">
+    <div className={'sm' + (theme === 'light' ? ' light' : '')}>
       <div className="sm-grid" />
       <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} onCloseMobile={() => setSidebarOpenMobile(false)} />
       <div className="sm-main">
         <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
         <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
-        {view !== "auth" && view !== "forgot" && view !== "reset" && (
-          <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} />
-        )}
+      {view !== "auth" && view !== "forgot" && view !== "reset" && (
+        <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} theme={theme} onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />
+      )}
 
       {showCreateSetDialog && (
         <div className="sm-modal-overlay" onClick={() => setShowCreateSetDialog(false)}>
