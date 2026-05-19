@@ -36,6 +36,58 @@ function normalizeSet(raw) {
   };
 }
 
+const STREAK_STORAGE_KEY = "studymate-streaks";
+
+function toISODate(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function readStreakStore() {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STREAK_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStreakStore(store) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(store));
+  } catch (err) {
+    console.warn("Could not persist streak data to localStorage.", err);
+  }
+}
+
+function getStreakState(userKey) {
+  const store = readStreakStore();
+  return store[userKey] || { count: 0, lastCompletedDate: null };
+}
+
+function awardDailyStreak(userKey) {
+  const today = toISODate();
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = toISODate(yesterdayDate);
+  const store = readStreakStore();
+  const current = store[userKey] || { count: 0, lastCompletedDate: null };
+
+  if (current.lastCompletedDate === today) {
+    return current;
+  }
+
+  const nextCount = current.lastCompletedDate === yesterday ? current.count + 1 : 1;
+  const nextState = { count: nextCount, lastCompletedDate: today };
+  store[userKey] = nextState;
+  writeStreakStore(store);
+  return nextState;
+}
+
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = `
@@ -542,13 +594,13 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, onRequireAuth }) {
-  const [tab, setTab] = useState(initialTab || "dashboard");
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak }) {
+  const [tab, setTab] = useState(initialTab || "discover");
   const [search, setSearch] = useState("");
   const searchRef = useRef(null);
 
   useEffect(() => {
-    setTab(initialTab || "dashboard");
+    setTab(initialTab || "discover");
   }, [initialTab]);
 
   useEffect(() => {
@@ -617,7 +669,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
           {[
             { n: mineSets.length, l: "Meine Sets", color: "#00d4aa" },
             { n: totalCards, l: "Karten gesamt", color: "#8b5cf6" },
-            { n: "7", l: "Streak-Tage 🔥", color: "#f59e0b" },
+            { n: streak, l: "Streak-Tage 🔥", color: "#f59e0b" },
           ].map((s, i) => (
             <div key={i} className="sm-stat">
               <div className="sm-stat-num" style={{ color: s.color }}>{s.n}</div>
@@ -839,7 +891,7 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
   );
 }
 
-function LearnView({ set, onBack }) {
+function LearnView({ set, onBack, onCompleteSet }) {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState([]);
@@ -851,7 +903,10 @@ function LearnView({ set, onBack }) {
     setFlipped(false);
     if (knew) setDone([...done, idx]);
     setTimeout(() => {
-      if (idx + 1 >= set.cards.length) setIdx(-1);
+      if (idx + 1 >= set.cards.length) {
+        onCompleteSet?.();
+        setIdx(-1);
+      }
       else setIdx(idx + 1);
     }, 100);
   };
@@ -1238,6 +1293,7 @@ export default function StudyMate() {
   const [setsLoading, setSetsLoading] = useState(false);
   const [currentSet, setCurrentSet] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
+  const [streak, setStreak] = useState(0);
   const [showCreateSetDialog, setShowCreateSetDialog] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -1259,6 +1315,10 @@ export default function StudyMate() {
     return () => { document.head.removeChild(el); };
   }, []);
 
+  useEffect(() => {
+    const key = user?.id || "guest";
+    setStreak(getStreakState(key).count);
+  }, [user?.id]);
   useEffect(() => {
     try { localStorage.setItem('sm_theme', theme); } catch (e) {}
   }, [theme]);
@@ -1406,6 +1466,12 @@ export default function StudyMate() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleCompleteSet = () => {
+    const key = user?.id || "guest";
+    const updated = awardDailyStreak(key);
+    setStreak(updated.count);
   };
 
   const handleAddCard = async (setId, q, a) => {
@@ -1609,6 +1675,7 @@ export default function StudyMate() {
           initialTab={dashboardTab}
           onTabChange={setDashboardTab}
           createLoading={createLoading}
+          streak={streak}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
           onRequireAuth={() => setView('auth')}
@@ -1629,7 +1696,7 @@ export default function StudyMate() {
       )}
 
       {view === "learn" && currentSet && (
-        <LearnView set={currentSet} onBack={() => setView("detail")} />
+        <LearnView set={currentSet} onBack={() => setView("detail")} onCompleteSet={handleCompleteSet} />
       )}
 
       {view === "quiz" && currentSet && (
