@@ -135,7 +135,7 @@ const styles = `
   .sm-btn-danger { background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.25); }
   .sm-btn-danger:hover { background: rgba(239,68,68,.25); }
 
-  .sm-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 20px; cursor: pointer; transition: all .2s; }
+  .sm-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 20px; padding-top: 44px; cursor: pointer; transition: all .2s; position: relative; }
   .sm-card:hover { background: rgba(255,255,255,.06); border-color: rgba(0,212,170,.2); transform: translateY(-2px); }
 
   .sm-tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(0,212,170,.1); color: #00d4aa; border: 1px solid rgba(0,212,170,.2); }
@@ -816,8 +816,8 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
         <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}>
           <ArrowLeft size={15} />
         </button>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{set.title}</h2>
             <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`} style={{ fontSize: 11 }}>
               {set.isPublic ? <><Globe size={10} /> Öffentlich</> : <><Lock size={10} /> Privat</>}
@@ -1287,10 +1287,10 @@ function SettingsView({ onBack }) {
 // ── Root ──────────────────────────────────────────────────────────────────────
 
 export default function StudyMate() {
-  const [view, setView] = useState("loading");
+  const [view, setView] = useState("dashboard");
   const [user, setUser] = useState(null);
   const [sets, setSets] = useState([]);
-  const [setsLoading, setSetsLoading] = useState(false);
+  const [setsLoading, setSetsLoading] = useState(true);
   const [currentSet, setCurrentSet] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [streak, setStreak] = useState(0);
@@ -1344,7 +1344,8 @@ export default function StudyMate() {
       if (session) {
         initUser(session.user);
       } else {
-        setView("auth");
+        setView("dashboard");
+        fetchSets(null);
       }
     });
 
