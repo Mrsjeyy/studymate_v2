@@ -170,38 +170,36 @@ function NavBar({ user, onHome, onLogout, onGoToLogin }) {
   );
 }
 
-function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
+function AuthView({ onLogin, onRegister, onGuest }) {
   const [tab, setTab] = useState("login");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [pass, setPass] = useState("");
-  const [name, setName] = useState("");
   const [err, setErr] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const attempt = async (fn) => {
     setErr("");
-    setSuccess("");
     setLoading(true);
     try {
       await fn();
     } catch (e) {
-      if (e.isInfo) setSuccess(e.message);
-      else setErr(e.message || "Ein Fehler ist aufgetreten.");
+      setErr(e.message || "Ein Fehler ist aufgetreten.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogin = () => {
-    if (!email || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
-    attempt(() => onLogin(email, pass));
+    if (!username || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
+    attempt(() => onLogin(username, pass));
   };
 
   const handleRegister = () => {
-    if (!email || !pass || !name) { setErr("Bitte alle Felder ausfüllen."); return; }
+    if (!username || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
+    if (username.length < 3) { setErr("Benutzername mindestens 3 Zeichen."); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) { setErr("Benutzername darf nur Buchstaben, Zahlen und _ enthalten."); return; }
     if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
-    attempt(() => onRegister(email, pass, name));
+    attempt(() => onRegister(username, pass));
   };
 
   return (
@@ -219,11 +217,8 @@ function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
         <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 20, padding: 28 }}>
           <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 4, marginBottom: 24, gap: 4 }}>
             {["login", "register"].map(t => (
-              <button
-                key={t}
-                onClick={() => { setTab(t); setErr(""); }}
-                style={{ flex: 1, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-              >
+              <button key={t} onClick={() => { setTab(t); setErr(""); setUsername(""); setPass(""); }}
+                style={{ flex: 1, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                 <span className={`sm-tab ${tab === t ? "active" : ""}`} style={{ display: "block", padding: "7px 0", textAlign: "center" }}>
                   {t === "login" ? "Anmelden" : "Registrieren"}
                 </span>
@@ -232,27 +227,16 @@ function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {tab === "register" && (
-              <div>
-                <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Name</label>
-                <input className="sm-input" placeholder="Max Mustermann" value={name} onChange={e => setName(e.target.value)} />
-              </div>
-            )}
             <div>
-              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>E-Mail</label>
-              <input className="sm-input" type="email" placeholder="deine@email.de" value={email} onChange={e => setEmail(e.target.value)}
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Benutzername</label>
+              <input className="sm-input sm-mono" placeholder="dein_username" value={username}
+                onChange={e => setUsername(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <label style={{ fontSize: 12, color: "#64748b" }}>Passwort</label>
-                {tab === "login" && (
-                  <button onClick={onForgotPassword} style={{ fontSize: 12, color: "#475569", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
-                    Passwort vergessen?
-                  </button>
-                )}
-              </div>
-              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort</label>
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass}
+                onChange={e => setPass(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
 
@@ -261,24 +245,14 @@ function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
                 {err}
               </div>
             )}
-            {success && (
-              <div style={{ fontSize: 13, color: "#00d4aa", background: "rgba(0,212,170,.08)", border: "1px solid rgba(0,212,170,.25)", borderRadius: 8, padding: "8px 12px" }}>
-                {success}
-              </div>
-            )}
 
-            <button
-              className="sm-btn sm-btn-primary"
-              style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
-              onClick={tab === "login" ? handleLogin : handleRegister}
-              disabled={loading}
-            >
+            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
+              onClick={tab === "login" ? handleLogin : handleRegister} disabled={loading}>
               {loading
                 ? <><Spinner size={14} color="#080c18" /> Bitte warten...</>
                 : tab === "login"
                   ? <><LogIn size={15} /> Anmelden</>
-                  : <><Check size={15} /> Konto erstellen</>
-              }
+                  : <><Check size={15} /> Konto erstellen</>}
             </button>
           </div>
 
@@ -958,29 +932,35 @@ export default function StudyMate() {
     setSetsLoading(false);
   };
 
-  const handleLogin = async (email, pass) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) throw error;
+  const toFakeEmail = (username) => `${username.toLowerCase()}@studymate.local`;
+
+  const handleLogin = async (username, pass) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: toFakeEmail(username),
+      password: pass,
+    });
+    if (error) {
+      // Benutzerfreundliche Fehlermeldung statt Supabase-Standard
+      throw new Error("Benutzername oder Passwort falsch.");
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (session) await initUser(session.user);
   };
 
-  const handleRegister = async (email, pass, name) => {
+  const handleRegister = async (username, pass) => {
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: toFakeEmail(username),
       password: pass,
-      options: { data: { displayname: name } },
+      options: { data: { username, displayname: username } },
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("already registered")) throw new Error("Benutzername bereits vergeben.");
+      throw error;
+    }
     if (data.session) {
-      // E-Mail-Bestätigung deaktiviert → direkt eingeloggt
       await initUser(data.session.user);
     } else {
-      // E-Mail-Bestätigung aktiv → Hinweis anzeigen
-      throw Object.assign(
-        new Error("Bestätigungs-E-Mail gesendet! Bitte Postfach (inkl. Spam) prüfen und dann anmelden."),
-        { isInfo: true }
-      );
+      throw new Error("Registrierung fehlgeschlagen. Bitte 'Confirm email' in Supabase deaktivieren.");
     }
   };
 
@@ -1038,12 +1018,7 @@ export default function StudyMate() {
           onLogin={handleLogin}
           onRegister={handleRegister}
           onGuest={handleGuest}
-          onForgotPassword={() => setView("forgot")}
         />
-      )}
-
-      {view === "forgot" && (
-        <ForgotPasswordView onBack={() => setView("auth")} />
       )}
 
       {view === "reset" && (
