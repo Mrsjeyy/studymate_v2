@@ -170,7 +170,7 @@ function NavBar({ user, onHome, onLogout, onGoToLogin }) {
   );
 }
 
-function AuthView({ onLogin, onRegister, onGuest }) {
+function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -241,7 +241,14 @@ function AuthView({ onLogin, onRegister, onGuest }) {
                 onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <label style={{ fontSize: 12, color: "#64748b" }}>Passwort</label>
+                {tab === "login" && (
+                  <button onClick={onForgotPassword} style={{ fontSize: 12, color: "#475569", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                    Passwort vergessen?
+                  </button>
+                )}
+              </div>
               <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && (tab === "login" ? handleLogin() : handleRegister())} />
             </div>
@@ -277,6 +284,135 @@ function AuthView({ onLogin, onRegister, onGuest }) {
             <Globe size={14} />
             Als Gast fortfahren
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForgotPasswordView({ onBack }) {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  const handleSubmit = async () => {
+    if (!email) { setErr("Bitte E-Mail eingeben."); return; }
+    setLoading(true);
+    setErr("");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    setLoading(false);
+    if (error) { setErr(error.message); return; }
+    setSent(true);
+  };
+
+  if (sent) return (
+    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>📧</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>E-Mail gesendet!</h2>
+        <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+          Prüfe dein Postfach und klicke den Link um dein Passwort zurückzusetzen.
+        </p>
+        <button className="sm-btn sm-btn-ghost" style={{ margin: "0 auto" }} onClick={onBack}>
+          <ArrowLeft size={14} /> Zurück zum Login
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="sm-glow sm-pulse" style={{ width: 400, height: 400, background: "rgba(0,212,170,.06)", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
+      <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ width: 56, height: 56, background: "linear-gradient(135deg, #00d4aa, #00b894)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Shield size={26} color="#080c18" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Passwort zurücksetzen</h1>
+          <p style={{ color: "#64748b", fontSize: 14 }}>Wir senden dir einen Reset-Link per E-Mail</p>
+        </div>
+        <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 20, padding: 28 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>E-Mail</label>
+              <input className="sm-input" type="email" placeholder="deine@email.de" value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSubmit()} />
+            </div>
+            {err && <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>{err}</div>}
+            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={handleSubmit} disabled={loading}>
+              {loading ? <><Spinner size={14} color="#080c18" /> Senden...</> : "Reset-Link senden"}
+            </button>
+          </div>
+          <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center", marginTop: 12 }} onClick={onBack}>
+            <ArrowLeft size={14} /> Zurück zum Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResetPasswordView({ onDone }) {
+  const [pass, setPass] = useState("");
+  const [pass2, setPass2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState(false);
+
+  const handleReset = async () => {
+    if (!pass || !pass2) { setErr("Bitte beide Felder ausfüllen."); return; }
+    if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
+    if (pass !== pass2) { setErr("Passwörter stimmen nicht überein."); return; }
+    setLoading(true);
+    setErr("");
+    const { error } = await supabase.auth.updateUser({ password: pass });
+    setLoading(false);
+    if (error) { setErr(error.message); return; }
+    setDone(true);
+    setTimeout(onDone, 2000);
+  };
+
+  if (done) return (
+    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center" }}>
+      <div className="sm-z sm-fadeup" style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>Passwort geändert!</h2>
+        <p style={{ color: "#64748b", fontSize: 14 }}>Du wirst weitergeleitet...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="sm-glow sm-pulse" style={{ width: 400, height: 400, background: "rgba(0,212,170,.06)", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
+      <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ width: 56, height: 56, background: "linear-gradient(135deg, #00d4aa, #00b894)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Shield size={26} color="#080c18" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Neues Passwort</h1>
+          <p style={{ color: "#64748b", fontSize: 14 }}>Gib dein neues Passwort ein</p>
+        </div>
+        <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 20, padding: 28 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Neues Passwort</label>
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort wiederholen</label>
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass2} onChange={e => setPass2(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleReset()} />
+            </div>
+            {err && <div style={{ fontSize: 13, color: "#f87171", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.2)", borderRadius: 8, padding: "8px 12px" }}>{err}</div>}
+            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={handleReset} disabled={loading}>
+              {loading ? <><Spinner size={14} color="#080c18" /> Speichern...</> : <><Check size={15} /> Passwort speichern</>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -754,7 +890,11 @@ export default function StudyMate() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setView("reset");
+        return;
+      }
       if (!session) {
         setUser(null);
         setSets([]);
@@ -876,7 +1016,16 @@ export default function StudyMate() {
           onLogin={handleLogin}
           onRegister={handleRegister}
           onGuest={handleGuest}
+          onForgotPassword={() => setView("forgot")}
         />
+      )}
+
+      {view === "forgot" && (
+        <ForgotPasswordView onBack={() => setView("auth")} />
+      )}
+
+      {view === "reset" && (
+        <ResetPasswordView onDone={() => setView("auth")} />
       )}
 
       {view === "dashboard" && (
