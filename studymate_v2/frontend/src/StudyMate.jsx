@@ -1287,10 +1287,10 @@ function SettingsView({ onBack }) {
 // ── Root ──────────────────────────────────────────────────────────────────────
 
 export default function StudyMate() {
-  const [view, setView] = useState("loading");
+  const [view, setView] = useState("dashboard");
   const [user, setUser] = useState(null);
   const [sets, setSets] = useState([]);
-  const [setsLoading, setSetsLoading] = useState(false);
+  const [setsLoading, setSetsLoading] = useState(true);
   const [currentSet, setCurrentSet] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [streak, setStreak] = useState(0);
