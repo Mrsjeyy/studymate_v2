@@ -428,7 +428,7 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet }) {
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading }) {
   const [tab, setTab] = useState("discover");
   const [search, setSearch] = useState("");
 
@@ -453,9 +453,9 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet }) {
           </p>
         </div>
         {user && (
-          <button className="sm-btn sm-btn-primary" onClick={onCreateSet}>
-            <Plus size={15} />
-            Neues Set
+          <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+            {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
+            {createLoading ? "Erstellen..." : "Neues Set"}
           </button>
         )}
       </div>
@@ -989,6 +989,7 @@ export default function StudyMate() {
   const [sets, setSets] = useState([]);
   const [setsLoading, setSetsLoading] = useState(false);
   const [currentSet, setCurrentSet] = useState(null);
+  const [createLoading, setCreateLoading] = useState(false);
   const recoveryMode = useRef(false);
 
   useEffect(() => {
@@ -1123,6 +1124,44 @@ export default function StudyMate() {
     return newCard;
   };
 
+  const handleCreateSet = async () => {
+    if (!user) {
+      alert("Bitte melde dich an, um ein neues Set zu erstellen.");
+      setView("auth");
+      return;
+    }
+
+    const title = window.prompt("Titel für dein neues Set eingeben:");
+    if (!title?.trim()) return;
+
+    setCreateLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("flashcard_sets")
+        .insert({
+          owneruserid: user.id,
+          title: title.trim(),
+          description: "",
+          ispublic: false,
+        })
+        .select("*, flashcards(*)")
+        .single();
+
+      if (error) throw error;
+
+      const newSet = normalizeSet({ ...data, profiles: { username: user.name, displayname: user.name } });
+      setSets(prev => [newSet, ...prev]);
+      setCurrentSet(newSet);
+      setView("detail");
+    } catch (e) {
+      const message = e?.message || String(e) || "Fehler beim Erstellen des Sets.";
+      alert(message);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const goHome = () => setView("dashboard");
 
   if (view === "loading") {
@@ -1169,7 +1208,8 @@ export default function StudyMate() {
           sets={sets}
           setsLoading={setsLoading}
           onOpenSet={(s) => { setCurrentSet(s); setView("detail"); }}
-          onCreateSet={() => alert("Set-Erstellung kommt bald!")}
+          onCreateSet={handleCreateSet}
+          createLoading={createLoading}
         />
       )}
 
