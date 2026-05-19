@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from: str = "StudyMate <onboarding@resend.dev>"
 
+    gemini_api_key: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

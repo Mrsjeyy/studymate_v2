@@ -751,35 +751,69 @@ function LearnView({ set, onBack }) {
 }
 
 function QuizView({ set, onBack }) {
-  const [phase, setPhase] = useState("intro");
+  const [phase, setPhase] = useState("intro"); // intro | quiz | aiquiz | result
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
-  const [aiLoading, setAiLoading] = useState(false);
+  const [quizMode, setQuizMode] = useState("standard");
 
-  const shuffled = set.cards.slice(0, Math.min(4, set.cards.length));
-  const q = shuffled[qIdx];
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiQuestions, setAiQuestions] = useState(null);
+  const [showExpl, setShowExpl] = useState(false);
+
+  const shuffled = set.cards.slice(0, Math.min(5, set.cards.length));
 
   const getAnswers = (card) => {
     const wrong = set.cards.filter(c => c.id !== card.id).slice(0, 3).map(c => ({ text: c.a, correct: false }));
     return [...wrong, { text: card.a, correct: true }].sort(() => Math.random() - .5);
   };
 
-  const [answers] = useState(() => shuffled.map(c => getAnswers(c)));
+  const [stdAnswers] = useState(() => shuffled.map(c => getAnswers(c)));
 
-  const pick = (i) => {
+  const stdPick = (i) => {
     if (selected !== null) return;
     setSelected(i);
-    if (answers[qIdx][i].correct) setScore(s => s + 1);
+    if (stdAnswers[qIdx][i].correct) setScore(s => s + 1);
     setTimeout(() => {
-      if (qIdx + 1 >= shuffled.length) setPhase("result");
+      if (qIdx + 1 >= shuffled.length) { setQuizMode("standard"); setPhase("result"); }
       else { setQIdx(q => q + 1); setSelected(null); }
     }, 1200);
   };
 
-  const simulateAI = () => {
+  const aiPick = (i) => {
+    if (selected !== null) return;
+    setSelected(i);
+    if (aiQuestions && i === aiQuestions[qIdx].correct) setScore(s => s + 1);
+    setShowExpl(true);
+  };
+
+  const aiNext = () => {
+    setShowExpl(false);
+    setSelected(null);
+    if (!aiQuestions || qIdx + 1 >= aiQuestions.length) { setQuizMode("ai"); setPhase("result"); }
+    else setQIdx(q => q + 1);
+  };
+
+  const generateAIQuiz = async () => {
     setAiLoading(true);
-    setTimeout(() => setAiLoading(false), 2000);
+    setAiError("");
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/quiz/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cards: set.cards.map(c => ({ q: c.q, a: c.a })), count: 5 }),
+      });
+      if (!res.ok) throw new Error("Generierung fehlgeschlagen.");
+      const data = await res.json();
+      setAiQuestions(data.questions);
+      setQIdx(0); setSelected(null); setScore(0); setShowExpl(false);
+      setPhase("aiquiz");
+    } catch (e) {
+      setAiError(e.message);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   if (phase === "intro") return (
@@ -795,47 +829,120 @@ function QuizView({ set, onBack }) {
             <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{shuffled.length} Fragen · Multiple Choice</p>
           </div>
         </div>
-        <div style={{ background: "rgba(255,255,255,.04)", borderRadius: 12, padding: 16, marginBottom: 20 }}>
+        <div style={{ background: "rgba(255,255,255,.04)", borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <Sparkles size={14} color="#a78bfa" />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>KI-Quizgenerierung (Beta)</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>KI-Quizgenerierung</span>
           </div>
-          <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>Lass KI neue Quizfragen auf Basis deiner Karten erstellen – mit Erklärungen und variablen Schwierigkeitsstufen.</p>
-          <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={simulateAI}>
-            {aiLoading
-              ? <><Spinner size={12} color="#a78bfa" /> Generiere...</>
-              : <><Sparkles size={13} /> KI-Quiz erstellen</>}
+          <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>
+            KI erstellt neue Fragen auf Basis deiner Karten – mit Erklärungen nach jeder Antwort.
+          </p>
+          {aiError && <p style={{ fontSize: 12, color: "#f87171", margin: "0 0 8px" }}>{aiError}</p>}
+          <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={generateAIQuiz} disabled={aiLoading}>
+            {aiLoading ? <><Spinner size={12} color="#a78bfa" /> Generiere...</> : <><Sparkles size={13} /> KI-Quiz erstellen</>}
           </button>
         </div>
-        <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => setPhase("quiz")}>
-          <Zap size={15} /> Quiz starten
+        <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
+          <Zap size={15} /> Standard-Quiz starten
         </button>
       </div>
     </div>
   );
 
-  if (phase === "result") return (
-    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 440, margin: "0 auto", textAlign: "center" }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 52, marginBottom: 12 }}>{score === shuffled.length ? "🏆" : score >= shuffled.length / 2 ? "💪" : "😞"}</div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{score === shuffled.length ? "Perfekt!" : "Quiz abgeschlossen!"}</h2>
-        <p style={{ color: "#64748b", fontSize: 14 }}>{score} von {shuffled.length} Fragen richtig</p>
+  if (phase === "result") {
+    const total = quizMode === "ai" && aiQuestions ? aiQuestions.length : shuffled.length;
+    return (
+      <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 440, margin: "0 auto", textAlign: "center" }}>
+        <div style={{ marginBottom: 24 }}>
+          {quizMode === "ai" && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(139,92,246,.1)", border: "1px solid rgba(139,92,246,.25)", borderRadius: 20, padding: "4px 12px", marginBottom: 12 }}>
+              <Sparkles size={12} color="#a78bfa" />
+              <span style={{ fontSize: 12, color: "#a78bfa" }}>KI-Quiz</span>
+            </div>
+          )}
+          <div style={{ fontSize: 52, marginBottom: 12 }}>{score === total ? "🏆" : score >= total / 2 ? "💪" : "😞"}</div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{score === total ? "Perfekt!" : "Quiz abgeschlossen!"}</h2>
+          <p style={{ color: "#64748b", fontSize: 14 }}>{score} von {total} Fragen richtig</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
+          <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#00d4aa" }}>{score}</div><div className="sm-stat-label">Richtig</div></div>
+          <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#ef4444" }}>{total - score}</div><div className="sm-stat-label">Falsch</div></div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setPhase("intro"); setQIdx(0); setSelected(null); setScore(0); setShowExpl(false); setAiError(""); }}>
+            <RotateCcw size={14} /> Nochmal
+          </button>
+          <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onBack}>
+            <ArrowLeft size={14} /> Zurück
+          </button>
+        </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
-        <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#00d4aa" }}>{score}</div><div className="sm-stat-label">Richtig</div></div>
-        <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#ef4444" }}>{shuffled.length - score}</div><div className="sm-stat-label">Falsch</div></div>
-      </div>
-      <div style={{ display: "flex", gap: 10 }}>
-        <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setPhase("quiz"); setQIdx(0); setSelected(null); setScore(0); }}>
-          <RotateCcw size={14} /> Nochmal
-        </button>
-        <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onBack}>
-          <ArrowLeft size={14} /> Zurück
-        </button>
-      </div>
-    </div>
-  );
+    );
+  }
 
+  if (phase === "aiquiz" && aiQuestions) {
+    const q = aiQuestions[qIdx];
+    return (
+      <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}><ArrowLeft size={15} /></button>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 13, color: "#64748b" }}>KI-Frage {qIdx + 1} von {aiQuestions.length}</span>
+              <span className="sm-mono" style={{ fontSize: 13, color: "#8b5cf6" }}>+{score} Punkte</span>
+            </div>
+            <div className="sm-progress-bar"><div className="sm-progress-fill" style={{ width: `${(qIdx / aiQuestions.length) * 100}%`, background: "linear-gradient(90deg, #8b5cf6, #a78bfa)" }} /></div>
+          </div>
+        </div>
+
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+          <Sparkles size={12} color="#a78bfa" />
+          <span style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600 }}>KI-generierte Frage</span>
+        </div>
+
+        <div style={{ background: "rgba(139,92,246,.06)", border: "1px solid rgba(139,92,246,.2)", borderRadius: 16, padding: "24px 28px", marginBottom: 16, minHeight: 100, display: "flex", alignItems: "center" }}>
+          <p style={{ fontSize: 16, fontWeight: 600, margin: 0, lineHeight: 1.6 }}>{q.question}</p>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+          {q.options.map((opt, i) => {
+            let cls = "sm-answer-btn";
+            if (selected !== null) {
+              if (i === q.correct) cls += " correct";
+              else if (i === selected && i !== q.correct) cls += " wrong";
+            }
+            return (
+              <button key={i} className={cls} onClick={() => aiPick(i)} disabled={selected !== null}>
+                <span className="sm-mono" style={{ color: selected !== null && i === q.correct ? "#00d4aa" : selected !== null && i === selected ? "#f87171" : "#475569", marginRight: 10 }}>
+                  {String.fromCharCode(65 + i)}.
+                </span>
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
+        {showExpl && (
+          <div style={{ background: "rgba(139,92,246,.08)", border: "1px solid rgba(139,92,246,.25)", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <Brain size={13} color="#a78bfa" />
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa" }}>Erklärung</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: "#cbd5e1", lineHeight: 1.6 }}>{q.explanation}</p>
+          </div>
+        )}
+
+        {selected !== null && (
+          <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={aiNext}>
+            {qIdx + 1 >= aiQuestions.length ? "Ergebnis sehen" : "Nächste Frage"} <ChevronRight size={15} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Standard quiz
+  const q = shuffled[qIdx];
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
@@ -854,14 +961,14 @@ function QuizView({ set, onBack }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {answers[qIdx].map((ans, i) => {
+        {stdAnswers[qIdx].map((ans, i) => {
           let cls = "sm-answer-btn";
           if (selected !== null) {
             if (ans.correct) cls += " correct";
             else if (i === selected && !ans.correct) cls += " wrong";
           }
           return (
-            <button key={i} className={cls} onClick={() => pick(i)} disabled={selected !== null}>
+            <button key={i} className={cls} onClick={() => stdPick(i)} disabled={selected !== null}>
               <span className="sm-mono" style={{ color: selected !== null && ans.correct ? "#00d4aa" : selected !== null && i === selected ? "#f87171" : "#475569", marginRight: 10 }}>
                 {String.fromCharCode(65 + i)}.
               </span>
