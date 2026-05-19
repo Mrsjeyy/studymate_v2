@@ -787,13 +787,22 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
   );
 }
 
-function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet }) {
+function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
   const [cards, setCards] = useState(set.cards);
   const [saving, setSaving] = useState(false);
   const [addErr, setAddErr] = useState("");
+  const [showEdit, setShowEdit] = useState(false);
+  const [editCardId, setEditCardId] = useState(null);
+  const [editQ, setEditQ] = useState("");
+  const [editA, setEditA] = useState("");
+  const [editErr, setEditErr] = useState("");
+  const [showImport, setShowImport] = useState(false);
+  const [importJson, setImportJson] = useState("");
+  const [importErr, setImportErr] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
 
   const addCard = async () => {
     if (!newQ || !newA) return;
@@ -807,6 +816,54 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
       setAddErr(e.message || "Fehler beim Speichern.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openEditCard = (card) => {
+    setEditCardId(card.id);
+    setEditQ(card.q);
+    setEditA(card.a);
+    setEditErr("");
+    setShowEdit(true);
+  };
+
+  const saveEditCard = async () => {
+    if (!editQ || !editA) return;
+    setSaving(true);
+    setEditErr("");
+    try {
+      await onEditCard(editCardId, editQ, editA);
+      setCards(prev => prev.map(c => c.id === editCardId ? { ...c, q: editQ, a: editA } : c));
+      setShowEdit(false);
+    } catch (e) {
+      setEditErr(e.message || "Fehler beim Speichern.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteCard = async (cardId) => {
+    try {
+      await onDeleteCard(cardId);
+      setCards(prev => prev.filter(c => c.id !== cardId));
+    } catch (e) {
+      alert(e.message || "Fehler beim Löschen.");
+    }
+  };
+
+  const importCards = async () => {
+    setImportLoading(true);
+    setImportErr("");
+    try {
+      await onImportCards(set.id, importJson);
+      const updated = JSON.parse(importJson);
+      setCards(prev => [...prev, ...updated.map((u, i) => ({ id: `temp-${i}`, q: u.question, a: u.answer }))]);
+      setImportJson("");
+      setShowImport(false);
+    } catch (e) {
+      setImportErr(e.message || "Fehler beim Importieren.");
+    } finally {
+      setImportLoading(false);
     }
   };
 
@@ -852,6 +909,10 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
             <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => setShowAdd(!showAdd)}>
               <Plus size={13} />
               Karte hinzufügen
+            </button>
+            <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => setShowImport(true)}>
+              <Plus size={13} />
+              Importieren
             </button>
           </div>
         )}
@@ -1579,6 +1640,58 @@ export default function StudyMate() {
     if (currentSet?.id === setId) {
       setCurrentSet(null);
       setView("dashboard");
+    }
+  };
+
+  const handleDeleteCard = async (cardId) => {
+    if (!window.confirm("Karte wirklich löschen?")) return;
+    const { error } = await supabase
+      .from("flashcards")
+      .delete()
+      .eq("id", cardId);
+    if (error) throw new Error(error.message);
+    setSets(prev => prev.map(s => ({
+      ...s,
+      cards: s.cards.filter(c => c.id !== cardId)
+    })));
+    if (currentSet) {
+      setCurrentSet(prev => prev ? { ...prev, cards: prev.cards.filter(c => c.id !== cardId) } : prev);
+    }
+  };
+
+  const handleEditCard = async (cardId, q, a) => {
+    const { error } = await supabase
+      .from("flashcards")
+      .update({ question: q, answer: a })
+      .eq("id", cardId);
+    if (error) throw new Error(error.message);
+    setSets(prev => prev.map(s => ({
+      ...s,
+      cards: s.cards.map(c => c.id === cardId ? { ...c, q, a } : c)
+    })));
+    if (currentSet) {
+      setCurrentSet(prev => prev ? { ...prev, cards: prev.cards.map(c => c.id === cardId ? { ...c, q, a } : c) } : prev);
+    }
+  };
+
+  const handleImportCards = async (setId, jsonText) => {
+    try {
+      const cards = JSON.parse(jsonText);
+      if (!Array.isArray(cards)) throw new Error("JSON muss ein Array sein.");
+      if (cards.length === 0) throw new Error("Array ist leer.");
+
+      let imported = 0;
+      for (const card of cards) {
+        if (!card.question || !card.answer) {
+          throw new Error(`Karte fehlt 'question' oder 'answer': ${JSON.stringify(card)}`);
+        }
+        await handleAddCard(setId, card.question, card.answer);
+        imported++;
+      }
+      alert(`${imported} Karten erfolgreich importiert!`);
+      return imported;
+    } catch (e) {
+      throw new Error(`Import-Fehler: ${e.message}`);
     }
   };
 
