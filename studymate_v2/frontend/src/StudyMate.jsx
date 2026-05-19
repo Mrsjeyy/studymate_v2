@@ -137,7 +137,7 @@ function Spinner({ size = 14, color = "#00d4aa" }) {
   );
 }
 
-function NavBar({ user, onHome, onLogout }) {
+function NavBar({ user, onHome, onLogout, onGoToLogin }) {
   return (
     <nav className="sm-nav">
       <div className="sm-logo" onClick={onHome}>
@@ -157,7 +157,13 @@ function NavBar({ user, onHome, onLogout }) {
             </button>
           </>
         ) : (
-          <span style={{ fontSize: 13, color: "#475569" }}>Gastmodus</span>
+          <>
+            <span style={{ fontSize: 13, color: "#475569" }}>Gastmodus</span>
+            <button className="sm-btn sm-btn-primary" style={{ padding: "7px 14px", fontSize: 13 }} onClick={onGoToLogin}>
+              <LogIn size={14} />
+              Anmelden
+            </button>
+          </>
         )}
       </div>
     </nav>
@@ -862,7 +868,7 @@ export default function StudyMate() {
       <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
       {view !== "auth" && (
-        <NavBar user={user} onHome={goHome} onLogout={handleLogout} />
+        <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} />
       )}
 
       {view === "auth" && (
