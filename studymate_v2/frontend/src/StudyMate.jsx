@@ -159,7 +159,7 @@ const styles = `
   /* show sidebar on desktop */
   @media (min-width: 880px) {
     .sm-sidebar { display: flex; }
-    .sm-main { margin-left: 260px; }
+    .sm:not(.no-sidebar) .sm-main { margin-left: 260px; }
     .sm-hamburger { display: none !important; }
   }
   @media (max-width: 879px) {
@@ -542,7 +542,7 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange }) {
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, onRequireAuth }) {
   const [tab, setTab] = useState(initialTab || "dashboard");
   const [search, setSearch] = useState("");
   const searchRef = useRef(null);
@@ -667,6 +667,15 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
           <Spinner size={28} />
           <p style={{ fontSize: 14, marginTop: 16 }}>Sets werden geladen...</p>
+        </div>
+      ) : (tab === 'mine' && !user) ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+          <BookOpen size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
+          <p style={{ fontSize: 15, marginBottom: 12 }}>Bitte melden Sie sich an, um Ihre eigenen Sets zu sehen.</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+            <button className="sm-btn sm-btn-primary" onClick={() => onRequireAuth?.()}>Anmelden</button>
+            <button className="sm-btn sm-btn-ghost" onClick={() => onRequireAuth?.()}>Gastmodus</button>
+          </div>
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
@@ -1508,6 +1517,8 @@ export default function StudyMate() {
 
   const goHome = () => setView("dashboard");
 
+  const showSidebar = (view !== "auth" && view !== "forgot" && view !== "reset");
+
   if (view === "loading") {
     return (
       <div className="sm" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 600 }}>
@@ -1520,9 +1531,11 @@ export default function StudyMate() {
   }
 
   return (
-    <div className={`sm ${sidebarCollapsed ? 'sm-collapsed' : ''}`}>
+    <div className={`sm ${sidebarCollapsed ? 'sm-collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
       <div className="sm-grid" />
-      <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} onCloseMobile={() => setSidebarOpenMobile(false)} />
+      {(view !== "auth" && view !== "forgot" && view !== "reset") && (
+        <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} onCloseMobile={() => setSidebarOpenMobile(false)} />
+      )}
       <div className="sm-main">
         <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
         <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
@@ -1598,6 +1611,7 @@ export default function StudyMate() {
           createLoading={createLoading}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
+          onRequireAuth={() => setView('auth')}
         />
       )}
 
