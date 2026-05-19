@@ -1,3 +1,18 @@
 studymate_v2/backend/app/core/__pycache__/*
 studymate_v2/backend/app/db/__pycache__/*
 studymate_v2/backend/app/core/__pycache__/*
+# Python
+**/__pycache__/
+**/*.pyc
+**/venv/
+**/.venv/
+
+# Node / Vite
+**/node_modules/
+**/.vite/
+**/dist/
+
+# Env files
+**/.env
+**/.env.local
+**/.env.production
