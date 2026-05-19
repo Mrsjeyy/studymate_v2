@@ -816,8 +816,8 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
         <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}>
           <ArrowLeft size={15} />
         </button>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{set.title}</h2>
             <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`} style={{ fontSize: 11 }}>
               {set.isPublic ? <><Globe size={10} /> Öffentlich</> : <><Lock size={10} /> Privat</>}
@@ -1344,7 +1344,8 @@ export default function StudyMate() {
       if (session) {
         initUser(session.user);
       } else {
-        setView("auth");
+        setView("dashboard");
+        fetchSets(null);
       }
     });
 
