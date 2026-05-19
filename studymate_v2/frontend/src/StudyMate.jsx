@@ -59,7 +59,9 @@ function writeStreakStore(store) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(store));
-  } catch {}
+  } catch (err) {
+    console.warn("Could not persist streak data to localStorage.", err);
+  }
 }
 
 function getStreakState(userKey) {
