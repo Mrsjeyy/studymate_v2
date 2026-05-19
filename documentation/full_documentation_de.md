@@ -1,4 +1,4 @@
-# StudyMate v2 — Ausführliche Projektdokumentation (Deutsch)
+# StudyMate v2 — Ausführliche Projektdokumentation
 
 Version: 0.1.0
 Datum: 2026-05-19
