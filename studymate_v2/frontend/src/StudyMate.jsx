@@ -45,6 +45,7 @@ const styles = `
   body { min-height: 100vh; }
   .sm * { box-sizing: border-box; }
   .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 100vh; height: 100%; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
+  .sm-main { min-height: 100%; position: relative; }
 
   .sm-grid {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
@@ -151,8 +152,7 @@ const styles = `
   /* show sidebar on desktop */
   @media (min-width: 880px) {
     .sm-sidebar { display: flex; }
-    .sm { margin-left: 260px; }
-    .sm-nav { left: 260px; }
+    .sm-main { margin-left: 260px; }
     .sm-hamburger { display: none !important; }
   }
   @media (max-width: 879px) {
@@ -1476,12 +1476,13 @@ export default function StudyMate() {
     <div className="sm">
       <div className="sm-grid" />
       <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} onCloseMobile={() => setSidebarOpenMobile(false)} />
-      <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
-      <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
+      <div className="sm-main">
+        <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
+        <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
-      {view !== "auth" && view !== "forgot" && view !== "reset" && (
-        <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} />
-      )}
+        {view !== "auth" && view !== "forgot" && view !== "reset" && (
+          <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} />
+        )}
 
       {showCreateSetDialog && (
         <div className="sm-modal-overlay" onClick={() => setShowCreateSetDialog(false)}>
@@ -1583,5 +1584,6 @@ export default function StudyMate() {
         <SettingsView onBack={() => setView('dashboard')} />
       )}
     </div>
+  </div>
   );
 }
