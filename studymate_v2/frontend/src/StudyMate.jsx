@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
-  Sparkles, Target, FlipHorizontal, Lock,
+  Sparkles, Target, FlipHorizontal, Lock, Menu,
 } from "lucide-react";
+import { Star } from "lucide-react";
 import { supabase } from "./supabase";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -134,6 +135,34 @@ const styles = `
   .sm-modal-error { color: #f87171; font-size: 13px; margin-top: -6px; margin-bottom: 10px; }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* Sidebar */
+  .sm-sidebar { position: fixed; left: 18px; top: 18px; bottom: 18px; width: 220px; background: linear-gradient(180deg, rgba(8,12,24,.72), rgba(8,12,24,.6)); border: 1px solid rgba(0,212,170,.06); backdrop-filter: blur(8px); border-radius: 16px; padding: 18px; display: none; flex-direction: column; z-index: 200; }
+  .sm-sidebar.mobile-open { display: flex; left: 12px; right: 12px; width: auto; height: auto; top: 80px; bottom: 18px; }
+  .sm-sidebar-top { padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.03); margin-bottom: 12px; }
+  .sm-sidebar-logo { font-weight: 700; font-size: 18px; }
+  .sm-sidebar-menu { display: flex; flex-direction: column; gap: 8px; }
+  .sm-sidebar-item { display: inline-flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: transparent; color: #cbd5e1; border: none; cursor: pointer; text-align: left; transition: all .15s; }
+  .sm-sidebar-item:hover { transform: translateX(6px); background: rgba(0,212,170,.03); }
+  .sm-sidebar-item span { font-size: 14px; }
+  .sm-sidebar-item.active { box-shadow: 0 0 18px rgba(0,212,170,.18); background: linear-gradient(90deg, rgba(0,212,170,.06), rgba(139,92,246,.03)); color: #00d4aa; }
+  .sm-sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.03); }
+
+  /* show sidebar on desktop */
+  @media (min-width: 880px) {
+    .sm-sidebar { display: flex; }
+    .sm { margin-left: 260px; }
+    .sm-nav { left: 260px; }
+    .sm-hamburger { display: none !important; }
+  }
+  @media (max-width: 879px) {
+    .sm-sidebar { display: none; }
+    .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: #cbd5e1; }
+  }
+
+  .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.32); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.04); color: #94a3b8; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
+  .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; }
+  .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.12); }
 `;
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -151,6 +180,11 @@ function Spinner({ size = 14, color = "#00d4aa" }) {
 function NavBar({ user, onHome, onLogout, onGoToLogin }) {
   return (
     <nav className="sm-nav">
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <button className="sm-hamburger" onClick={e => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('toggle-sidebar')); }} style={{ marginRight: 6, display: 'none' }}>
+          <Menu size={16} />
+        </button>
+      </div>
       <div className="sm-logo" onClick={onHome}>
         <div className="sm-logo-icon">
           <Shield size={16} color="#080c18" strokeWidth={2.5} />
@@ -178,6 +212,40 @@ function NavBar({ user, onHome, onLogout, onGoToLogin }) {
         )}
       </div>
     </nav>
+  );
+}
+
+function Sidebar({ user, activeView, onNavigate, openMobile, onCloseMobile }) {
+  const items = [
+    { id: 'dashboard', label: 'Dashboard', icon: BookOpen },
+    { id: 'mine', label: 'Meine Sets', icon: Brain },
+    { id: 'discover', label: 'Entdecken', icon: Globe },
+    { id: 'favorites', label: 'Favoriten', icon: Sparkles },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Target },
+    { id: 'settings', label: 'Einstellungen', icon: Shield },
+  ];
+
+  return (
+    <aside className={`sm-sidebar ${openMobile ? 'mobile-open' : ''}`} onClick={e => e.stopPropagation()}>
+      <div className="sm-sidebar-top">
+        <div className="sm-sidebar-logo">Study<span style={{ color: '#00d4aa' }}>Mate</span></div>
+      </div>
+      <div className="sm-sidebar-menu">
+        {items.map(it => {
+          const Icon = it.icon;
+          const active = activeView === it.id || (it.id === 'dashboard' && activeView === 'dashboard');
+          return (
+            <button key={it.id} className={`sm-sidebar-item ${active ? 'active' : ''}`} onClick={() => { onNavigate(it.id); onCloseMobile && onCloseMobile(); }}>
+              <Icon size={16} />
+              <span>{it.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="sm-sidebar-footer">
+        <div style={{ fontSize: 12, color: '#94a3b8' }}>{user ? user.name : 'Gast'}</div>
+      </div>
+    </aside>
   );
 }
 
@@ -439,12 +507,24 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading }) {
-  const [tab, setTab] = useState("discover");
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange }) {
+  const [tab, setTab] = useState(initialTab || "dashboard");
   const [search, setSearch] = useState("");
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    setTab(initialTab || "dashboard");
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (tab === 'discover') {
+      setTimeout(() => searchRef.current?.focus(), 80);
+    }
+  }, [tab]);
 
   const filtered = sets.filter(s => {
     if (tab === "mine" && s.owneruserid !== user?.id) return false;
+    if (tab === "discover" && !s.isPublic) return false;
     if (search && !s.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -452,26 +532,52 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
   const mineSets = sets.filter(s => s.owneruserid === user?.id);
   const totalCards = sets.reduce((acc, s) => acc + s.cards.length, 0);
 
+  const suggestions = sets.filter(s => s.isPublic && s.owneruserid !== user?.id).slice(0, 6);
+
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
-            {user ? `Hey, ${user.name} 👾` : "Lernsets entdecken"}
-          </h2>
-          <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>
-            {user ? "Bereit für deine nächste Session?" : "Melde dich an, um eigene Sets zu erstellen"}
-          </p>
+      {tab === 'mine' ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Meine Sets</h2>
+            <p style={{ color: "#64748b", fontSize: 13, margin: '6px 0 0' }}>Nur deine eigenen Sets werden hier angezeigt.</p>
+          </div>
+          {user && (
+            <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+              {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
+              {createLoading ? "Erstellen..." : "Neues Set"}
+            </button>
+          )}
         </div>
-        {user && (
-          <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
-            {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
-            {createLoading ? "Erstellen..." : "Neues Set"}
-          </button>
-        )}
-      </div>
+      ) : tab === 'discover' ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>Entdecken</h2>
+            <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>Suche nach öffentlichen Sets von anderen Lernenden.</p>
+          </div>
+          {user && (
+            <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+              {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
+              {createLoading ? "Erstellen..." : "Neues Set"}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>Dashboard</h2>
+            <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>Dein Arbeitsbereich mit Fortschritt, Statistiken und deinen Sets.</p>
+          </div>
+          {user && (
+            <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+              {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
+              {createLoading ? "Erstellen..." : "Neues Set"}
+            </button>
+          )}
+        </div>
+      )}
 
-      {user && (
+      {user && tab === 'dashboard' && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
           {[
             { n: mineSets.length, l: "Meine Sets", color: "#00d4aa" },
@@ -489,18 +595,38 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <div style={{ flex: 1, position: "relative" }}>
           <Search size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#475569" }} />
-          <input className="sm-input" style={{ paddingLeft: 40 }} placeholder="Sets suchen..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input ref={searchRef} className="sm-input" style={{ paddingLeft: 40 }} placeholder={tab === 'discover' ? "Nach öffentlichen Sets suchen..." : "Sets suchen..."} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {user && (
           <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3 }}>
-            {["discover", "mine"].map(t => (
-              <button key={t} className={`sm-tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={{ padding: "6px 14px", fontSize: 13 }}>
-                {t === "discover" ? "Entdecken" : "Meine Sets"}
+            {["dashboard", "discover", "mine"].map(t => (
+              <button key={t} className={`sm-tab ${tab === t ? "active" : ""}`} onClick={() => { setTab(t); onTabChange?.(t); }} style={{ padding: "6px 14px", fontSize: 13 }}>
+                {t === "dashboard" ? "Dashboard" : t === "discover" ? "Entdecken" : "Meine Sets"}
               </button>
             ))}
           </div>
         )}
       </div>
+
+      {tab === 'discover' && suggestions.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>Vorgeschlagen für dich</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>Basierend auf öffentlichen Sets</div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+            {suggestions.map(s => (
+              <div key={s.id} className="sm-card" style={{ minWidth: 220, cursor: 'pointer' }} onClick={() => onOpenSet(s)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong style={{ fontSize: 14 }}>{s.title}</strong>
+                  <div style={{ color: '#64748b', fontSize: 12 }}>{s.cards.length} Karten</div>
+                </div>
+                <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>{s.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {setsLoading ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
@@ -516,6 +642,9 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
             <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
+              <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen">
+                <Star size={14} />
+              </button>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                 <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`}>
@@ -1001,6 +1130,61 @@ function QuizView({ set, onBack }) {
   );
 }
 
+function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOpenSet }) {
+  const [search, setSearch] = useState('');
+  const favSets = sets.filter(s => favorites.includes(s.id));
+  const filtered = favSets.filter(s => !search || s.title.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button className="sm-btn sm-btn-ghost" onClick={onBack}><ArrowLeft size={15} /> Zurück</button>
+        <h2 style={{ margin: 0 }}>Favoriten</h2>
+      </div>
+      <div style={{ marginTop: 12, marginBottom: 12 }}>
+        <input className="sm-input" placeholder="Favoriten durchsuchen..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {filtered.length === 0 ? (
+        <p style={{ color: '#64748b' }}>Keine Favoriten gefunden.</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+          {filtered.map(set => (
+            <div key={set.id} className="sm-card" style={{ position: 'relative' }}>
+              <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={() => toggleFavorite(set.id)} title="Aus Favoriten entfernen">
+                <Star size={14} />
+              </button>
+              <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>{set.title}</h3>
+              <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{set.description}</p>
+              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="sm-btn sm-btn-ghost" onClick={() => onOpenSet(set)}>Öffnen</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LeaderboardView({ onBack }) {
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
+      <button className="sm-btn sm-btn-ghost" onClick={onBack}><ArrowLeft size={15} /> Zurück</button>
+      <h2 style={{ marginTop: 18 }}>Leaderboard</h2>
+      <p style={{ color: '#64748b' }}>Highscores und Ranglisten erscheinen hier.</p>
+    </div>
+  );
+}
+
+function SettingsView({ onBack }) {
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
+      <button className="sm-btn sm-btn-ghost" onClick={onBack}><ArrowLeft size={15} /> Zurück</button>
+      <h2 style={{ marginTop: 18 }}>Einstellungen</h2>
+      <p style={{ color: '#64748b' }}>Einstellungen folgen hier.</p>
+    </div>
+  );
+}
+
 // ── Root ──────────────────────────────────────────────────────────────────────
 
 export default function StudyMate() {
@@ -1015,6 +1199,9 @@ export default function StudyMate() {
   const [createDescription, setCreateDescription] = useState("");
   const [createIsPublic, setCreateIsPublic] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
+  const [dashboardTab, setDashboardTab] = useState('discover');
+  const [favorites, setFavorites] = useState([]);
   const recoveryMode = useRef(false);
 
   useEffect(() => {
@@ -1051,6 +1238,39 @@ export default function StudyMate() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const handler = () => setSidebarOpenMobile(s => !s);
+    document.addEventListener('toggle-sidebar', handler);
+    return () => document.removeEventListener('toggle-sidebar', handler);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('sm_favs');
+      setFavorites(raw ? JSON.parse(raw) : []);
+    } catch (e) { setFavorites([]); }
+  }, []);
+
+  const toggleFavorite = (setId) => {
+    setFavorites(prev => {
+      const s = new Set(prev);
+      if (s.has(setId)) s.delete(setId); else s.add(setId);
+      const arr = Array.from(s);
+      try { localStorage.setItem('sm_favs', JSON.stringify(arr)); } catch (e) {}
+      return arr;
+    });
+  };
+
+  const handleNavigate = (id) => {
+    if (id === 'mine' || id === 'discover' || id === 'dashboard') {
+      setDashboardTab(id);
+      setView('dashboard');
+    } else {
+      setView(id);
+    }
+    setSidebarOpenMobile(false);
+  };
 
   const initUser = async (authUser) => {
     const { data: profile } = await supabase
@@ -1255,6 +1475,7 @@ export default function StudyMate() {
   return (
     <div className="sm">
       <div className="sm-grid" />
+      <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} onCloseMobile={() => setSidebarOpenMobile(false)} />
       <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
       <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
@@ -1324,7 +1545,11 @@ export default function StudyMate() {
           setsLoading={setsLoading}
           onOpenSet={(s) => { setCurrentSet(s); setView("detail"); }}
           onCreateSet={handleCreateSet}
+          initialTab={dashboardTab}
+          onTabChange={setDashboardTab}
           createLoading={createLoading}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
         />
       )}
 
@@ -1347,6 +1572,15 @@ export default function StudyMate() {
 
       {view === "quiz" && currentSet && (
         <QuizView set={currentSet} onBack={() => setView("detail")} />
+      )}
+      {view === 'favorites' && (
+        <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} />
+      )}
+      {view === 'leaderboard' && (
+        <LeaderboardView onBack={() => setView('dashboard')} />
+      )}
+      {view === 'settings' && (
+        <SettingsView onBack={() => setView('dashboard')} />
       )}
     </div>
   );
