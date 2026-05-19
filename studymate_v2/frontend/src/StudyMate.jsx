@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
@@ -370,8 +370,9 @@ function ResetPasswordView({ onDone }) {
     setLoading(true);
     setErr("");
     const { error } = await supabase.auth.updateUser({ password: pass });
+    if (error) { setLoading(false); setErr(error.message); return; }
+    await supabase.auth.signOut();
     setLoading(false);
-    if (error) { setErr(error.message); return; }
     setDone(true);
     setTimeout(onDone, 2000);
   };
@@ -873,6 +874,7 @@ export default function StudyMate() {
   const [sets, setSets] = useState([]);
   const [setsLoading, setSetsLoading] = useState(false);
   const [currentSet, setCurrentSet] = useState(null);
+  const recoveryMode = useRef(false);
 
   useEffect(() => {
     const el = document.createElement("style");
@@ -882,22 +884,26 @@ export default function StudyMate() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        initUser(session.user);
-      } else {
-        setView("auth");
-      }
-    });
-
+    // onAuthStateChange muss VOR getSession registriert sein
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
+        recoveryMode.current = true;
         setView("reset");
         return;
       }
       if (!session) {
+        recoveryMode.current = false;
         setUser(null);
         setSets([]);
+        setView("auth");
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (recoveryMode.current) return; // Recovery läuft — nicht überschreiben
+      if (session) {
+        initUser(session.user);
+      } else {
         setView("auth");
       }
     });
