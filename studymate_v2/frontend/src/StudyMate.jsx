@@ -138,10 +138,17 @@ const styles = `
   @keyframes spin { to { transform: rotate(360deg); } }
   
   /* Sidebar */
-  .sm-sidebar { position: fixed; left: 18px; top: 18px; bottom: 18px; width: 220px; background: linear-gradient(180deg, rgba(8,12,24,.72), rgba(8,12,24,.6)); border: 1px solid rgba(0,212,170,.06); backdrop-filter: blur(8px); border-radius: 16px; padding: 18px; display: none; flex-direction: column; z-index: 200; }
+  .sm-sidebar { position: fixed; left: 18px; top: 18px; bottom: 18px; width: 220px; background: linear-gradient(180deg, rgba(8,12,24,.72), rgba(8,12,24,.6)); border: 1px solid rgba(0,212,170,.06); backdrop-filter: blur(8px); border-radius: 16px; padding: 18px; display: none; flex-direction: column; z-index: 200; transition: width .2s ease, padding .2s ease; }
   .sm-sidebar.mobile-open { display: flex; left: 12px; right: 12px; width: auto; height: auto; top: 80px; bottom: 18px; }
-  .sm-sidebar-top { padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.03); margin-bottom: 12px; }
+  .sm-sidebar-top { padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.03); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .sm-sidebar.collapsed { width: 72px; padding: 14px 10px; }
+  .sm-sidebar.collapsed .sm-sidebar-top { padding-bottom: 8px; margin-bottom: 10px; }
+  .sm-sidebar.collapsed .sm-sidebar-title { display: none; }
+  .sm-sidebar.collapsed .sm-sidebar-item { justify-content: center; }
+  .sm-sidebar.collapsed .sm-sidebar-item span { display: none; }
+  .sm-sidebar.collapsed .sm-sidebar-footer { display: none; }
   .sm-sidebar-logo { font-weight: 700; font-size: 18px; }
+  .sm-sidebar-brand { display: flex; align-items: center; gap: 10px; }
   .sm-sidebar-menu { display: flex; flex-direction: column; gap: 8px; }
   .sm-sidebar-item { display: inline-flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: transparent; color: #cbd5e1; border: none; cursor: pointer; text-align: left; transition: all .15s; }
   .sm-sidebar-item:hover { transform: translateX(6px); background: rgba(0,212,170,.03); }
@@ -237,7 +244,7 @@ function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onToggleTheme }) {
   );
 }
 
-function Sidebar({ user, activeView, onNavigate, openMobile, onCloseMobile }) {
+function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggleCollapse, onCloseMobile }) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: BookOpen },
     { id: 'mine', label: 'Meine Sets', icon: Brain },
@@ -248,9 +255,15 @@ function Sidebar({ user, activeView, onNavigate, openMobile, onCloseMobile }) {
   ];
 
   return (
-    <aside className={`sm-sidebar ${openMobile ? 'mobile-open' : ''}`} onClick={e => e.stopPropagation()}>
+    <aside className={`sm-sidebar ${collapsed ? 'collapsed' : ''} ${openMobile ? 'mobile-open' : ''}`} onClick={e => e.stopPropagation()}>
       <div className="sm-sidebar-top">
-        <div className="sm-sidebar-logo">Study<span style={{ color: '#00d4aa' }}>Mate</span></div>
+        <div className="sm-sidebar-brand">
+          <div className="sm-sidebar-logo">S</div>
+          <div className="sm-sidebar-title">Study<span style={{ color: '#00d4aa' }}>Mate</span></div>
+        </div>
+        <button className="sm-sidebar-collapse" onClick={onToggleCollapse} title="Sidebar ein-/ausblenden">
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
       <div className="sm-sidebar-menu">
         {items.map(it => {
@@ -1222,6 +1235,7 @@ export default function StudyMate() {
   const [createIsPublic, setCreateIsPublic] = useState(false);
   const [createError, setCreateError] = useState("");
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardTab, setDashboardTab] = useState('discover');
   const [favorites, setFavorites] = useState([]);
   const recoveryMode = useRef(false);
@@ -1299,6 +1313,10 @@ export default function StudyMate() {
       setView(id);
     }
     setSidebarOpenMobile(false);
+  };
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(prev => !prev);
   };
 
   const initUser = async (authUser) => {
@@ -1502,9 +1520,9 @@ export default function StudyMate() {
   }
 
   return (
-    <div className={'sm' + (theme === 'light' ? ' light' : '')}>
+    <div className={`sm ${sidebarCollapsed ? 'sm-collapsed' : ''}`}>
       <div className="sm-grid" />
-      <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} onCloseMobile={() => setSidebarOpenMobile(false)} />
+      <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} onCloseMobile={() => setSidebarOpenMobile(false)} />
       <div className="sm-main">
         <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
         <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
