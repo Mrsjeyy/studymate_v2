@@ -45,6 +45,20 @@ function toISODate(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+function parseISODate(dateString) {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function getDaysSince(dateString, referenceDate = new Date()) {
+  const parsedDate = parseISODate(dateString);
+  if (!parsedDate) return Infinity;
+  const reference = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  return Math.floor((reference - parsedDate) / (1000 * 60 * 60 * 24));
+}
+
 function readStreakStore() {
   if (typeof window === "undefined") return {};
   try {
@@ -66,16 +80,23 @@ function writeStreakStore(store) {
 
 function getStreakState(userKey) {
   const store = readStreakStore();
-  return store[userKey] || { count: 0, lastCompletedDate: null };
+  const current = store[userKey] || { count: 0, lastCompletedDate: null };
+  if (current.lastCompletedDate && getDaysSince(current.lastCompletedDate) > 1) {
+    const resetState = { count: 0, lastCompletedDate: null };
+    store[userKey] = resetState;
+    writeStreakStore(store);
+    return resetState;
+  }
+  return current;
 }
 
 function awardDailyStreak(userKey) {
   const today = toISODate();
+  const store = readStreakStore();
+  const current = getStreakState(userKey);
   const yesterdayDate = new Date();
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterday = toISODate(yesterdayDate);
-  const store = readStreakStore();
-  const current = store[userKey] || { count: 0, lastCompletedDate: null };
 
   if (current.lastCompletedDate === today) {
     return current;
@@ -1380,7 +1401,11 @@ export default function StudyMate() {
 
   useEffect(() => {
     const key = user?.id || "guest";
-    setStreak(getStreakState(key).count);
+    const refreshStreak = () => setStreak(getStreakState(key).count);
+
+    refreshStreak();
+    const intervalId = window.setInterval(refreshStreak, 60 * 1000);
+    return () => window.clearInterval(intervalId);
   }, [user?.id]);
   useEffect(() => {
     try { localStorage.setItem('sm_theme', theme); } catch (e) {}
