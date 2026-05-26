@@ -770,6 +770,12 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
               <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen">
                 <Star size={14} />
               </button>
+              {user && set.isPublic && set.owneruserid !== user.id && (
+                <button style={{ position: "absolute", top: 10, right: 40, background: "rgba(0,212,170,.1)", border: "1px solid rgba(0,212,170,.3)", color: "#00d4aa", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 12, fontWeight: 500 }} onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} title="Dieses Set forken">
+                  <FlipHorizontal size={14} style={{ display: "inline-block", marginRight: 4 }} />
+                  Fork
+                </button>
+              )}
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                 <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`}>
@@ -1791,6 +1797,41 @@ export default function StudyMate() {
     if (currentSet?.id === setId) {
       setCurrentSet(null);
       setView("dashboard");
+    }
+  };
+
+  const handleForkSet = async (sourceSet) => {
+    if (!user) {
+      alert("Bitte melde dich an, um ein Set zu forken.");
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Authentifizierung erforderlich.");
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${sourceSet.id}/fork`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Fehler beim Forken des Sets.");
+      }
+
+      const forkedSet = await response.json();
+      const normalizedSet = normalizeSet({ ...forkedSet, profiles: { username: user.name, displayname: user.name } });
+      setSets(prev => [normalizedSet, ...prev]);
+      alert(`Set "${sourceSet.title}" erfolgreich geforkt!`);
+    } catch (error) {
+      alert(error?.message || "Fehler beim Forken des Sets.");
     }
   };
 

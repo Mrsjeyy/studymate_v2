@@ -50,6 +50,7 @@ Feature-Überblick:
 - KI-Quiz über Gemini, falls der Schlüssel konfiguriert ist
 - Set-Verwaltung mit Erstellen, Sichtbarkeit umschalten und Löschen
 - Kartenverwaltung mit Anlegen, Bearbeiten, Löschen und JSON-Import
+- Forken öffentlicher Sets in das eigene Konto (nur für angemeldete Benutzer)
 
 Wichtiger UI‑Hinweis:
 - Das Frontend zeigt einen Tagesstreak für abgeschlossene Lernsessions an.
@@ -101,6 +102,7 @@ Wichtige Browser-Features aus `StudyMate.jsx`:
 - Dashboard mit Suche, Tabs und Favoriten
 - Set-Detail mit Lernmodus, Quiz, Bearbeitung und Import
 - Streak-Tracking im Browser-Storage
+- Fork-Funktion zum Kopieren öffentlicher Sets in das Benutzerkonto
 
 4. Lokale Entwicklungsumgebung (Schritt‑für‑Schritt)
 -------------------------------------------------
@@ -216,6 +218,14 @@ PUT /sets/{set_id}
 
 DELETE /sets/{set_id}
 - Auth: erforderlich; Only owner
+
+POST /sets/{set_id}/fork
+- Auth: erforderlich
+- Beschreibung: Forkt ein öffentliches Set in das Konto des aktuellen Benutzers.
+- Nur möglich wenn das Quell-Set öffentlich ist (ispublic = true)
+- Das neue Set ist standardmäßig privat (ispublic = false)
+- Alle Karteikarten des Quell-Sets werden in das neue Set kopiert
+- Response: Das neu erstellte Set mit allen Karteikarten (like `select("*, flashcards(*)")`)
 
 Beispiel für das Erstellen eines Sets im Frontend:
 
