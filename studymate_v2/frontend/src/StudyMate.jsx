@@ -94,6 +94,7 @@ const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
   html, body, #root { min-height: 100%; height: 100%; margin: 0; background: #080c18; }
+  html.light, body.light, body.light #root { background: #f8fafc; }
   body { min-height: 100vh; }
   .sm * { box-sizing: border-box; }
   .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 100vh; height: 100%; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
@@ -1326,6 +1327,10 @@ export default function StudyMate() {
   }, [theme]);
 
   useEffect(() => {
+    document.body.classList.toggle('light', theme === 'light');
+  }, [theme]);
+
+  useEffect(() => {
     // onAuthStateChange muss VOR getSession registriert sein
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
@@ -1600,7 +1605,7 @@ export default function StudyMate() {
   }
 
   return (
-    <div className={`sm ${sidebarCollapsed ? 'sm-collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
+    <div className={`sm ${theme === 'light' ? 'light' : ''} ${sidebarCollapsed ? 'sm-collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
       <div className="sm-grid" />
       {(view !== "auth" && view !== "forgot" && view !== "reset") && (
         <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} onCloseMobile={() => setSidebarOpenMobile(false)} />
