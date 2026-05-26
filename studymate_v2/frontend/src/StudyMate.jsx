@@ -767,14 +767,14 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
             <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: 73, right: 10, display: "flex", alignItems: "center", gap: 6, zIndex: 20 }}>
+              <div style={{ position: "absolute", top: 8, right: 10, display: "flex", alignItems: "center", gap: 6, zIndex: 20 }}>
                 {user && set.isPublic && set.owneruserid !== user.id && (
-                  <button onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} style={{ background: "transparent", border: "none", color: "#00d4aa", cursor: "pointer", padding: "4px 8px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", height: "32px" }} title="Dieses Set forken">
+                  <button onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} style={{ background: "transparent", border: "none", color: "#00d4aa", cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", height: "32px" }} title="Dieses Set forken">
                     <FlipHorizontal size={14} />
                     Fork
                   </button>
                 )}
-                <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen" style={{ padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center", height: "32px", width: "32px" }}>
+                <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen" style={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", height: "32px", width: "32px" }}>
                   <Star size={14} />
                 </button>
               </div>
