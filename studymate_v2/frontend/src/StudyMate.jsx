@@ -767,16 +767,16 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
             <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8, position: "relative", zIndex: 10 }}>
-                <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen">
-                  <Star size={14} />
-                </button>
+              <div style={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 6, zIndex: 20 }}>
                 {user && set.isPublic && set.owneruserid !== user.id && (
-                  <button onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} style={{ background: "rgba(0,212,170,.1)", border: "1px solid rgba(0,212,170,.3)", color: "#00d4aa", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" }} title="Dieses Set forken">
-                    <FlipHorizontal size={13} style={{ display: "inline-block", marginRight: 4, verticalAlign: "middle" }} />
+                  <button onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} style={{ background: "transparent", border: "none", color: "#00d4aa", cursor: "pointer", padding: "4px 8px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", height: "28px" }} title="Dieses Set forken">
+                    <FlipHorizontal size={14} />
                     Fork
                   </button>
                 )}
+                <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen" style={{ padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center", height: "28px", width: "28px" }}>
+                  <Star size={14} />
+                </button>
               </div>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
@@ -1816,6 +1816,7 @@ export default function StudyMate() {
   };
 
   const handleForkSet = async (sourceSet) => {
+    console.log("handleForkSet called with:", sourceSet);
     if (!user) {
       alert("Bitte melde dich an, um ein Set zu forken.");
       return;
@@ -1829,6 +1830,7 @@ export default function StudyMate() {
   };
 
   const submitForkSet = async () => {
+    console.log("submitForkSet called, forkSourceSet:", forkSourceSet);
     const title = forkTitle.trim();
     if (!title) {
       setForkError("Bitte gib einen Titel für das geforkte Set ein.");
@@ -1844,7 +1846,10 @@ export default function StudyMate() {
         throw new Error("Authentifizierung erforderlich.");
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${forkSourceSet.id}/fork`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${forkSourceSet.id}/fork`;
+      console.log("Calling fork API:", apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session.access_token}`,
@@ -1852,12 +1857,15 @@ export default function StudyMate() {
         },
       });
 
+      console.log("Fork response status:", response.status);
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || "Fehler beim Forken des Sets.");
       }
 
       const forkedSet = await response.json();
+      console.log("Forked set:", forkedSet);
       const normalizedSet = normalizeSet({ ...forkedSet, profiles: { username: user.name, displayname: user.name } });
 
       const updatedSet = { ...normalizedSet, title, description: forkDescription };
@@ -1870,7 +1878,9 @@ export default function StudyMate() {
       setSets(prev => [updatedSet, ...prev]);
       setShowForkDialog(false);
       alert(`Set erfolgreich als "${title}" geforkt!`);
+      fetchSets(user?.id);
     } catch (error) {
+      console.error("Fork error:", error);
       setForkError(error?.message || "Fehler beim Forken des Sets.");
     } finally {
       setForkLoading(false);
