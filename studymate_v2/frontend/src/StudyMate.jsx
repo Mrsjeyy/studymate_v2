@@ -767,15 +767,17 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
             <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
-              <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen">
-                <Star size={14} />
-              </button>
-              {user && set.isPublic && set.owneruserid !== user.id && (
-                <button style={{ position: "absolute", top: 10, right: 40, background: "rgba(0,212,170,.1)", border: "1px solid rgba(0,212,170,.3)", color: "#00d4aa", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 12, fontWeight: 500 }} onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} title="Dieses Set forken">
-                  <FlipHorizontal size={14} style={{ display: "inline-block", marginRight: 4 }} />
-                  Fork
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8, position: "relative", zIndex: 10 }}>
+                <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen">
+                  <Star size={14} />
                 </button>
-              )}
+                {user && set.isPublic && set.owneruserid !== user.id && (
+                  <button onClick={(e) => { e.stopPropagation(); handleForkSet(set); }} style={{ background: "rgba(0,212,170,.1)", border: "1px solid rgba(0,212,170,.3)", color: "#00d4aa", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" }} title="Dieses Set forken">
+                    <FlipHorizontal size={13} style={{ display: "inline-block", marginRight: 4, verticalAlign: "middle" }} />
+                    Fork
+                  </button>
+                )}
+              </div>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                 <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`}>
@@ -950,6 +952,13 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
           Quiz starten
         </button>
       </div>
+
+      {user && set.isPublic && set.owneruserid !== user.id && (
+        <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", width: "100%", marginBottom: 20, borderColor: "rgba(0,212,170,.3)", color: "#00d4aa" }} onClick={() => onForkSet(set)}>
+          <FlipHorizontal size={15} />
+          Set forken
+        </button>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
         <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
@@ -1490,6 +1499,12 @@ export default function StudyMate() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardTab, setDashboardTab] = useState('discover');
   const [favorites, setFavorites] = useState([]);
+  const [showForkDialog, setShowForkDialog] = useState(false);
+  const [forkSourceSet, setForkSourceSet] = useState(null);
+  const [forkTitle, setForkTitle] = useState("");
+  const [forkDescription, setForkDescription] = useState("");
+  const [forkError, setForkError] = useState("");
+  const [forkLoading, setForkLoading] = useState(false);
   const recoveryMode = useRef(false);
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('sm_theme') || 'dark'; } catch (e) { return 'dark'; }
@@ -1806,14 +1821,30 @@ export default function StudyMate() {
       return;
     }
 
+    setForkSourceSet(sourceSet);
+    setForkTitle(sourceSet.title);
+    setForkDescription(sourceSet.description);
+    setForkError("");
+    setShowForkDialog(true);
+  };
+
+  const submitForkSet = async () => {
+    const title = forkTitle.trim();
+    if (!title) {
+      setForkError("Bitte gib einen Titel für das geforkte Set ein.");
+      return;
+    }
+
+    setForkLoading(true);
+    setForkError("");
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert("Authentifizierung erforderlich.");
-        return;
+        throw new Error("Authentifizierung erforderlich.");
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${sourceSet.id}/fork`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${forkSourceSet.id}/fork`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session.access_token}`,
@@ -1828,10 +1859,21 @@ export default function StudyMate() {
 
       const forkedSet = await response.json();
       const normalizedSet = normalizeSet({ ...forkedSet, profiles: { username: user.name, displayname: user.name } });
-      setSets(prev => [normalizedSet, ...prev]);
-      alert(`Set "${sourceSet.title}" erfolgreich geforkt!`);
+
+      const updatedSet = { ...normalizedSet, title, description: forkDescription };
+      await supabase
+        .from("flashcard_sets")
+        .update({ title, description: forkDescription })
+        .eq("id", updatedSet.id)
+        .execute();
+
+      setSets(prev => [updatedSet, ...prev]);
+      setShowForkDialog(false);
+      alert(`Set erfolgreich als "${title}" geforkt!`);
     } catch (error) {
-      alert(error?.message || "Fehler beim Forken des Sets.");
+      setForkError(error?.message || "Fehler beim Forken des Sets.");
+    } finally {
+      setForkLoading(false);
     }
   };
 
@@ -1954,6 +1996,35 @@ export default function StudyMate() {
         </div>
       )}
 
+      {showForkDialog && (
+        <div className="sm-modal-overlay" onClick={() => setShowForkDialog(false)}>
+          <div className="sm-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div>
+                <h3>Set forken</h3>
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>Bearbeite den Namen deines geforkten Sets.</p>
+              </div>
+              <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 10px" }} onClick={() => setShowForkDialog(false)}>
+                <X size={14} /> Abbrechen
+              </button>
+            </div>
+            <label>Titel</label>
+            <input className="sm-input" placeholder="Titel eingeben" value={forkTitle} onChange={e => setForkTitle(e.target.value)} />
+            <label>Beschreibung</label>
+            <textarea className="sm-input" rows={4} placeholder="Beschreibung (optional)" value={forkDescription} onChange={e => setForkDescription(e.target.value)} style={{ resize: "vertical" }} />
+            {forkError && <div className="sm-modal-error">{forkError}</div>}
+            <div className="sm-modal-actions">
+              <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={submitForkSet} disabled={forkLoading}>
+                {forkLoading ? <><Spinner size={14} color="#080c18" /> Forken...</> : "Set forken"}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => setShowForkDialog(false)}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {view === "auth" && (
         <AuthView
           onLogin={handleLogin}
@@ -2001,7 +2072,7 @@ export default function StudyMate() {
           onImportCards={handleImportCards}
           onToggleVisibility={handleToggleSetVisibility}
           onDeleteSet={handleDeleteSet}
-          onUpdateSetTitle={handleUpdateSetTitle}
+          onForkSet={handleForkSet}
         />
       )}
 
