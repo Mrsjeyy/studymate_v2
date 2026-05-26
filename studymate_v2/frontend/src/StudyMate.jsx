@@ -952,7 +952,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
   );
 }
 
-function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards, onUpdateSetTitle }) {
+function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards, onUpdateSetTitle, onForkSet }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
