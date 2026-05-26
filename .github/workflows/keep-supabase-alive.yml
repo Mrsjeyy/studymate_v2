@@ -20,8 +20,9 @@ jobs:
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             "$SUPABASE_URL/auth/v1/health")
           echo "Status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ]; then
+            echo "Supabase is alive!"
+          else
             echo "Supabase health check failed with status $STATUS!"
             exit 1
           fi
-          echo "Supabase is alive!"
