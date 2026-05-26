@@ -175,8 +175,8 @@ const styles = `
   .sm-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0); }
   .sm-flip-back { position: absolute; inset: 0; transform: rotateY(180deg) translateZ(1px); }
 
-  .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-  .sm-badge-public { background: rgba(0,212,170,.12); color: #00d4aa; }
+  .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;}
+  .sm-badge-public { background: rgba(0,212,170,.12); color: #00d4aa}
   .sm-badge-private { background: rgba(255,255,255,.07); color: #64748b; }
 
   .sm-answer-btn { width: 100%; text-align: left; padding: 14px 18px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); color: #cbd5e1; font-family: 'Sora', sans-serif; font-size: 14px; cursor: pointer; transition: all .2s; line-height: 1.5; }
@@ -262,6 +262,46 @@ const styles = `
   .sm.light .sm-sidebar { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
   .sm.light .sm-modal { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
   .sm.light .sm-fav-btn { background: rgba(0,0,0,.03); color: #475569; border: 1px solid rgba(0,0,0,.04); }
+
+  .sm-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  .sm-toast-success {
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  }
+  .sm-toast-error {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+  .sm-toast-info {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
 
 `;
 
@@ -886,7 +926,7 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
       await onDeleteCard(cardId);
       setCards(prev => prev.filter(c => c.id !== cardId));
     } catch (e) {
-      alert(e.message || "Fehler beim Löschen.");
+      showToast(e.message || "Fehler beim Löschen.", 'error');
     }
   };
 
@@ -1507,6 +1547,12 @@ export default function StudyMate() {
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('sm_theme') || 'dark'; } catch (e) { return 'dark'; }
   });
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), duration);
+  };
 
   useEffect(() => {
     const el = document.createElement("style");
@@ -1702,7 +1748,7 @@ export default function StudyMate() {
 
   const handleCreateSet = () => {
     if (!user) {
-      alert("Bitte melde dich an, um ein neues Set zu erstellen.");
+      showToast("Bitte melde dich an, um ein neues Set zu erstellen.", 'error');
       setView("auth");
       return;
     }
@@ -1761,7 +1807,7 @@ export default function StudyMate() {
       .single();
 
     if (error) {
-      alert(error.message || "Fehler beim Aktualisieren der Sichtbarkeit.");
+      showToast(error.message || "Fehler beim Aktualisieren der Sichtbarkeit.", 'error');
       return;
     }
 
@@ -1802,7 +1848,7 @@ export default function StudyMate() {
       .eq("id", setId);
 
     if (error) {
-      alert(error.message || "Fehler beim Löschen des Sets.");
+      showToast(error.message || "Fehler beim Löschen des Sets.", 'error');
       return;
     }
 
@@ -1816,7 +1862,7 @@ export default function StudyMate() {
   const handleForkSet = async (sourceSet) => {
     console.log("handleForkSet called with:", sourceSet);
     if (!user) {
-      alert("Bitte melde dich an, um ein Set zu forken.");
+      showToast("Bitte melde dich an, um ein Set zu forken.", 'error');
       return;
     }
 
@@ -1875,7 +1921,7 @@ export default function StudyMate() {
 
       setSets(prev => [updatedSet, ...prev]);
       setShowForkDialog(false);
-      alert(`Set erfolgreich als "${title}" geforkt!`);
+      showToast(`Set erfolgreich als "${title}" geforkt!`, 'success');
       fetchSets(user?.id);
     } catch (error) {
       console.error("Fork error:", error);
@@ -1930,7 +1976,7 @@ export default function StudyMate() {
         await handleAddCard(setId, card.question, card.answer);
         imported++;
       }
-      alert(`${imported} Karten erfolgreich importiert!`);
+      showToast(`${imported} Karten erfolgreich importiert!`, 'success');
       return imported;
     } catch (e) {
       throw new Error(`Import-Fehler: ${e.message}`);
@@ -2099,6 +2145,15 @@ export default function StudyMate() {
       )}
       {view === 'settings' && (
         <SettingsView onBack={() => setView('dashboard')} />
+      )}
+
+      {toast && (
+        <div className={`sm-toast sm-toast-${toast.type}`}>
+          {toast.type === 'success' && <Check size={16} />}
+          {toast.type === 'error' && <X size={16} />}
+          {toast.type === 'info' && <Sparkles size={16} />}
+          {toast.message}
+        </div>
       )}
     </div>
   </div>
