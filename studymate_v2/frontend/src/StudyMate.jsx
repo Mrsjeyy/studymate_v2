@@ -594,7 +594,7 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak }) {
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak, onRequireAuth }) {
   const [tab, setTab] = useState(initialTab || "discover");
   const [search, setSearch] = useState("");
   const searchRef = useRef(null);
@@ -726,7 +726,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
           <p style={{ fontSize: 15, marginBottom: 12 }}>Bitte melden Sie sich an, um Ihre eigenen Sets zu sehen.</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
             <button className="sm-btn sm-btn-primary" onClick={() => onRequireAuth?.()}>Anmelden</button>
-            <button className="sm-btn sm-btn-ghost" onClick={() => onRequireAuth?.()}>Gastmodus</button>
+            <button className="sm-btn sm-btn-ghost" onClick={() => {}}>Weiter als Gast</button>
           </div>
         </div>
       ) : filtered.length === 0 ? (
@@ -1151,9 +1151,11 @@ function QuizView({ set, onBack }) {
             {aiLoading ? <><Spinner size={12} color="#a78bfa" /> Generiere...</> : <><Sparkles size={13} /> KI-Quiz erstellen</>}
           </button>
         </div>
-        <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
-          <Zap size={15} /> Standard-Quiz starten
-        </button>
+        {set.cards.length >= 4 && (
+          <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
+            <Zap size={15} /> Standard-Quiz starten
+          </button>
+        )}
       </div>
     </div>
   );

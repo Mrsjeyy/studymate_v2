@@ -10,12 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase Health
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.VITE_SUPABASE_URL }}/auth/v1/health")
-          echo "Status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "Supabase health check failed!"
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "Error: VITE_SUPABASE_URL secret is not set in GitHub repository secrets!"
             exit 1
           fi
-          echo "Supabase is alive!"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/auth/v1/health")
+          echo "Status: $STATUS"
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ]; then
+            echo "Supabase is alive!"
+          else
+            echo "Supabase health check failed with status $STATUS!"
+            exit 1
+          fi

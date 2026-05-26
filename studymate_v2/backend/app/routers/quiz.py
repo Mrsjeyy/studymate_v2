@@ -1,4 +1,5 @@
 import json
+import random
 
 import google.generativeai as genai
 from fastapi import APIRouter, HTTPException
@@ -15,29 +16,25 @@ def generate_quiz(payload: QuizGenerateRequest):
         raise HTTPException(status_code=503, detail="KI nicht konfiguriert.")
 
     count = min(payload.count, len(payload.cards), 8)
+    selected_cards = payload.cards[:count]
     cards_text = "\n".join(
-        [f"- Frage: {c.q}\n  Antwort: {c.a}" for c in payload.cards]
+        [f"{i+1}. Frage: {c.q}\n   Richtige Antwort: {c.a}" for i, c in enumerate(selected_cards)]
     )
 
     prompt = f"""Du bist ein Quiz-Generator für eine Cybersecurity-Lernapp.
-Erstelle basierend auf diesen Lernkarten genau {count} Multiple-Choice-Fragen auf Deutsch.
+Für jede der folgenden Lernkarten erstelle genau 3 falsche, aber thematisch passende und plausibel klingende Antwortmöglichkeiten auf Deutsch.
+Die falschen Antworten sollen zum Thema der Frage passen und wie mögliche richtige Antworten klingen, aber inhaltlich falsch sein.
 
 Lernkarten:
 {cards_text}
 
-Regeln:
-- Teste Verständnis, nicht nur Auswendiglernen
-- Genau 4 Antwortmöglichkeiten pro Frage
-- Kurze präzise Erklärung warum die Antwort korrekt ist (1-2 Sätze)
-- Gib NUR ein JSON-Array zurück, ohne Markdown, ohne weiteren Text
+Gib NUR ein JSON-Array zurück, ohne Markdown, ohne weiteren Text.
+Das Array enthält genau {count} Objekte (eines pro Karte, in gleicher Reihenfolge):
 
-Format:
 [
   {{
-    "question": "...",
-    "options": ["...", "...", "...", "..."],
-    "correct": 0,
-    "explanation": "..."
+    "wrong_answers": ["...", "...", "..."],
+    "explanation": "Kurze Erklärung warum die richtige Antwort korrekt ist (1-2 Sätze)."
   }}
 ]"""
 
@@ -54,7 +51,18 @@ Format:
 
     try:
         data = json.loads(raw)
-        questions = [QuizQuestion(**q) for q in data[:count]]
+        questions = []
+        for i, item in enumerate(data[:count]):
+            card = selected_cards[i]
+            options = item["wrong_answers"][:3]
+            correct_idx = random.randint(0, len(options))
+            options.insert(correct_idx, card.a)
+            questions.append(QuizQuestion(
+                question=card.q,
+                options=options,
+                correct=correct_idx,
+                explanation=item.get("explanation", ""),
+            ))
         return QuizGenerateResponse(questions=questions)
     except Exception:
         raise HTTPException(status_code=500, detail="KI-Antwort konnte nicht verarbeitet werden.")
