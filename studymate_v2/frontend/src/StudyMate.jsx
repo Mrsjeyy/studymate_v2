@@ -1090,12 +1090,11 @@ function QuizView({ set, onBack }) {
             {aiLoading ? <><Spinner size={12} color="#a78bfa" /> Generiere...</> : <><Sparkles size={13} /> KI-Quiz erstellen</>}
           </button>
         </div>
-        {set.cards.length < 4
-          ? <p style={{ fontSize: 12, color: "#64748b", textAlign: "center", margin: 0 }}>Standard-Quiz benötigt mindestens 4 Karten. Nutze den KI-Quiz!</p>
-          : <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
-              <Zap size={15} /> Standard-Quiz starten
-            </button>
-        }
+        {set.cards.length >= 4 && (
+          <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
+            <Zap size={15} /> Standard-Quiz starten
+          </button>
+        )}
       </div>
     </div>
   );
