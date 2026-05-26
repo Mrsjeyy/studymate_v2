@@ -50,6 +50,7 @@ Feature-Überblick:
 - KI-Quiz über Gemini, falls der Schlüssel konfiguriert ist
 - Set-Verwaltung mit Erstellen, Sichtbarkeit umschalten und Löschen
 - Kartenverwaltung mit Anlegen, Bearbeiten, Löschen und JSON-Import
+- **Forken öffentlicher Sets:** Angemeldete Benutzer können öffentliche Sets in ihr Konto kopieren (mit optionalem Rename via Dialog)
 
 Wichtiger UI‑Hinweis:
 - Das Frontend zeigt einen Tagesstreak für abgeschlossene Lernsessions an.
@@ -101,6 +102,7 @@ Wichtige Browser-Features aus `StudyMate.jsx`:
 - Dashboard mit Suche, Tabs und Favoriten
 - Set-Detail mit Lernmodus, Quiz, Bearbeitung und Import
 - Streak-Tracking im Browser-Storage
+- Fork-Funktion zum Kopieren öffentlicher Sets in das Benutzerkonto
 
 4. Lokale Entwicklungsumgebung (Schritt‑für‑Schritt)
 -------------------------------------------------
@@ -216,6 +218,56 @@ PUT /sets/{set_id}
 
 DELETE /sets/{set_id}
 - Auth: erforderlich; Only owner
+
+POST /sets/{set_id}/fork
+- Auth: erforderlich
+- Beschreibung: Forkt ein öffentliches Set in das Konto des aktuellen Benutzers.
+- Nur möglich wenn das Quell-Set öffentlich ist (ispublic = true)
+- Das neue Set ist standardmäßig privat (ispublic = false)
+- Alle Karteikarten des Quell-Sets werden in das neue Set kopiert
+- Response: Das neu erstellte Set mit allen Karteikarten (like `select("*, flashcards(*)")`)
+
+**Fork-Feature (Benutzer-Workflow):**
+
+Das Forken ermöglicht angemeldeten Benutzern, öffentliche Sets in ihr Konto zu kopieren:
+
+1. **Fork-Button Verfügbarkeit:**
+   - Sichtbar im Dashboard bei jedem öffentlichen Set, das nicht dem aktuellen Benutzer gehört
+   - Sichtbar in der Set-Detailansicht als großer Button unter den Learn/Quiz-Buttons
+   - Nicht sichtbar für Gäste oder Eigentümer des Sets
+
+2. **Fork-Dialog:**
+   - Öffnet sich nach Klick auf Fork-Button
+   - Benutzer kann den Namen des geforkten Sets anpassen (Standardwert = Original-Name)
+   - Benutzer kann die Beschreibung bearbeiten (Standardwert = Original-Beschreibung)
+   - Bestätigung speichert das neue Set mit allen Karten
+   - Das neue Set ist automatisch privat und kann später öffentlich gemacht werden
+
+3. **Ergebnis:**
+   - Neues Set erscheint in "Meine Sets" Übersicht
+   - Alle Karten sind im neuen Set vorhanden
+   - Benutzer kann das Set sofort bearbeiten und die Karten ändern
+
+Beispiel für das Forken eines Sets im Frontend:
+
+```jsx
+const { data: { session } } = await supabase.auth.getSession();
+const response = await fetch(`http://localhost:8000/sets/${sourceSet.id}/fork`, {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${session.access_token}`,
+    "Content-Type": "application/json",
+  },
+});
+
+const forkedSet = await response.json();
+// Optional: Update geforktes Set mit benutzerdefinierten Titel/Beschreibung
+await supabase
+  .from("flashcard_sets")
+  .update({ title: customTitle, description: customDescription })
+  .eq("id", forkedSet.id)
+  .execute();
+```
 
 Beispiel für das Erstellen eines Sets im Frontend:
 

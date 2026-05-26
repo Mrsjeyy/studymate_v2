@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.schemas.sets import StudySetCreate, StudySetUpdate
 from app.db.supabase_client import get_supabase_admin
-from app.core.security import get_current_user_id, require_set_owner
+from app.core.security import get_current_user_id, require_set_owner, require_set_access
 
 router = APIRouter()
 
@@ -87,3 +87,52 @@ def delete_set(
     supabase = get_supabase_admin()
     result = supabase.table("flashcard_sets").delete().eq("id", set_id).execute()
     return {"deleted": True, "data": result.data}
+
+
+@router.post("/{set_id}/fork")
+def fork_set(
+    set_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    supabase = get_supabase_admin()
+
+    source_set = require_set_access(set_id)
+    if not source_set.get("ispublic"):
+        raise HTTPException(status_code=403, detail="Can only fork public sets")
+
+    new_set_result = supabase.table("flashcard_sets").insert(
+        {
+            "owneruserid": user_id,
+            "title": source_set["title"],
+            "description": source_set["description"],
+            "ispublic": False,
+        }
+    ).execute()
+
+    new_set_id = new_set_result.data[0]["id"]
+
+    source_cards = (
+        supabase.table("flashcards")
+        .select("*")
+        .eq("setid", set_id)
+        .execute()
+    )
+
+    for card in source_cards.data:
+        supabase.table("flashcards").insert(
+            {
+                "setid": new_set_id,
+                "question": card["question"],
+                "answer": card["answer"],
+            }
+        ).execute()
+
+    new_set_with_cards = (
+        supabase.table("flashcard_sets")
+        .select("*, flashcards(*)")
+        .eq("id", new_set_id)
+        .single()
+        .execute()
+    )
+
+    return new_set_with_cards.data
