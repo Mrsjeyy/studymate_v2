@@ -14,7 +14,7 @@ def generate_quiz(payload: QuizGenerateRequest):
     if not settings.gemini_api_key:
         raise HTTPException(status_code=503, detail="KI nicht konfiguriert.")
 
-    count = min(payload.count, len(payload.cards), 8)
+    count = min(payload.count, 8)
     cards_text = "\n".join(
         [f"- Frage: {c.q}\n  Antwort: {c.a}" for c in payload.cards]
     )
@@ -28,6 +28,8 @@ Lernkarten:
 Regeln:
 - Teste Verständnis, nicht nur Auswendiglernen
 - Genau 4 Antwortmöglichkeiten pro Frage
+- Die 3 falschen Antworten müssen plausibel klingende, aber falsche Alternativen sein – erfinde sie aus deinem Fachwissen, auch wenn nur wenige Karten vorhanden sind
+- Bei wenigen Karten: Stelle verschiedene Aspekte desselben Themas als separate Fragen
 - Kurze präzise Erklärung warum die Antwort korrekt ist (1-2 Sätze)
 - Gib NUR ein JSON-Array zurück, ohne Markdown, ohne weiteren Text
 
