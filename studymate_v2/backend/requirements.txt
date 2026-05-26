@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-supabase
+supabase==1.0.2
 pydantic
 pydantic-settings
 email-validator
