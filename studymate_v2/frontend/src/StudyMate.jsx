@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
-  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon,
+  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon, Edit,
 } from "lucide-react";
 import { Star } from "lucide-react";
 import { supabase } from "./supabase";
@@ -724,12 +724,19 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
           </div>
           <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
             {suggestions.map(s => (
-              <div key={s.id} className="sm-card" style={{ minWidth: 220, cursor: 'pointer' }} onClick={() => onOpenSet(s)}>
+              <div key={s.id} className="sm-card" style={{ minWidth: 220, cursor: 'pointer', position: 'relative' }} onClick={() => onOpenSet(s)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <strong style={{ fontSize: 14 }}>{s.title}</strong>
                   <div style={{ color: '#64748b', fontSize: 12 }}>{s.cards.length} Karten</div>
                 </div>
                 <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>{s.description}</p>
+                {s.isPublic && s.owneruserid !== user?.id && (
+                  <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
+                    <button className="sm-btn sm-btn-ghost" style={{ padding: '4px 8px', fontSize: 12, height: 'auto' }} onClick={(e) => { e.stopPropagation(); onOpenSet(s); }} title="Set öffnen">
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -808,7 +815,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
   );
 }
 
-function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards }) {
+function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards, onUpdateSetTitle }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
@@ -824,6 +831,10 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
   const [importJson, setImportJson] = useState("");
   const [importErr, setImportErr] = useState("");
   const [importLoading, setImportLoading] = useState(false);
+  const [showEditTitle, setShowEditTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(set.title);
+  const [editDescription, setEditDescription] = useState(set.description);
+  const [editTitleLoading, setEditTitleLoading] = useState(false);
 
   const addCard = async () => {
     if (!newQ || !newA) return;
@@ -888,6 +899,18 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
     }
   };
 
+  const saveEditTitle = async () => {
+    setEditTitleLoading(true);
+    try {
+      await onUpdateSetTitle(set.id, editTitle, editDescription);
+      setShowEditTitle(false);
+    } catch (e) {
+      alert(e.message || "Fehler beim Speichern.");
+    } finally {
+      setEditTitleLoading(false);
+    }
+  };
+
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
@@ -897,6 +920,11 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{set.title}</h2>
+            {user && user.id === set.owneruserid && (
+              <button className="sm-btn sm-btn-ghost" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => setShowEditTitle(true)} title="Titel bearbeiten">
+                <Edit size={14} />
+              </button>
+            )}
             <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`} style={{ fontSize: 11 }}>
               {set.isPublic ? <><Globe size={10} /> Öffentlich</> : <><Lock size={10} /> Privat</>}
             </span>
@@ -958,6 +986,64 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
         </div>
       )}
 
+      {showImport && (
+        <div style={{ background: "rgba(139,92,246,.05)", border: "1px solid rgba(139,92,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Karten importieren</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ fontSize: 13, color: "#cbd5e1", margin: "0 0 10px", lineHeight: 1.5 }}>
+              JSON-Array mit Karten: <code style={{ background: "rgba(0,0,0,.3)", padding: "2px 6px", borderRadius: 4, fontFamily: "JetBrains Mono", fontSize: 12 }}>question</code> und <code style={{ background: "rgba(0,0,0,.3)", padding: "2px 6px", borderRadius: 4, fontFamily: "JetBrains Mono", fontSize: 12 }}>answer</code> Felder
+            </p>
+            <textarea className="sm-input" placeholder={`[{"question": "Frage 1?", "answer": "Antwort 1"}, {"question": "Frage 2?", "answer": "Antwort 2"}]`} value={importJson} onChange={e => setImportJson(e.target.value)} rows={5} style={{ resize: "vertical", fontFamily: "JetBrains Mono, monospace", fontSize: 12 }} />
+            {importErr && <div style={{ fontSize: 13, color: "#f87171" }}>{importErr}</div>}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={importCards} disabled={importLoading}>
+                {importLoading ? <><Spinner size={12} color="#080c18" /> Importieren...</> : <><Check size={13} /> Importieren</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => { setShowImport(false); setImportJson(""); setImportErr(""); }}>
+                <X size={13} /> Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEdit && (
+        <div style={{ background: "rgba(59,130,246,.05)", border: "1px solid rgba(59,130,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Karte bearbeiten</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input className="sm-input" placeholder="Frage..." value={editQ} onChange={e => setEditQ(e.target.value)} />
+            <textarea className="sm-input" placeholder="Antwort..." value={editA} onChange={e => setEditA(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+            {editErr && <div style={{ fontSize: 13, color: "#f87171" }}>{editErr}</div>}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={saveEditCard} disabled={saving}>
+                {saving ? <><Spinner size={12} color="#080c18" /> Speichern...</> : <><Check size={13} /> Speichern</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowEdit(false)}>
+                <X size={13} /> Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditTitle && (
+        <div style={{ background: "rgba(59,130,246,.05)", border: "1px solid rgba(59,130,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Set bearbeiten</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input className="sm-input" placeholder="Titel..." value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            <textarea className="sm-input" placeholder="Beschreibung..." value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={2} style={{ resize: "vertical" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={saveEditTitle} disabled={editTitleLoading}>
+                {editTitleLoading ? <><Spinner size={12} color="#080c18" /> Speichern...</> : <><Check size={13} /> Speichern</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowEditTitle(false)}>
+                <X size={13} /> Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {cards.map((c, i) => (
           <div key={c.id} style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -966,6 +1052,16 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
               <p style={{ fontSize: 14, fontWeight: 500, margin: "0 0 5px", color: "#e2e8f0" }}>{c.q}</p>
               <p style={{ fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5 }}>{c.a}</p>
             </div>
+            {user && user.id === set.owneruserid && (
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => openEditCard(c)}>
+                  <Sparkles size={13} />
+                </button>
+                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => deleteCard(c.id)}>
+                  <X size={13} />
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -1313,7 +1409,7 @@ function QuizView({ set, onBack }) {
   );
 }
 
-function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOpenSet }) {
+function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOpenSet, user }) {
   const [search, setSearch] = useState('');
   const favSets = sets.filter(s => favorites.includes(s.id));
   const filtered = favSets.filter(s => !search || s.title.toLowerCase().includes(search.toLowerCase()));
@@ -1337,8 +1433,8 @@ function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOp
               </button>
               <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>{set.title}</h3>
               <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{set.description}</p>
-              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="sm-btn sm-btn-ghost" onClick={() => onOpenSet(set)}>Öffnen</button>
+              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <button className="sm-btn sm-btn-ghost" style={{ flex: 1 }} onClick={() => onOpenSet(set)}>Öffnen</button>
               </div>
             </div>
           ))}
@@ -1650,6 +1746,29 @@ export default function StudyMate() {
     if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, isPublic: updatedSet.isPublic } : prev);
   };
 
+  const handleUpdateSetTitle = async (setId, newTitle, newDescription) => {
+    if (!newTitle.trim()) {
+      alert("Titel darf nicht leer sein.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("flashcard_sets")
+      .update({ title: newTitle.trim(), description: newDescription.trim() })
+      .eq("id", setId)
+      .select()
+      .single();
+
+    if (error) {
+      alert(error.message || "Fehler beim Aktualisieren des Sets.");
+      return;
+    }
+
+    const updatedSet = normalizeSet({ ...data, profiles: { username: user?.name || "Unbekannt", displayname: user?.name || "Unbekannt" } });
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, title: updatedSet.title } : s));
+    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, title: updatedSet.title } : prev);
+  };
+
   const handleDeleteSet = async (setId) => {
     if (!window.confirm("Möchtest du dieses Set wirklich endgültig löschen?")) return;
 
@@ -1831,8 +1950,12 @@ export default function StudyMate() {
           onLearn={() => setView("learn")}
           onQuiz={() => setView("quiz")}
           onAddCard={handleAddCard}
+          onEditCard={handleEditCard}
+          onDeleteCard={handleDeleteCard}
+          onImportCards={handleImportCards}
           onToggleVisibility={handleToggleSetVisibility}
           onDeleteSet={handleDeleteSet}
+          onUpdateSetTitle={handleUpdateSetTitle}
         />
       )}
 
@@ -1844,7 +1967,7 @@ export default function StudyMate() {
         <QuizView set={currentSet} onBack={() => setView("detail")} />
       )}
       {view === 'favorites' && (
-        <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} />
+        <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} user={user} />
       )}
       {view === 'leaderboard' && (
         <LeaderboardView onBack={() => setView('dashboard')} />
