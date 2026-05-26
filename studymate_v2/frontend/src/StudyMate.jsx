@@ -471,7 +471,7 @@ function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggle
     { id: 'dashboard', label: 'Dashboard', icon: BookOpen },
     { id: 'mine', label: 'Meine Sets', icon: Brain },
     { id: 'discover', label: 'Entdecken', icon: Globe },
-    { id: 'favorites', label: 'Favoriten', icon: Sparkles },
+    ...(user ? [{ id: 'favorites', label: 'Favoriten', icon: Sparkles }] : []),
     { id: 'leaderboard', label: 'Leaderboard', icon: Target },
     { id: 'settings', label: 'Einstellungen', icon: Shield },
   ];
@@ -2021,18 +2021,20 @@ export default function StudyMate() {
   }, []);
 
   useEffect(() => {
+    if (!user) { setFavorites([]); return; }
     try {
-      const raw = localStorage.getItem('sm_favs');
+      const raw = localStorage.getItem(`sm_favs_${user.id}`);
       setFavorites(raw ? JSON.parse(raw) : []);
     } catch (e) { setFavorites([]); }
-  }, []);
+  }, [user?.id]);
 
   const toggleFavorite = (setId) => {
+    if (!user) { setView('auth'); return; }
     setFavorites(prev => {
       const s = new Set(prev);
       if (s.has(setId)) s.delete(setId); else s.add(setId);
       const arr = Array.from(s);
-      try { localStorage.setItem('sm_favs', JSON.stringify(arr)); } catch (e) {}
+      try { localStorage.setItem(`sm_favs_${user.id}`, JSON.stringify(arr)); } catch (e) {}
       return arr;
     });
   };
@@ -2592,8 +2594,8 @@ export default function StudyMate() {
       {view === "quiz" && currentSet && (
         <QuizView set={currentSet} onBack={() => setView("detail")} />
       )}
-      {view === 'favorites' && (
-        <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} user={user} />
+      {view === 'favorites' && user && (
+        <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} />
       )}
       {view === 'leaderboard' && (
         <LeaderboardView onBack={() => setView('dashboard')} />
