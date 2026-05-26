@@ -1099,15 +1099,18 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-        <button className="learn-btn sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn}>
+        <button className="learn-btn sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn} disabled={cards.length === 0} title={cards.length === 0 ? "Füge zuerst Karten hinzu" : undefined}>
           <Brain size={15} />
           Lernen starten
         </button>
-        <button className="quiz-btn sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz}>
+        <button className="quiz-btn sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz} disabled={cards.length === 0} title={cards.length === 0 ? "Füge zuerst Karten hinzu" : undefined}>
           <Zap size={15} />
           Quiz starten
         </button>
       </div>
+      {cards.length === 0 && (
+        <p style={{ fontSize: 13, color: "#64748b", textAlign: "center", marginBottom: 16 }}>Noch keine Karten – füge welche hinzu, um zu lernen.</p>
+      )}
 
       {user && set.isPublic && set.owneruserid !== user.id && (
         <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", width: "100%", marginBottom: 20, borderColor: "rgba(0,212,170,.3)", color: "#00d4aa" }} onClick={() => onForkSet(set)}>
@@ -1245,6 +1248,15 @@ function LearnView({ set, onBack, onCompleteSet }) {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState([]);
+
+  if (set.cards.length === 0) {
+    return (
+      <div className="sm-z sm-fadeup" style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
+        <p style={{ marginBottom: 12 }}>Dieses Set hat keine Karten.</p>
+        <button className="sm-btn sm-btn-ghost" onClick={onBack}><ArrowLeft size={14} /> Zurück</button>
+      </div>
+    );
+  }
 
   const card = set.cards[idx];
   const progress = (idx / set.cards.length) * 100;
@@ -2177,6 +2189,7 @@ export default function StudyMate() {
 
     const newCard = { id: data.id, q: data.question, a: data.answer };
     setSets(prev => prev.map(s => s.id === setId ? { ...s, cards: [...s.cards, newCard] } : s));
+    setCurrentSet(prev => prev?.id === setId ? { ...prev, cards: [...prev.cards, newCard] } : prev);
     return newCard;
   };
 
