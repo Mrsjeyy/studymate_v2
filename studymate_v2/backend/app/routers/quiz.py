@@ -1,7 +1,7 @@
 import json
 import random
 
-import google.generativeai as genai
+from google import genai
 from fastapi import APIRouter, HTTPException
 
 from app.core.config import settings
@@ -38,18 +38,20 @@ Das Array enthält genau {count} Objekte (eines pro Karte, in gleicher Reihenfol
   }}
 ]"""
 
-    genai.configure(api_key=settings.gemini_api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
-
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-        raw = raw.strip()
-
     try:
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt,
+        )
+        raw = response.text.strip()
+
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+
         data = json.loads(raw)
         questions = []
         for i, item in enumerate(data[:count]):
@@ -64,5 +66,7 @@ Das Array enthält genau {count} Objekte (eines pro Karte, in gleicher Reihenfol
                 explanation=item.get("explanation", ""),
             ))
         return QuizGenerateResponse(questions=questions)
-    except Exception:
-        raise HTTPException(status_code=500, detail="KI-Antwort konnte nicht verarbeitet werden.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"KI-Fehler: {str(e)}")
