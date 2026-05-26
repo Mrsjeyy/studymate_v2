@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
-  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon,
+  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon, HelpCircle,
 } from "lucide-react";
 import { Star } from "lucide-react";
 import { supabase } from "./supabase";
@@ -78,6 +78,31 @@ function writeStreakStore(store) {
   }
 }
 
+const PROFILE_SETTINGS_KEY = "studymate-profile-settings";
+
+function readProfileSettings(userId) {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PROFILE_SETTINGS_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return data[userId] || {};
+  } catch {
+    return {};
+  }
+}
+
+function writeProfileSettings(userId, settings) {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(PROFILE_SETTINGS_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    data[userId] = { ...(data[userId] || {}), ...settings };
+    window.localStorage.setItem(PROFILE_SETTINGS_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.warn("Could not persist profile settings to localStorage.", err);
+  }
+}
+
 function getStreakState(userKey) {
   const store = readStreakStore();
   const current = store[userKey] || { count: 0, lastCompletedDate: null };
@@ -109,12 +134,43 @@ function awardDailyStreak(userKey) {
   return nextState;
 }
 
+// ── Guided Tour ────────────────────────────────────────────────────────────────
+
+const TOUR_STEPS = {
+  dashboard: [
+    { target: 'h2', title: 'Willkommen! 👋', text: 'Dies ist dein Studien-Hub. Hier siehst du öffentliche Sets und deine eigenen.' },
+    { target: '.discover-tab-btn', title: 'Entdecken', text: 'Stöbere durch öffentliche Sets von anderen Nutzern.' },
+    { target: '.mine-tab-btn', title: 'Meine Sets', text: 'Deine eigenen erstellten Sets findest du hier.' },
+    { target: '.sm-create-btn', title: 'Set erstellen', text: 'Klicke hier, um ein neues Flashcard-Set zu erstellen.' },
+  ],
+  discover: [
+    { target: '.sm-card', title: 'Öffentliche Sets', text: 'Hier siehst du Sets von anderen Nutzern. Du kannst sie forken um deine eigene Kopie zu erstellen.' },
+    { target: '.fork-btn', title: 'Set forken', text: 'Mit diesem Button kopierst du ein öffentliches Set in dein Konto.' },
+    { target: '.sm-fav-btn', title: 'Favoriten', text: 'Markiere Sets als Favorit, um sie schnell zu finden.' },
+  ],
+  mine: [
+    { target: '.sm-card', title: 'Deine Sets', text: 'Dies sind all deine erstellten Flashcard-Sets.' },
+    { target: '.sm-create-btn', title: 'Neues Set', text: 'Erstelle ein neues Set mit eigenen Karten.' },
+  ],
+  detail: [
+    { target: 'h1', title: 'Set Details', text: 'Hier sind alle Karten deines Sets aufgelistet.' },
+    { target: '.learn-btn', title: 'Lernen', text: 'Aktiviere den Lernmodus, um die Karten durchzugehen.' },
+    { target: '.quiz-btn', title: 'Quiz', text: 'Teste dein Wissen mit einem KI-generierten Quiz.' },
+  ],
+  createSet: [
+    { target: 'input[placeholder*="Titel"]', title: 'Set Name', text: 'Gib einen aussagekräftigen Namen für dein Set ein.' },
+    { target: 'textarea', title: 'Beschreibung', text: 'Beschreibe worum es in diesem Set geht.' },
+    { target: 'label:has-text("Öffentlich")', title: 'Sichtbarkeit', text: 'Mache dein Set öffentlich, damit andere es entdecken können.' },
+  ],
+};
+
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
   html, body, #root { min-height: 100%; height: 100%; margin: 0; background: #080c18; }
+  html.light, body.light, body.light #root { background: #f8fafc; }
   body { min-height: 100vh; }
   .sm * { box-sizing: border-box; }
   .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 100vh; height: 100%; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
@@ -174,8 +230,8 @@ const styles = `
   .sm-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0); }
   .sm-flip-back { position: absolute; inset: 0; transform: rotateY(180deg) translateZ(1px); }
 
-  .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-  .sm-badge-public { background: rgba(0,212,170,.12); color: #00d4aa; }
+  .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;}
+  .sm-badge-public { background: rgba(0,212,170,.12); color: #00d4aa}
   .sm-badge-private { background: rgba(255,255,255,.07); color: #64748b; }
 
   .sm-answer-btn { width: 100%; text-align: left; padding: 14px 18px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); color: #cbd5e1; font-family: 'Sora', sans-serif; font-size: 14px; cursor: pointer; transition: all .2s; line-height: 1.5; }
@@ -259,8 +315,88 @@ const styles = `
   .sm.light .sm-tab { color: #475569; }
   .sm.light .sm-divider { background: rgba(15,23,42,.06); }
   .sm.light .sm-sidebar { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
-  .sm.light .sm-modal { background: #ffffff; border: 1px solid rgba(15,23,42,.06); color: #0f172a; }
-  .sm.light .sm-fav-btn { background: rgba(0,0,0,.03); color: #475569; border: 1px solid rgba(0,0,0,.04); }
+  .tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+  }
+  .tour-highlight {
+    position: fixed;
+    border: 3px solid #00d4aa;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+  }
+  .tour-modal {
+    position: fixed;
+    background: #1e293b;
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 320px;
+    z-index: 1002;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    animation: tourSlideIn 0.3s ease-out;
+  }
+  .tour-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00d4aa;
+    margin-bottom: 8px;
+  }
+  .tour-text {
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .tour-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .tour-step-counter {
+    font-size: 12px;
+    color: #64748b;
+    flex: 1;
+  }
+  .tour-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tour-btn-skip {
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+  }
+  .tour-btn-skip:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .tour-btn-primary {
+    background: #00d4aa;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .tour-btn-primary:hover {
+    background: #00c79a;
+  }
+  @keyframes tourSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
 `;
 
@@ -276,7 +412,8 @@ function Spinner({ size = 14, color = "#00d4aa" }) {
   );
 }
 
-function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onToggleTheme }) {
+function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onToggleTheme, onProfile, onTourRestart, currentViewHasTour }) {
+
   return (
     <nav className="sm-nav">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -292,12 +429,24 @@ function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onToggleTheme }) {
         <span className="sm-mono" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {currentViewHasTour && (
+          <button
+            className="sm-btn sm-btn-ghost"
+            onClick={onTourRestart}
+            title="Tour ansehen"
+            style={{ padding: "7px 10px", fontSize: 13, color: "#00d4aa" }}
+          >
+            <HelpCircle size={14} />
+          </button>
+        )}
         <button className="sm-btn sm-btn-ghost" onClick={onToggleTheme} title="Theme umschalten" style={{ padding: "7px 10px", fontSize: 13 }}>
           {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
         </button>
         {user ? (
           <>
-            <div className="sm-avatar">{user.initial}</div>
+            <button className="sm-avatar" onClick={onProfile} title="Profil ansehen" style={{ border: 'none', background: 'transparent', padding: 0 }}>
+              {user.initial}
+            </button>
             <button className="sm-btn sm-btn-ghost" style={{ padding: "7px 14px", fontSize: 13 }} onClick={onLogout}>
               <LogOut size={14} />
               Logout
@@ -651,7 +800,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
             <p style={{ color: "#64748b", fontSize: 13, margin: '6px 0 0' }}>Nur deine eigenen Sets werden hier angezeigt.</p>
           </div>
           {user && (
-            <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+            <button className="sm-create-btn sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
               {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
               {createLoading ? "Erstellen..." : "Neues Set"}
             </button>
@@ -664,7 +813,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
             <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>Suche nach öffentlichen Sets von anderen Lernenden.</p>
           </div>
           {user && (
-            <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+            <button className="sm-create-btn sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
               {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
               {createLoading ? "Erstellen..." : "Neues Set"}
             </button>
@@ -677,7 +826,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
             <p style={{ color: "#64748b", fontSize: 14, margin: 0 }}>Dein Arbeitsbereich mit Fortschritt, Statistiken und deinen Sets.</p>
           </div>
           {user && (
-            <button className="sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
+            <button className="sm-create-btn sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
               {createLoading ? <Spinner size={14} color="#080c18" /> : <Plus size={15} />}
               {createLoading ? "Erstellen..." : "Neues Set"}
             </button>
@@ -708,7 +857,12 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         {user && (
           <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3 }}>
             {["dashboard", "discover", "mine"].map(t => (
-              <button key={t} className={`sm-tab ${tab === t ? "active" : ""}`} onClick={() => { setTab(t); onTabChange?.(t); }} style={{ padding: "6px 14px", fontSize: 13 }}>
+              <button
+                key={t}
+                className={`sm-tab ${t === "discover" ? "discover-tab-btn" : t === "mine" ? "mine-tab-btn" : ""} ${tab === t ? "active" : ""}`}
+                onClick={() => { setTab(t); onTabChange?.(t); }}
+                style={{ padding: "6px 14px", fontSize: 13 }}
+              >
                 {t === "dashboard" ? "Dashboard" : t === "discover" ? "Entdecken" : "Meine Sets"}
               </button>
             ))}
@@ -724,12 +878,19 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
           </div>
           <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
             {suggestions.map(s => (
-              <div key={s.id} className="sm-card" style={{ minWidth: 220, cursor: 'pointer' }} onClick={() => onOpenSet(s)}>
+              <div key={s.id} className="sm-card" style={{ minWidth: 220, cursor: 'pointer', position: 'relative' }} onClick={() => onOpenSet(s)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <strong style={{ fontSize: 14 }}>{s.title}</strong>
                   <div style={{ color: '#64748b', fontSize: 12 }}>{s.cards.length} Karten</div>
                 </div>
                 <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>{s.description}</p>
+                {s.isPublic && s.owneruserid !== user?.id && (
+                  <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
+                    <button className="sm-btn sm-btn-ghost" style={{ padding: '4px 8px', fontSize: 12, height: 'auto' }} onClick={(e) => { e.stopPropagation(); onOpenSet(s); }} title="Set öffnen">
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -759,7 +920,18 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
             <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
-              <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen">
+              {user && set.isPublic && set.owneruserid !== user.id && (
+                <button
+                  className="fork-btn"
+                  onClick={(e) => { e.stopPropagation(); handleForkSet(set); }}
+                  style={{ position: "absolute", top: 8, right: 50, background: "transparent", border: "none", color: "#00d4aa", cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", height: "32px", zIndex: 20 }}
+                  title="Dieses Set forken"
+                >
+                  <FlipHorizontal size={14} />
+                  Fork
+                </button>
+              )}
+              <button className={`sm-fav-btn ${favorites.includes(set.id) ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); toggleFavorite(set.id); }} title="Zu Favoriten hinzufügen" style={{ position: "absolute", top: 8, right: 10, padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", height: "32px", width: "32px", zIndex: 20 }}>
                 <Star size={14} />
               </button>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
@@ -808,7 +980,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
   );
 }
 
-function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards }) {
+function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards, onUpdateSetTitle, onForkSet }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
@@ -824,6 +996,10 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
   const [importJson, setImportJson] = useState("");
   const [importErr, setImportErr] = useState("");
   const [importLoading, setImportLoading] = useState(false);
+  const [showEditTitle, setShowEditTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(set.title);
+  const [editDescription, setEditDescription] = useState(set.description);
+  const [editTitleLoading, setEditTitleLoading] = useState(false);
 
   const addCard = async () => {
     if (!newQ || !newA) return;
@@ -868,7 +1044,7 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
       await onDeleteCard(cardId);
       setCards(prev => prev.filter(c => c.id !== cardId));
     } catch (e) {
-      alert(e.message || "Fehler beim Löschen.");
+      showToast(e.message || "Fehler beim Löschen.", 'error');
     }
   };
 
@@ -888,6 +1064,18 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
     }
   };
 
+  const saveEditTitle = async () => {
+    setEditTitleLoading(true);
+    try {
+      await onUpdateSetTitle(set.id, editTitle, editDescription);
+      setShowEditTitle(false);
+    } catch (e) {
+      alert(e.message || "Fehler beim Speichern.");
+    } finally {
+      setEditTitleLoading(false);
+    }
+  };
+
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
@@ -897,6 +1085,11 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{set.title}</h2>
+            {user && user.id === set.owneruserid && (
+              <button className="sm-btn sm-btn-ghost" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => setShowEditTitle(true)} title="Titel bearbeiten">
+                <Edit size={14} />
+              </button>
+            )}
             <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`} style={{ fontSize: 11 }}>
               {set.isPublic ? <><Globe size={10} /> Öffentlich</> : <><Lock size={10} /> Privat</>}
             </span>
@@ -906,15 +1099,22 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-        <button className="sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn}>
+        <button className="learn-btn sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn}>
           <Brain size={15} />
           Lernen starten
         </button>
-        <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz}>
+        <button className="quiz-btn sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz}>
           <Zap size={15} />
           Quiz starten
         </button>
       </div>
+
+      {user && set.isPublic && set.owneruserid !== user.id && (
+        <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", width: "100%", marginBottom: 20, borderColor: "rgba(0,212,170,.3)", color: "#00d4aa" }} onClick={() => onForkSet(set)}>
+          <FlipHorizontal size={15} />
+          Set forken
+        </button>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
         <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
@@ -958,6 +1158,64 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
         </div>
       )}
 
+      {showImport && (
+        <div style={{ background: "rgba(139,92,246,.05)", border: "1px solid rgba(139,92,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Karten importieren</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ fontSize: 13, color: "#cbd5e1", margin: "0 0 10px", lineHeight: 1.5 }}>
+              JSON-Array mit Karten: <code style={{ background: "rgba(0,0,0,.3)", padding: "2px 6px", borderRadius: 4, fontFamily: "JetBrains Mono", fontSize: 12 }}>question</code> und <code style={{ background: "rgba(0,0,0,.3)", padding: "2px 6px", borderRadius: 4, fontFamily: "JetBrains Mono", fontSize: 12 }}>answer</code> Felder
+            </p>
+            <textarea className="sm-input" placeholder={`[{"question": "Frage 1?", "answer": "Antwort 1"}, {"question": "Frage 2?", "answer": "Antwort 2"}]`} value={importJson} onChange={e => setImportJson(e.target.value)} rows={5} style={{ resize: "vertical", fontFamily: "JetBrains Mono, monospace", fontSize: 12 }} />
+            {importErr && <div style={{ fontSize: 13, color: "#f87171" }}>{importErr}</div>}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={importCards} disabled={importLoading}>
+                {importLoading ? <><Spinner size={12} color="#080c18" /> Importieren...</> : <><Check size={13} /> Importieren</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => { setShowImport(false); setImportJson(""); setImportErr(""); }}>
+                <X size={13} /> Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEdit && (
+        <div style={{ background: "rgba(59,130,246,.05)", border: "1px solid rgba(59,130,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Karte bearbeiten</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input className="sm-input" placeholder="Frage..." value={editQ} onChange={e => setEditQ(e.target.value)} />
+            <textarea className="sm-input" placeholder="Antwort..." value={editA} onChange={e => setEditA(e.target.value)} rows={3} style={{ resize: "vertical" }} />
+            {editErr && <div style={{ fontSize: 13, color: "#f87171" }}>{editErr}</div>}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={saveEditCard} disabled={saving}>
+                {saving ? <><Spinner size={12} color="#080c18" /> Speichern...</> : <><Check size={13} /> Speichern</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowEdit(false)}>
+                <X size={13} /> Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditTitle && (
+        <div style={{ background: "rgba(59,130,246,.05)", border: "1px solid rgba(59,130,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+          <p className="sm-section-title">Set bearbeiten</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <input className="sm-input" placeholder="Titel..." value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            <textarea className="sm-input" placeholder="Beschreibung..." value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={2} style={{ resize: "vertical" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="sm-btn sm-btn-primary" style={{ fontSize: 13, padding: "8px 14px" }} onClick={saveEditTitle} disabled={editTitleLoading}>
+                {editTitleLoading ? <><Spinner size={12} color="#080c18" /> Speichern...</> : <><Check size={13} /> Speichern</>}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "8px 14px" }} onClick={() => setShowEditTitle(false)}>
+                <X size={13} /> Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {cards.map((c, i) => (
           <div key={c.id} style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -966,6 +1224,16 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
               <p style={{ fontSize: 14, fontWeight: 500, margin: "0 0 5px", color: "#e2e8f0" }}>{c.q}</p>
               <p style={{ fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5 }}>{c.a}</p>
             </div>
+            {user && user.id === set.owneruserid && (
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => openEditCard(c)}>
+                  <Sparkles size={13} />
+                </button>
+                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => deleteCard(c.id)}>
+                  <X size={13} />
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -1313,7 +1581,7 @@ function QuizView({ set, onBack }) {
   );
 }
 
-function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOpenSet }) {
+function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOpenSet, user }) {
   const [search, setSearch] = useState('');
   const favSets = sets.filter(s => favorites.includes(s.id));
   const filtered = favSets.filter(s => !search || s.title.toLowerCase().includes(search.toLowerCase()));
@@ -1337,8 +1605,8 @@ function FavoritesView({ onBack, sets = [], favorites = [], toggleFavorite, onOp
               </button>
               <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>{set.title}</h3>
               <p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{set.description}</p>
-              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="sm-btn sm-btn-ghost" onClick={() => onOpenSet(set)}>Öffnen</button>
+              <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <button className="sm-btn sm-btn-ghost" style={{ flex: 1 }} onClick={() => onOpenSet(set)}>Öffnen</button>
               </div>
             </div>
           ))}
@@ -1358,6 +1626,172 @@ function LeaderboardView({ onBack }) {
   );
 }
 
+function ProfileView({ user, sets, streak, onBack, onEdit }) {
+  const totalCards = sets.reduce((sum, set) => sum + (set.cards?.length || 0), 0);
+  const username = user?.name ? user.name.toLowerCase().replace(/\s+/g, '_') : 'gast';
+  const previewSets = sets.slice(0, 4);
+
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 1080, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
+          <div style={{ width: 116, height: 116, borderRadius: 28, background: 'linear-gradient(135deg, rgba(0,212,170,.18), rgba(139,92,246,.18))', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: 86, height: 86, borderRadius: '50%', background: '#ffffff', display: 'grid', placeItems: 'center', fontSize: 36, fontWeight: 700, color: '#080c18' }}>
+              {user?.initial}
+            </div>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 6 }}>{user?.name || 'Unbekannt'}</div>
+            <div style={{ fontSize: 14, color: '#64748b', marginBottom: 14 }}>@{username}</div>
+            <div style={{ color: '#475569', fontSize: 15, lineHeight: 1.6, maxWidth: 560 }}>
+              {user?.bio || 'Lernen. Verstehen. Wiederholen. ✨'}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button className="sm-btn sm-btn-primary" style={{ minWidth: 180, justifyContent: 'center' }} onClick={onEdit}>Profil bearbeiten</button>
+          <button className="sm-btn sm-btn-ghost" onClick={onBack} style={{ minWidth: 180, justifyContent: 'center' }}>Zurück zur Übersicht</button>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginBottom: 28 }}>
+        <div className="sm-stat" style={{ padding: 22 }}>
+          <div className="sm-stat-num" style={{ color: '#00d4aa' }}>{totalCards}</div>
+          <div className="sm-stat-label">Karteikarten</div>
+        </div>
+        <div className="sm-stat" style={{ padding: 22 }}>
+          <div className="sm-stat-num" style={{ color: '#8b5cf6' }}>{sets.length}</div>
+          <div className="sm-stat-label">Karteikartensets</div>
+        </div>
+        <div className="sm-stat" style={{ padding: 22 }}>
+          <div className="sm-stat-num" style={{ color: '#f59e0b' }}>{streak || 0}</div>
+          <div className="sm-stat-label">Tage am Stück</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 22 }}>Meine Karteikartensets</h2>
+          <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 14 }}>Schnell zu deinen letzten Sets.</p>
+        </div>
+        <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13 }} onClick={onBack}>Alle anzeigen</button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+        {previewSets.map(set => (
+          <div key={set.id} className="sm-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: set.accent, display: 'grid', placeItems: 'center', color: '#ffffff', fontWeight: 700 }}>{set.authorInitial}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{set.title}</div>
+                <div style={{ color: '#64748b', fontSize: 13 }}>{set.cards.length} Karteikarten</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', color: '#94a3b8', fontSize: 13 }}>
+              Zuletzt gelernt: heute
+            </div>
+          </div>
+        ))}
+        {previewSets.length === 0 && (
+          <div className="sm-card" style={{ gridColumn: '1 / -1', color: '#64748b' }}>
+            Keine Sets verfügbar.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileEditView({ user, onBack, onSave }) {
+  const [displayName, setDisplayName] = useState(user?.name || "");
+  const [bio, setBio] = useState(user?.bio || "");
+  const [imageData, setImageData] = useState(user?.imageData || null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageData(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    setError("");
+    if (!displayName.trim()) {
+      setError("Bitte gib einen Anzeigenamen ein.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(displayName.trim(), bio.trim(), imageData);
+    } catch (err) {
+      setError(err?.message || "Speichern fehlgeschlagen.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 840, margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 26 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>Profil bearbeiten</h2>
+          <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: 14 }}>Passe dein öffentliches Profil an.</p>
+        </div>
+        <button className="sm-btn sm-btn-ghost" onClick={onBack}>Abbrechen</button>
+      </div>
+
+      <div className="sm-card" style={{ padding: 28, borderRadius: 24 }}>
+        <div style={{ display: 'grid', gap: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap' }}>
+            <div style={{ width: 96, height: 96, borderRadius: 999, overflow: 'hidden', background: '#e2e8f0', display: 'grid', placeItems: 'center' }}>
+              {imageData ? (
+                <img src={imageData} alt="Profilbild" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: 92, height: 92, borderRadius: '50%', background: '#cbd5e1', display: 'grid', placeItems: 'center', color: '#475569', fontSize: 28, fontWeight: 700 }}>
+                  {user?.initial}
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <label className="sm-btn sm-btn-primary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                Bild ändern
+                <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              </label>
+              <button className="sm-btn sm-btn-ghost" type="button" onClick={() => setImageData(null)}>
+                Entfernen
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Anzeigename</label>
+            <input className="sm-input" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Bio</label>
+            <textarea className="sm-input" rows={4} value={bio} onChange={e => setBio(e.target.value)} style={{ resize: 'vertical' }} />
+          </div>
+
+          {error && <div style={{ color: '#f87171', fontSize: 13 }}>{error}</div>}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+            <button className="sm-btn sm-btn-ghost" type="button" onClick={onBack}>Abbrechen</button>
+            <button className="sm-btn sm-btn-primary" type="button" onClick={handleSave} disabled={saving}>
+              {saving ? 'Speichern...' : 'Speichern'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SettingsView({ onBack }) {
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24 }}>
@@ -1369,6 +1803,75 @@ function SettingsView({ onBack }) {
 }
 
 // ── Root ──────────────────────────────────────────────────────────────────────
+
+function GuidedTourOverlay({ active, step, viewName, onNext, onPrev, onSkip }) {
+  if (!active || !viewName || !TOUR_STEPS[viewName] || !TOUR_STEPS[viewName][step]) {
+    return null;
+  }
+
+  const tourStep = TOUR_STEPS[viewName][step];
+  const totalSteps = TOUR_STEPS[viewName].length;
+
+  // Find target element
+  const targetEl = document.querySelector(tourStep.target);
+  if (!targetEl) return null;
+
+  const rect = targetEl.getBoundingClientRect();
+
+  // Calculate modal position (below target or above if no space)
+  let modalTop = rect.bottom + 20;
+  let modalLeft = Math.max(20, rect.left + rect.width / 2 - 160);
+
+  if (window.innerHeight - rect.bottom < 250) {
+    modalTop = rect.top - 220;
+  }
+
+  // Keep modal on screen
+  if (modalLeft + 320 > window.innerWidth) {
+    modalLeft = window.innerWidth - 340;
+  }
+
+  return (
+    <div className="tour-overlay">
+      <div
+        className="tour-highlight"
+        style={{
+          left: rect.left - 6,
+          top: rect.top - 6,
+          width: rect.width + 12,
+          height: rect.height + 12,
+        }}
+      />
+      <div
+        className="tour-modal"
+        style={{
+          left: modalLeft,
+          top: modalTop,
+        }}
+      >
+        <div className="tour-title">{tourStep.title}</div>
+        <div className="tour-text">{tourStep.text}</div>
+        <div className="tour-actions">
+          <div className="tour-step-counter">{step + 1} von {totalSteps}</div>
+          <button className="tour-btn tour-btn-skip" onClick={onSkip}>
+            Überspringen
+          </button>
+          {step > 0 && (
+            <button className="tour-btn tour-btn-skip" onClick={onPrev}>
+              Zurück
+            </button>
+          )}
+          <button
+            className="tour-btn tour-btn-primary"
+            onClick={onNext}
+          >
+            {step === totalSteps - 1 ? 'Fertig' : 'Weiter'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function StudyMate() {
   const [view, setView] = useState("dashboard");
@@ -1387,10 +1890,74 @@ export default function StudyMate() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardTab, setDashboardTab] = useState('discover');
   const [favorites, setFavorites] = useState([]);
+  const [showForkDialog, setShowForkDialog] = useState(false);
+  const [forkSourceSet, setForkSourceSet] = useState(null);
+  const [forkTitle, setForkTitle] = useState("");
+  const [forkDescription, setForkDescription] = useState("");
+  const [forkError, setForkError] = useState("");
+  const [forkLoading, setForkLoading] = useState(false);
   const recoveryMode = useRef(false);
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('sm_theme') || 'dark'; } catch (e) { return 'dark'; }
   });
+  const [toast, setToast] = useState(null);
+  const [tourActive, setTourActive] = useState(false);
+  const [currentTourStep, setCurrentTourStep] = useState(0);
+  const [tourCurrentView, setTourCurrentView] = useState(null);
+  const [tourCompleted, setTourCompleted] = useState(() => {
+    try {
+      const data = localStorage.getItem('sm_tour_completed');
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), duration);
+  };
+
+  // Tour helper functions
+  const startTour = (viewName) => {
+    setTourCurrentView(viewName);
+    setCurrentTourStep(0);
+    setTourActive(true);
+  };
+
+  const skipTour = () => {
+    if (tourCurrentView) {
+      finishTour(tourCurrentView);
+    }
+  };
+
+  const nextStep = () => {
+    if (!tourCurrentView) return;
+    const currentSteps = TOUR_STEPS[tourCurrentView];
+    if (currentTourStep < currentSteps.length - 1) {
+      setCurrentTourStep(prev => prev + 1);
+    } else {
+      finishTour(tourCurrentView);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentTourStep > 0) {
+      setCurrentTourStep(prev => prev - 1);
+    }
+  };
+
+  const finishTour = (viewName) => {
+    const updated = {
+      ...tourCompleted,
+      [viewName]: { completed: true, completedAt: new Date().toISOString() }
+    };
+    localStorage.setItem('sm_tour_completed', JSON.stringify(updated));
+    setTourCompleted(updated);
+    setTourActive(false);
+    setTourCurrentView(null);
+    setCurrentTourStep(0);
+  };
 
   useEffect(() => {
     const el = document.createElement("style");
@@ -1410,6 +1977,13 @@ export default function StudyMate() {
   useEffect(() => {
     try { localStorage.setItem('sm_theme', theme); } catch (e) {}
   }, [theme]);
+
+  // Auto-start tour on first dashboard visit
+  useEffect(() => {
+    if (user && view === 'dashboard' && !tourCompleted.dashboard && !tourActive) {
+      setTimeout(() => startTour('dashboard'), 800);
+    }
+  }, [view, user, tourCompleted.dashboard, tourActive]);
 
   useEffect(() => {
     // onAuthStateChange muss VOR getSession registriert sein
@@ -1487,9 +2061,33 @@ export default function StudyMate() {
       .single();
 
     const name = profile?.displayname || profile?.username || authUser.email.split("@")[0];
-    setUser({ id: authUser.id, email: authUser.email, name, initial: name[0].toUpperCase() });
+    const settings = readProfileSettings(authUser.id);
+    setUser({
+      id: authUser.id,
+      email: authUser.email,
+      name,
+      initial: name[0]?.toUpperCase() || "U",
+      bio: settings.bio || "",
+      imageData: settings.imageData || null,
+    });
     setView("dashboard");
     await fetchSets(authUser.id);
+  };
+
+  const handleSaveProfile = async (displayName, bio, imageData) => {
+    if (!user) throw new Error("Kein Benutzer angemeldet.");
+    const { error } = await supabase
+      .from("profiles")
+      .update({ displayname: displayName })
+      .eq("id", user.id);
+
+    if (error) {
+      console.warn("Profil-Update fehlgeschlagen: ", error.message);
+      throw new Error("Profil konnte nicht gespeichert werden.");
+    }
+
+    writeProfileSettings(user.id, { bio, imageData });
+    setUser(prev => prev ? ({ ...prev, name: displayName, initial: displayName[0]?.toUpperCase() || "U", bio, imageData }) : prev);
   };
 
   const fetchSets = async (userId = null) => {
@@ -1584,7 +2182,7 @@ export default function StudyMate() {
 
   const handleCreateSet = () => {
     if (!user) {
-      alert("Bitte melde dich an, um ein neues Set zu erstellen.");
+      showToast("Bitte melde dich an, um ein neues Set zu erstellen.", 'error');
       setView("auth");
       return;
     }
@@ -1643,13 +2241,36 @@ export default function StudyMate() {
       .single();
 
     if (error) {
-      alert(error.message || "Fehler beim Aktualisieren der Sichtbarkeit.");
+      showToast(error.message || "Fehler beim Aktualisieren der Sichtbarkeit.", 'error');
       return;
     }
 
     const updatedSet = normalizeSet({ ...data, profiles: { username: user?.name || "Unbekannt", displayname: user?.name || "Unbekannt" } });
     setSets(prev => prev.map(s => s.id === setId ? { ...s, isPublic: updatedSet.isPublic } : s));
     if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, isPublic: updatedSet.isPublic } : prev);
+  };
+
+  const handleUpdateSetTitle = async (setId, newTitle, newDescription) => {
+    if (!newTitle.trim()) {
+      alert("Titel darf nicht leer sein.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("flashcard_sets")
+      .update({ title: newTitle.trim(), description: newDescription.trim() })
+      .eq("id", setId)
+      .select()
+      .single();
+
+    if (error) {
+      alert(error.message || "Fehler beim Aktualisieren des Sets.");
+      return;
+    }
+
+    const updatedSet = normalizeSet({ ...data, profiles: { username: user?.name || "Unbekannt", displayname: user?.name || "Unbekannt" } });
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, title: updatedSet.title } : s));
+    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, title: updatedSet.title } : prev);
   };
 
   const handleDeleteSet = async (setId) => {
@@ -1661,7 +2282,7 @@ export default function StudyMate() {
       .eq("id", setId);
 
     if (error) {
-      alert(error.message || "Fehler beim Löschen des Sets.");
+      showToast(error.message || "Fehler beim Löschen des Sets.", 'error');
       return;
     }
 
@@ -1669,6 +2290,78 @@ export default function StudyMate() {
     if (currentSet?.id === setId) {
       setCurrentSet(null);
       setView("dashboard");
+    }
+  };
+
+  const handleForkSet = async (sourceSet) => {
+    console.log("handleForkSet called with:", sourceSet);
+    if (!user) {
+      showToast("Bitte melde dich an, um ein Set zu forken.", 'error');
+      return;
+    }
+
+    setForkSourceSet(sourceSet);
+    setForkTitle(sourceSet.title);
+    setForkDescription(sourceSet.description);
+    setForkError("");
+    setShowForkDialog(true);
+  };
+
+  const submitForkSet = async () => {
+    console.log("submitForkSet called, forkSourceSet:", forkSourceSet);
+    const title = forkTitle.trim();
+    if (!title) {
+      setForkError("Bitte gib einen Titel für das geforkte Set ein.");
+      return;
+    }
+
+    setForkLoading(true);
+    setForkError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Authentifizierung erforderlich.");
+      }
+
+      const apiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${forkSourceSet.id}/fork`;
+      console.log("Calling fork API:", apiUrl);
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Fork response status:", response.status);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || "Fehler beim Forken des Sets.");
+      }
+
+      const forkedSet = await response.json();
+      console.log("Forked set:", forkedSet);
+      const normalizedSet = normalizeSet({ ...forkedSet, profiles: { username: user.name, displayname: user.name } });
+
+      const updatedSet = { ...normalizedSet, title, description: forkDescription };
+      await supabase
+        .from("flashcard_sets")
+        .update({ title, description: forkDescription })
+        .eq("id", updatedSet.id)
+        .execute();
+
+      setSets(prev => [updatedSet, ...prev]);
+      setShowForkDialog(false);
+      showToast(`Set erfolgreich als "${title}" geforkt!`, 'success');
+      fetchSets(user?.id);
+    } catch (error) {
+      console.error("Fork error:", error);
+      setForkError(error?.message || "Fehler beim Forken des Sets.");
+    } finally {
+      setForkLoading(false);
     }
   };
 
@@ -1717,7 +2410,7 @@ export default function StudyMate() {
         await handleAddCard(setId, card.question, card.answer);
         imported++;
       }
-      alert(`${imported} Karten erfolgreich importiert!`);
+      showToast(`${imported} Karten erfolgreich importiert!`, 'success');
       return imported;
     } catch (e) {
       throw new Error(`Import-Fehler: ${e.message}`);
@@ -1740,7 +2433,7 @@ export default function StudyMate() {
   }
 
   return (
-    <div className={`sm ${sidebarCollapsed ? 'sm-collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
+    <div className={`sm ${theme === 'light' ? 'light' : ''} ${sidebarCollapsed ? 'sm-collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
       <div className="sm-grid" />
       {(view !== "auth" && view !== "forgot" && view !== "reset") && (
         <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={handleToggleSidebar} onCloseMobile={() => setSidebarOpenMobile(false)} />
@@ -1750,7 +2443,19 @@ export default function StudyMate() {
         <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
 
       {view !== "auth" && view !== "forgot" && view !== "reset" && (
-        <NavBar user={user} onHome={goHome} onLogout={handleLogout} onGoToLogin={() => setView("auth")} theme={theme} onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />
+
+        <NavBar
+          user={user}
+          onHome={goHome}
+          onLogout={handleLogout}
+          onProfile={() => setView('profile')}
+          onGoToLogin={() => setView("auth")}
+          theme={theme}
+          onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          onTourRestart={() => startTour(view === 'dashboard' && dashboardTab === 'discover' ? 'discover' : view === 'dashboard' && dashboardTab === 'mine' ? 'mine' : view)}
+          currentViewHasTour={!!TOUR_STEPS[view === 'dashboard' && dashboardTab === 'discover' ? 'discover' : view === 'dashboard' && dashboardTab === 'mine' ? 'mine' : view]}
+        />
+
       )}
 
       {showCreateSetDialog && (
@@ -1784,6 +2489,35 @@ export default function StudyMate() {
                 {createLoading ? <><Spinner size={14} color="#080c18" /> Erstellen...</> : "Set erstellen"}
               </button>
               <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => setShowCreateSetDialog(false)}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showForkDialog && (
+        <div className="sm-modal-overlay" onClick={() => setShowForkDialog(false)}>
+          <div className="sm-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div>
+                <h3>Set forken</h3>
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>Bearbeite den Namen deines geforkten Sets.</p>
+              </div>
+              <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 10px" }} onClick={() => setShowForkDialog(false)}>
+                <X size={14} /> Abbrechen
+              </button>
+            </div>
+            <label>Titel</label>
+            <input className="sm-input" placeholder="Titel eingeben" value={forkTitle} onChange={e => setForkTitle(e.target.value)} />
+            <label>Beschreibung</label>
+            <textarea className="sm-input" rows={4} placeholder="Beschreibung (optional)" value={forkDescription} onChange={e => setForkDescription(e.target.value)} style={{ resize: "vertical" }} />
+            {forkError && <div className="sm-modal-error">{forkError}</div>}
+            <div className="sm-modal-actions">
+              <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={submitForkSet} disabled={forkLoading}>
+                {forkLoading ? <><Spinner size={14} color="#080c18" /> Forken...</> : "Set forken"}
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => setShowForkDialog(false)}>
                 Abbrechen
               </button>
             </div>
@@ -1825,6 +2559,17 @@ export default function StudyMate() {
         />
       )}
 
+      {view === "profile" && (
+        <ProfileView user={user} sets={sets} streak={streak} onBack={() => setView('dashboard')} onEdit={() => setView('profile_edit')} />
+      )}
+
+      {view === "profile_edit" && (
+        <ProfileEditView user={user} onBack={() => setView('profile')} onSave={async (name, bio, imageData) => {
+          await handleSaveProfile(name, bio, imageData);
+          setView('profile');
+        }} />
+      )}
+
       {view === "detail" && currentSet && (
         <DetailView
           set={currentSet}
@@ -1833,8 +2578,12 @@ export default function StudyMate() {
           onLearn={() => setView("learn")}
           onQuiz={() => setView("quiz")}
           onAddCard={handleAddCard}
+          onEditCard={handleEditCard}
+          onDeleteCard={handleDeleteCard}
+          onImportCards={handleImportCards}
           onToggleVisibility={handleToggleSetVisibility}
           onDeleteSet={handleDeleteSet}
+          onForkSet={handleForkSet}
         />
       )}
 
@@ -1854,6 +2603,24 @@ export default function StudyMate() {
       {view === 'settings' && (
         <SettingsView onBack={() => setView('dashboard')} />
       )}
+
+      {toast && (
+        <div className={`sm-toast sm-toast-${toast.type}`}>
+          {toast.type === 'success' && <Check size={16} />}
+          {toast.type === 'error' && <X size={16} />}
+          {toast.type === 'info' && <Sparkles size={16} />}
+          {toast.message}
+        </div>
+      )}
+
+      <GuidedTourOverlay
+        active={tourActive}
+        step={currentTourStep}
+        viewName={tourCurrentView}
+        onNext={nextStep}
+        onPrev={prevStep}
+        onSkip={skipTour}
+      />
     </div>
   </div>
   );
