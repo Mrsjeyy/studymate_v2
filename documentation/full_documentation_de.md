@@ -40,6 +40,22 @@ StudyMate v2 ist eine moderne Webanwendung für Karteikarten‑basiertes Lernen.
 
 Diese Dokumentation richtet sich an Entwickler*innen, DevOps‑Verantwortliche und evaluierende Interessenten. Sie deckt Architektur, Setup, API‑Spezifikationen, Sicherheit, Tests, Deployment und Best Practices ab.
 
+Feature-Überblick:
+
+- Authentifizierung mit Supabase, inklusive Gastmodus und Passwort-Reset über Recovery-Email
+- Dashboard mit Statistiken, Suche, öffentlichen Sets und eigenen Sets
+- Favoritenliste pro Browser-Session/Benutzer
+- Lernmodus mit Kartenansicht und Streak-Aktualisierung nach abgeschlossener Session
+- Standard-Quiz aus vorhandenen Karten
+- KI-Quiz über Gemini, falls der Schlüssel konfiguriert ist
+- Set-Verwaltung mit Erstellen, Sichtbarkeit umschalten und Löschen
+- Kartenverwaltung mit Anlegen, Bearbeiten, Löschen und JSON-Import
+
+Wichtiger UI‑Hinweis:
+- Das Frontend zeigt einen Tagesstreak für abgeschlossene Lernsessions an.
+- Der Streak zählt nur bei Lernaktivität an aufeinanderfolgenden Kalendertagen weiter.
+- Wird länger als ein Kalendertag nicht gelernt, setzt sich der Streak beim nächsten Laden oder beim nächsten Statuscheck auf 0 zurück.
+
 2. Architekturübersicht
 -----------------------
 
@@ -73,11 +89,18 @@ Client (Browser) —HTTPS—> FastAPI —Supabase client—> Supabase (DB/Auth)
 
 3.2 Frontend (Ordner: `frontend/`)
 
-- `src/main.tsx` — Einstiegspunkt und Mounting
-- `src/App.tsx` — Layout & Beispielzustand (Demo Data)
-- `src/components/` — UI Komponenten
-- `src/components/ui/` — primitives / design system
-- `vite.config.ts` — Dev / Build Konfiguration
+- `src/main.jsx` — Einstiegspunkt und Mounting
+- `src/StudyMate.jsx` — komplette App-Logik, Views, lokale UI und API-Anbindung
+- `src/supabase.js` — Supabase-Client-Konfiguration
+- `index.html` — HTML Shell für Vite
+- `package.json` — Skripte und Abhängigkeiten
+
+Wichtige Browser-Features aus `StudyMate.jsx`:
+
+- Login, Registrierung, Gastmodus und Passwort-Reset
+- Dashboard mit Suche, Tabs und Favoriten
+- Set-Detail mit Lernmodus, Quiz, Bearbeitung und Import
+- Streak-Tracking im Browser-Storage
 
 4. Lokale Entwicklungsumgebung (Schritt‑für‑Schritt)
 -------------------------------------------------
@@ -156,6 +179,16 @@ POST /auth/forgot-password
 
 Response: `{ "message": "ok" }` (aus Sicherheitsgründen immer generisch)
 
+Beispiel aus dem Frontend:
+
+```jsx
+const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
+	method: "POST",
+	headers: { "Content-Type": "application/json" },
+	body: JSON.stringify({ username }),
+});
+```
+
 6.2 Sets
 
 GET /sets/public
@@ -184,6 +217,21 @@ PUT /sets/{set_id}
 DELETE /sets/{set_id}
 - Auth: erforderlich; Only owner
 
+Beispiel für das Erstellen eines Sets im Frontend:
+
+```jsx
+const { data, error } = await supabase
+	.from("flashcard_sets")
+	.insert({
+		owneruserid: user.id,
+		title,
+		description,
+		ispublic: createIsPublic,
+	})
+	.select("*, flashcards(*)")
+	.single();
+```
+
 6.3 Cards
 
 GET /sets/{set_id}/cards
@@ -205,6 +253,15 @@ Request Beispiel:
 DELETE /cards/{card_id}
 - Auth: erforderlich; `require_card_owner` prüft Eigentümerschaft
 
+JSON-Import für Karten im Frontend:
+
+```jsx
+const cards = JSON.parse(jsonText);
+for (const card of cards) {
+	await handleAddCard(setId, card.question, card.answer);
+}
+```
+
 6.4 Quiz Endpunkte (KI‑Integration)
 
 `POST /quiz/generate` (Beispiel)
@@ -212,6 +269,34 @@ DELETE /cards/{card_id}
 - Response Schema: `QuizGenerateResponse`
 
 Anmerkung: Die Implementierung nutzt optional `GEMINI_API_KEY` für KI‑gestützte Generierung; ohne Key kann eine heuristische Quizgenerierung genutzt werden.
+
+Beispielaufruf aus dem Frontend:
+
+```jsx
+const res = await fetch(`${import.meta.env.VITE_API_URL}/quiz/generate`, {
+	method: "POST",
+	headers: { "Content-Type": "application/json" },
+	body: JSON.stringify({
+		cards: set.cards.map(c => ({ q: c.q, a: c.a })),
+		count: 5,
+	}),
+});
+```
+
+Antwortstruktur im Backend:
+
+```json
+{
+	"questions": [
+		{
+			"question": "...",
+			"options": ["A", "B", "C", "D"],
+			"correct": 2,
+			"explanation": "..."
+		}
+	]
+}
+```
 
 7. Datenbank‑Schema & Migrationshinweise
 ---------------------------------------
@@ -243,18 +328,94 @@ Wichtige Sicherheitsregeln:
 9. Frontend‑Architektur & wichtige Komponenten
 ---------------------------------------------
 
-Designprinzipien:
-- Komponentenorientiertes Design mit Reusable UI Primitives unter `src/components/ui/`
-- Tailwind CSS + Utility Classes für schnelles Styling
+Die Frontend-Anwendung steckt vollständig in `src/StudyMate.jsx`. Dort werden alle Views und die zugehörigen Aktionen definiert. Die wichtigsten Flows sind:
 
-Wichtige Komponenten (Kurzbeschreibung):
-- `Header` — enthält Suche, Neu‑Kurs Button, Nutzer Menü
-- `CourseGrid`, `CourseCard` — Darstellung von Kursen / Sets
-- `RecentCourses` — kleine Ansicht zuletzt verwendeter Sets
-- `ui/card.tsx` — Card primitives (Title, Content, Footer)
+- `AuthView` für Login, Registrierung, Gastmodus und Passwort-Reset
+- `DashboardView` für Suche, Tabs, Statistiken und Favoriten
+- `DetailView` für Kartenverwaltung, Import, Löschen, Lernmodus und Quiz
+- `QuizView` für Standard-Quiz und KI-Quiz
+- `FavoritesView` für gespeicherte Sets
+- `LeaderboardView` und `SettingsView` als Platzhalter-Views
+
+Beispiel: Login und Registrierung im Frontend
+
+```jsx
+const handleLogin = () => {
+	if (!username || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
+	attempt(() => onLogin(username, pass));
+};
+
+const handleRegister = () => {
+	if (!username || !pass) { setErr("Bitte alle Felder ausfüllen."); return; }
+	if (username.length < 3) { setErr("Benutzername mindestens 3 Zeichen."); return; }
+	if (!/^[a-zA-Z0-9_]+$/.test(username)) { setErr("Benutzername darf nur Buchstaben, Zahlen und _ enthalten."); return; }
+	if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
+	attempt(() => onRegister(username, pass, recoveryEmail || null));
+};
+```
+
+Beispiel: Streak-Aktualisierung nach abgeschlossener Lernsitzung
+
+```jsx
+const handleCompleteSet = () => {
+	const key = user?.id || "guest";
+	const updated = awardDailyStreak(key);
+	setStreak(updated.count);
+};
+```
+
+Beispiel: Set-Erstellung im Dashboard
+
+```jsx
+const submitCreateSet = async () => {
+	const title = createTitle.trim();
+	const description = createDescription.trim();
+	if (!title) {
+		setCreateError("Bitte gib einen Titel für dein Set ein.");
+		return;
+	}
+
+	const { data, error } = await supabase
+		.from("flashcard_sets")
+		.insert({ owneruserid: user.id, title, description, ispublic: createIsPublic })
+		.select("*, flashcards(*)")
+		.single();
+};
+```
+
+Beispiel: KI-Quiz anlegen
+
+```jsx
+const generateAIQuiz = async () => {
+	const res = await fetch(`${import.meta.env.VITE_API_URL}/quiz/generate`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ cards: set.cards.map(c => ({ q: c.q, a: c.a })), count: 5 }),
+	});
+	const data = await res.json();
+	setAiQuestions(data.questions);
+};
+```
+
+Streak-Logik im Frontend:
+- Die Streak-Daten werden lokal in `localStorage` gespeichert.
+- `awardDailyStreak()` erhöht den Streak nur, wenn am Vortag bereits gelernt wurde.
+- `getStreakState()` setzt den Wert zurück, wenn seit der letzten Aktivität mehr als ein Kalendertag vergangen ist.
+- Ein periodischer Refresh sorgt dafür, dass der Wert auch ohne neue Lernaktion aus dem UI verschwindet.
+
+Favoriten und Dashboard:
+- Favoriten werden als Set-ID-Liste gespeichert.
+- Das Dashboard filtert zwischen `dashboard`, `discover` und `mine`.
+- Öffentliche Sets werden im Discover-Tab angezeigt, private Sets nur im eigenen Bereich.
+
+Lern- und Quizmodus:
+- Der Lernmodus wird aus dem Set-Detail heraus gestartet.
+- Der Standard-Quizmodus generiert Multiple-Choice-Fragen aus vorhandenen Karten.
+- Der KI-Quizmodus nutzt den Backend-Endpunkt `/quiz/generate`.
 
 Data fetching pattern:
-- Supabase JS Client sollte in Frontend integriert werden; aktuell enthält das Repo Platzhalter/Demo‑Daten.
+- Das Frontend liest öffentliche Daten direkt oder über Supabase und aktualisiert den lokalen UI-Zustand danach.
+- Karten- und Set-Änderungen werden sofort in den lokalen State gespiegelt, damit die UI ohne Reload aktuell bleibt.
 
 10. UI/UX, Animationen & Browser‑Kompatibilität (Flip‑Card Bugfix)
 -----------------------------------------------------------------
