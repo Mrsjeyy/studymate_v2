@@ -1,7 +1,7 @@
 import json
 import random
 
-from google import genai
+from openai import OpenAI
 from fastapi import APIRouter, HTTPException
 
 from app.core.config import settings
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/quiz/generate", response_model=QuizGenerateResponse)
 def generate_quiz(payload: QuizGenerateRequest):
-    if not settings.gemini_api_key:
+    if not settings.groq_api_key:
         raise HTTPException(status_code=503, detail="KI nicht konfiguriert.")
 
     count = min(payload.count, len(payload.cards), 8)
@@ -39,12 +39,16 @@ Das Array enthält genau {count} Objekte (eines pro Karte, in gleicher Reihenfol
 ]"""
 
     try:
-        client = genai.Client(api_key=settings.gemini_api_key)
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=prompt,
+        client = OpenAI(
+            api_key=settings.groq_api_key,
+            base_url="https://api.groq.com/openai/v1",
         )
-        raw = response.text.strip()
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+        )
+        raw = response.choices[0].message.content.strip()
 
         if raw.startswith("```"):
             raw = raw.split("```")[1]
