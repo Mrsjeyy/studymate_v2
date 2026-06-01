@@ -116,6 +116,7 @@ def fork_set(
         supabase.table("flashcards")
         .select("*")
         .eq("setid", set_id)
+        .order("position")
         .execute()
     )
 
@@ -125,6 +126,7 @@ def fork_set(
                 "setid": new_set_id,
                 "question": card["question"],
                 "answer": card["answer"],
+                "position": card.get("position", 0),
             }
         ).execute()
 
