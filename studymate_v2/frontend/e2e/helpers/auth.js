@@ -1,14 +1,8 @@
-import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: resolve(__dirname, '../../.env.test') });
-
+// Env vars are loaded by playwright.config.js via dotenv before any test runs.
 export const TEST_USERNAME = process.env.TEST_USERNAME || 'pw_test_user';
 export const TEST_PASSWORD = process.env.TEST_PASSWORD || 'test_pw_123!';
 
-/** Skip the guided tour by presetting localStorage before page hydration. */
+/** Disable the guided tour by presetting localStorage before page hydration. */
 export async function skipTour(page) {
   await page.addInitScript(() => {
     const completed = {
@@ -29,13 +23,11 @@ export async function login(page, username = TEST_USERNAME, password = TEST_PASS
   await page.locator('input[placeholder="dein_username"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button:has-text("Anmelden")').click();
-  // Wait until the create button appears – signals a successful login.
   await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 }
 
 /** Log out via the sidebar logout button. */
 export async function logout(page) {
-  // Open sidebar on mobile if needed.
   const logoutBtn = page.locator('button[title="Abmelden"], button:has-text("Abmelden")').first();
   await logoutBtn.click();
   await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 10000 });
