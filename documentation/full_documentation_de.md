@@ -1109,18 +1109,126 @@ Pull Requests werden nach Code-Review in `main` gemerged.
 
 ### Aktueller Stand
 
-Das Projekt enthält aktuell keine automatisierten Tests. Für die zukünftige Entwicklung werden folgende Teststrategien empfohlen:
+Die Qualitätssicherung erfolgt durch zwei Ebenen: strukturiertes manuelles Testen (Projektboard) sowie automatisierte E2E-Tests mit Playwright, die alle manuell geprüften Szenarien reproduzierbar abdecken.
 
-### Empfohlene Teststrategie
+### Durchgeführte manuelle Tests
 
-#### Backend-Tests (pytest)
+Alle Tests wurden manuell im Browser (Chrome und Firefox) sowie auf mobilen Viewports (Responsive Design) durchgeführt. Die Ergebnisse wurden im Projektboard (Spalte „Review / Testing") nachverfolgt.
+
+#### Authentifizierung
+
+| Testfall | Ergebnis |
+|---|---|
+| Login mit gültigen Zugangsdaten | ✅ Erfolgreich |
+| Logout | ✅ Session wird korrekt beendet |
+| Gastansicht (ohne Login) | ✅ Eingeschränkter Zugriff korrekt |
+
+#### Karteikarten & Lernsets
+
+| Testfall | Ergebnis |
+|---|---|
+| Karten erstellen | ✅ Karte wird gespeichert und angezeigt |
+| Karten laden | ✅ Karten werden korrekt aus der Datenbank geladen |
+| Karten bearbeiten | ✅ Änderungen werden übernommen |
+| Karten löschen | ✅ Karte wird entfernt |
+| Lernsets bearbeiten (Titel, Beschreibung) | ✅ Erfolgreich |
+| Lernsets löschen | ✅ Erfolgreich, Set verschwindet aus der Liste |
+| Private Lernsets | ✅ Nur für Eigentümer sichtbar |
+
+#### Infrastruktur & Deployment
+
+| Testfall | Ergebnis |
+|---|---|
+| Supabase-Verbindung prüfen | ✅ Datenbankabfragen funktionieren korrekt |
+| Deployment (Vercel/Production) | ✅ Produktivumgebung erreichbar und funktionsfähig |
+| Mobile Ansicht | ✅ Layout passt sich korrekt an kleine Bildschirme an |
+
+#### Gamification
+
+| Testfall | Ergebnis |
+|---|---|
+| Streaks | ✅ Lernserie wird korrekt gezählt und angezeigt |
+| Guided Tour | ✅ Tour startet bei Erstnutzung und kann übersprungen werden |
+
+#### Bekannte Bugs (identifiziert beim Testen)
+
+| Bug | Status |
+|---|---|
+| Sterne-Favoriten-Icon überlappt den „Karten"-Text in der Set-Karte | Offen |
+| Startseite leitet in Firefox nicht auf das Dashboard weiter | Offen |
+
+### Bugfix: Fork-Funktion kopiert Karten ohne Position (2026-06-01)
+
+**Problem:** Beim Forken eines öffentlichen Sets wurden die Karteikarten ohne das `position`-Feld in die neue Kopie eingefügt. Dadurch verloren die Karten ihre Reihenfolge, da `GET /sets/{set_id}/cards` nach `position` sortiert.
+
+**Ursache:** In `backend/app/routers/sets.py` fehlte `"position": card.get("position", 0)` beim Einfügen der kopierten Karten. Außerdem wurden die Quellkarten nicht nach `position` abgefragt.
+
+**Fix:** Quellkarten werden nun mit `.order("position")` abgefragt, und das `position`-Feld wird beim Insert in die Kopie übernommen.
+
+**Getestet durch:** Manuellen Test — öffentliches Set mit mehreren geordneten Karten geforkt, Reihenfolge der Karten im geforkten Set überprüft.
+
+### Automatisierte E2E-Tests mit Playwright (ab 2026-06-01)
+
+Die E2E-Tests befinden sich im Verzeichnis [`frontend/e2e/`](../studymate_v2/frontend/e2e/) und laufen mit [Playwright](https://playwright.dev/). Sie decken alle manuell geprüften Szenarien ab und führen sie automatisiert gegen die echte Supabase-Instanz aus.
+
+#### Voraussetzungen
+
+1. Einen Test-Benutzer in Supabase anlegen (einmalig über die App registrieren oder über das Supabase-Dashboard)
+2. Zugangsdaten in `frontend/.env.test` eintragen:
+
+```env
+TEST_USERNAME=testUser
+TEST_PASSWORD=password
+```
+
+#### Tests ausführen
+
+```bash
+cd studymate_v2/frontend
+
+# Alle Tests (Desktop Chrome + Mobile Chrome)
+npm run test:e2e
+
+# Interaktiver UI-Modus
+npm run test:e2e:ui
+
+# HTML-Bericht anzeigen
+npm run test:e2e:report
+```
+
+#### Testdateien
+
+| Datei | Abgedeckte Szenarien |
+|---|---|
+| [`e2e/auth.spec.js`](../studymate_v2/frontend/e2e/auth.spec.js) | Login, Logout, Gastansicht (3 Beschreibungen, 7 Tests) |
+| [`e2e/sets.spec.js`](../studymate_v2/frontend/e2e/sets.spec.js) | Supabase-Verbindung, Set erstellen/bearbeiten/löschen, Private Sets (5 Beschreibungen, 7 Tests) |
+| [`e2e/cards.spec.js`](../studymate_v2/frontend/e2e/cards.spec.js) | Karten laden, erstellen, bearbeiten, löschen (4 Beschreibungen, 5 Tests) |
+| [`e2e/ui.spec.js`](../studymate_v2/frontend/e2e/ui.spec.js) | Guided Tour, Streaks (2 Beschreibungen, 4 Tests) |
+| [`e2e/mobile.spec.js`](../studymate_v2/frontend/e2e/mobile.spec.js) | Mobile Ansicht auf Pixel-5-Viewport (1 Beschreibung, 3 Tests) |
+
+#### Konfiguration
+
+[`frontend/playwright.config.js`](../studymate_v2/frontend/playwright.config.js) definiert zwei Projekte:
+
+- **Desktop Chrome** — läuft alle Tests außer `mobile.spec.js`
+- **Mobile Chrome (Pixel 5)** — läuft nur `mobile.spec.js`
+
+Der Dev-Server wird beim Start automatisch hochgefahren (`reuseExistingServer: true` wiederverwendet einen laufenden Server).
+
+#### Wichtige Hinweise
+
+- Tests verwenden Timestamps-basierte eindeutige Titel (`PW_Set_<uid>`), um Testisolation zu gewährleisten
+- Erstellte Testdaten werden am Ende jedes Tests gelöscht (Cleanup in `afterEach` bzw. am Testende)
+- `.env.test` ist in `.gitignore` eingetragen und wird nicht ins Repository eingecheckt
+
+### Empfohlene Backend-Tests (zukünftig, pytest)
 
 ```bash
 pip install pytest pytest-asyncio httpx
 pytest -q
 ```
 
-Beispiel-Testfall:
+Beispiel-Testfälle:
 
 ```python
 def test_get_public_sets(client):
@@ -1131,24 +1239,14 @@ def test_get_public_sets(client):
 def test_fork_private_set_returns_403(client, auth_headers):
     response = client.post("/sets/private-set-id/fork", headers=auth_headers)
     assert response.status_code == 403
+
+def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered_cards):
+    response = client.post(f"/sets/{public_set_with_ordered_cards}/fork", headers=auth_headers)
+    assert response.status_code == 200
+    cards = response.json()["flashcards"]
+    positions = [c["position"] for c in cards]
+    assert positions == sorted(positions)
 ```
-
-#### Frontend-Tests (Vitest)
-
-```bash
-npm install --save-dev vitest @testing-library/react
-```
-
-#### E2E-Tests (Playwright)
-
-```bash
-npm install --save-dev @playwright/test
-```
-
-Kritische Test-Szenarien:
-1. Registrierung → Login → Set erstellen → Karte hinzufügen → Lernmodus
-2. Öffentliches Set forken → Anpassen → Quiz starten
-3. Passwort vergessen → E-Mail erhalten → Passwort zurücksetzen
 
 ---
 
@@ -1197,7 +1295,13 @@ Kritische Test-Szenarien:
 
 ## 16. ChangeLog
 
-### Version 0.2.1 (2026-06-01) — Aktuelle Version
+### Version 0.2.2 (2026-06-01) — Aktuelle Version
+
+**Änderungen gegenüber v0.2.1:**
+- Bugfix: Fork-Funktion kopiert Karteikarten jetzt mit korrektem `position`-Feld — Karten behalten ihre Reihenfolge im geforkten Set
+- Manuelle Testdokumentation in Abschnitt 14 ergänzt
+
+### Version 0.2.1 (2026-06-01)
 
 Basierend auf `main`-Branch, Commit `cf603c0` (Lina).
 
