@@ -476,8 +476,6 @@ function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggle
     { id: 'mine', label: 'Meine Sets', icon: Brain },
     { id: 'discover', label: 'Entdecken', icon: Globe },
     ...(user ? [{ id: 'favorites', label: 'Favoriten', icon: Sparkles }] : []),
-    { id: 'leaderboard', label: 'Leaderboard', icon: Target },
-    { id: 'settings', label: 'Einstellungen', icon: Shield },
   ];
 
   return (
