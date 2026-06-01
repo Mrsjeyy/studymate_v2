@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
-  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon, HelpCircle,
+  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon, HelpCircle, Edit,
 } from "lucide-react";
 import { Star } from "lucide-react";
 import { supabase } from "./supabase";
