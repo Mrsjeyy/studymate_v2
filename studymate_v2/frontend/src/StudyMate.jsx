@@ -160,9 +160,7 @@ function recordActivity(userKey, count = 1) {
   writeActivityStore(store);
 }
 
-function getWeekActivity(userKey, weekOffset = 0) {
-  const store = readActivityStore();
-  const userActivity = store[userKey] || {};
+function getWeekActivity(activityData, weekOffset = 0) {
   const today = new Date();
   const monday = new Date(today);
   monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + weekOffset * 7);
@@ -170,13 +168,13 @@ function getWeekActivity(userKey, weekOffset = 0) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     const key = toISODate(d);
-    return { date: key, count: userActivity[key] || 0, label: ["Mo","Di","Mi","Do","Fr","Sa","So"][i] };
+    return { date: key, count: activityData[key] || 0, label: ["Mo","Di","Mi","Do","Fr","Sa","So"][i] };
   });
 }
 
-function WeeklyActivityChart({ userKey }) {
+function WeeklyActivityChart({ activityData = {} }) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const data = getWeekActivity(userKey, weekOffset);
+  const data = getWeekActivity(activityData, weekOffset);
 
   const todayStr = toISODate();
   const pastData = data.filter(d => d.date <= todayStr);
@@ -908,7 +906,7 @@ function ResetPasswordView({ onDone }) {
   );
 }
 
-function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak, onRequireAuth }) {
+function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak, activityData = {}, onRequireAuth }) {
   const [tab, setTab] = useState(initialTab || "discover");
   const [search, setSearch] = useState("");
   const searchRef = useRef(null);
@@ -993,7 +991,7 @@ function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, create
             ))}
           </div>
           <div style={{ marginBottom: 24 }}>
-            <WeeklyActivityChart userKey={user.id} />
+            <WeeklyActivityChart activityData={activityData} />
           </div>
         </>
       )}
@@ -2034,6 +2032,7 @@ export default function StudyMate() {
   const [currentSet, setCurrentSet] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [activityData, setActivityData] = useState({});
   const [showCreateSetDialog, setShowCreateSetDialog] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -2209,7 +2208,7 @@ export default function StudyMate() {
   const initUser = async (authUser) => {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username, displayname")
+      .select("username, displayname, streak_count, streak_last_date, activity_data")
       .eq("id", authUser.id)
       .single();
 
@@ -2223,6 +2222,12 @@ export default function StudyMate() {
       bio: settings.bio || "",
       imageData: settings.imageData || null,
     });
+
+    const lastDate = profile?.streak_last_date || null;
+    const daysSince = lastDate ? getDaysSince(lastDate) : Infinity;
+    setStreak(daysSince > 1 ? 0 : (profile?.streak_count || 0));
+    setActivityData(profile?.activity_data || {});
+
     setView("dashboard");
     await fetchSets(authUser.id);
   };
@@ -2310,11 +2315,28 @@ export default function StudyMate() {
     await supabase.auth.signOut();
   };
 
-  const handleCompleteSet = (cardCount = 1) => {
-    const key = user?.id || "guest";
-    const updated = awardDailyStreak(key);
-    setStreak(updated.count);
-    recordActivity(key, cardCount);
+  const handleCompleteSet = async (cardCount = 1) => {
+    const today = toISODate();
+    const yesterday = toISODate(new Date(Date.now() - 86400000));
+    const newStreak = (streak > 0 && (activityData[today] !== undefined || activityData[yesterday] !== undefined))
+      ? streak + (activityData[today] !== undefined ? 0 : 1)
+      : 1;
+    const newActivity = { ...activityData, [today]: (activityData[today] || 0) + cardCount };
+
+    setStreak(newStreak);
+    setActivityData(newActivity);
+
+    if (user) {
+      await supabase.from("profiles").update({
+        streak_count: newStreak,
+        streak_last_date: today,
+        activity_data: newActivity,
+      }).eq("id", user.id);
+    } else {
+      const key = "guest";
+      awardDailyStreak(key);
+      recordActivity(key, cardCount);
+    }
   };
 
   const handleAddCard = async (setId, q, a) => {
@@ -2707,6 +2729,7 @@ export default function StudyMate() {
           onTabChange={setDashboardTab}
           createLoading={createLoading}
           streak={streak}
+          activityData={activityData}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
           onRequireAuth={() => setView('auth')}
