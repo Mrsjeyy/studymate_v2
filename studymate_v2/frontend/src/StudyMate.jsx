@@ -194,7 +194,7 @@ const styles = `
   .sm-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; color: #f1f5f9; cursor: pointer; }
   .sm-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #00d4aa, #00b894); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 
-  .sm-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #00d4aa33, #8b5cf633); border: 1px solid rgba(0,212,170,.3); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #00d4aa; cursor: pointer; }
+  .sm-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #00d4aa33, #8b5cf633); border: 1px solid rgba(0,212,170,.3); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #00d4aa; cursor: pointer; overflow: hidden; }
 
   .sm-input {
     width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
@@ -444,8 +444,12 @@ function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onToggleTheme, onP
         </button>
         {user ? (
           <>
-            <button className="sm-avatar" onClick={onProfile} title="Profil ansehen" style={{ border: 'none', background: 'transparent', padding: 0 }}>
-              {user.initial}
+            <button className="sm-avatar" onClick={onProfile} title="Profil ansehen" style={{ border: 'none', background: 'linear-gradient(135deg, #00d4aa33, #8b5cf633)', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {user.imageData ? (
+                <img src={user.imageData} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                user.initial
+              )}
             </button>
             <button className="sm-btn sm-btn-ghost" style={{ padding: "7px 14px", fontSize: 13 }} onClick={onLogout}>
               <LogOut size={14} />
@@ -500,7 +504,16 @@ function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggle
         })}
       </div>
       <div className="sm-sidebar-footer">
-        <div style={{ fontSize: 12, color: '#94a3b8' }}>{user ? user.name : 'Gast'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #00d4aa33, #8b5cf633)', border: '1px solid rgba(0,212,170,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', fontSize: 11, fontWeight: 600, color: '#00d4aa' }}>
+            {user?.imageData ? (
+              <img src={user.imageData} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              user?.initial
+            )}
+          </div>
+          <div style={{ fontSize: 12, color: '#94a3b8' }}>{user ? user.name : 'Gast'}</div>
+        </div>
       </div>
     </aside>
   );
@@ -1099,18 +1112,15 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-        <button className="learn-btn sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn} disabled={cards.length === 0} title={cards.length === 0 ? "Füge zuerst Karten hinzu" : undefined}>
+        <button className="learn-btn sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onLearn}>
           <Brain size={15} />
           Lernen starten
         </button>
-        <button className="quiz-btn sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz} disabled={cards.length === 0} title={cards.length === 0 ? "Füge zuerst Karten hinzu" : undefined}>
+        <button className="quiz-btn sm-btn sm-btn-ghost" style={{ justifyContent: "center", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={onQuiz}>
           <Zap size={15} />
           Quiz starten
         </button>
       </div>
-      {cards.length === 0 && (
-        <p style={{ fontSize: 13, color: "#64748b", textAlign: "center", marginBottom: 16 }}>Noch keine Karten – füge welche hinzu, um zu lernen.</p>
-      )}
 
       {user && set.isPublic && set.owneruserid !== user.id && (
         <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", width: "100%", marginBottom: 20, borderColor: "rgba(0,212,170,.3)", color: "#00d4aa" }} onClick={() => onForkSet(set)}>
@@ -1248,15 +1258,6 @@ function LearnView({ set, onBack, onCompleteSet }) {
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState([]);
-
-  if (set.cards.length === 0) {
-    return (
-      <div className="sm-z sm-fadeup" style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
-        <p style={{ marginBottom: 12 }}>Dieses Set hat keine Karten.</p>
-        <button className="sm-btn sm-btn-ghost" onClick={onBack}><ArrowLeft size={14} /> Zurück</button>
-      </div>
-    );
-  }
 
   const card = set.cards[idx];
   const progress = (idx / set.cards.length) * 100;
@@ -1647,10 +1648,14 @@ function ProfileView({ user, sets, streak, onBack, onEdit }) {
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 1080, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
-          <div style={{ width: 116, height: 116, borderRadius: 28, background: 'linear-gradient(135deg, rgba(0,212,170,.18), rgba(139,92,246,.18))', display: 'grid', placeItems: 'center' }}>
-            <div style={{ width: 86, height: 86, borderRadius: '50%', background: '#ffffff', display: 'grid', placeItems: 'center', fontSize: 36, fontWeight: 700, color: '#080c18' }}>
-              {user?.initial}
-            </div>
+          <div style={{ width: 140, height: 140, borderRadius: '50%', background: '#ffffff', display: 'grid', placeItems: 'center', overflow: 'hidden', border: '1px solid rgba(0,212,170,.20)', boxShadow: '0 10px 30px rgba(0,0,0,0.08)' }}>
+            {user?.imageData ? (
+              <img src={user.imageData} alt="Profilbild" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 44, fontWeight: 700, color: '#080c18' }}>
+                {user?.initial}
+              </div>
+            )}
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 6 }}>{user?.name || 'Unbekannt'}</div>
@@ -2189,7 +2194,6 @@ export default function StudyMate() {
 
     const newCard = { id: data.id, q: data.question, a: data.answer };
     setSets(prev => prev.map(s => s.id === setId ? { ...s, cards: [...s.cards, newCard] } : s));
-    setCurrentSet(prev => prev?.id === setId ? { ...prev, cards: [...prev.cards, newCard] } : prev);
     return newCard;
   };
 
