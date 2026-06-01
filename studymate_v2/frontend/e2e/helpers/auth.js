@@ -1,6 +1,6 @@
 // Env vars are loaded by playwright.config.js via dotenv before any test runs.
-export const TEST_USERNAME = process.env.TEST_USERNAME || 'pw_test_user';
-export const TEST_PASSWORD = process.env.TEST_PASSWORD || 'test_pw_123!';
+export const TEST_USERNAME = process.env.TEST_USERNAME || 'testUser';
+export const TEST_PASSWORD = process.env.TEST_PASSWORD || 'password';
 
 /** Disable the guided tour by presetting localStorage before page hydration. */
 export async function skipTour(page) {
