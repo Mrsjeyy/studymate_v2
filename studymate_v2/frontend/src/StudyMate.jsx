@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Brain, LogIn, LogOut, Plus, Search, ChevronRight,
   RotateCcw, ChevronLeft, Zap, Globe, ArrowLeft, Shield, Check, X,
-  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon, HelpCircle, Edit,
+  Sparkles, Target, FlipHorizontal, Lock, Menu, Sun, Moon, HelpCircle, SquarePen,
 } from "lucide-react";
 import { Star } from "lucide-react";
 import { supabase } from "./supabase";
@@ -1087,7 +1087,7 @@ function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVis
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{set.title}</h2>
             {user && user.id === set.owneruserid && (
               <button className="sm-btn sm-btn-ghost" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => setShowEditTitle(true)} title="Titel bearbeiten">
-                <Edit size={14} />
+                <SquarePen size={14} />
               </button>
             )}
             <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`} style={{ fontSize: 11 }}>
