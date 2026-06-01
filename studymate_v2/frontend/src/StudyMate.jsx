@@ -173,7 +173,7 @@ const styles = `
   html.light, body.light, body.light #root { background: #f8fafc; }
   body { min-height: 100vh; }
   .sm * { box-sizing: border-box; }
-  .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 100vh; height: 100%; background: #080c18; position: relative; overflow: hidden; border-radius: 12px; }
+  .sm { font-family: 'Sora', system-ui, sans-serif; color: #f1f5f9; min-height: 100vh; height: 100%; background: #080c18; position: relative; overflow-x: hidden; border-radius: 12px; }
   .sm-main { min-height: 100%; position: relative; }
 
   .sm-grid {
