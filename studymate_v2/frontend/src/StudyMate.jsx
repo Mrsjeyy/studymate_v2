@@ -1647,10 +1647,14 @@ function ProfileView({ user, sets, streak, onBack, onEdit }) {
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 1080, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, minWidth: 0 }}>
-          <div style={{ width: 116, height: 116, borderRadius: 28, background: 'linear-gradient(135deg, rgba(0,212,170,.18), rgba(139,92,246,.18))', display: 'grid', placeItems: 'center' }}>
-            <div style={{ width: 86, height: 86, borderRadius: '50%', background: '#ffffff', display: 'grid', placeItems: 'center', fontSize: 36, fontWeight: 700, color: '#080c18' }}>
-              {user?.initial}
-            </div>
+          <div style={{ width: 140, height: 140, borderRadius: '50%', background: '#ffffff', display: 'grid', placeItems: 'center', overflow: 'hidden', border: '1px solid rgba(0,212,170,.20)', boxShadow: '0 10px 30px rgba(0,0,0,0.08)' }}>
+            {user?.imageData ? (
+              <img src={user.imageData} alt="Profilbild" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 44, fontWeight: 700, color: '#080c18' }}>
+                {user?.initial}
+              </div>
+            )}
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 6 }}>{user?.name || 'Unbekannt'}</div>
