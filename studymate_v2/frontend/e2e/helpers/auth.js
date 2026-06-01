@@ -16,20 +16,39 @@ export async function skipTour(page) {
   });
 }
 
-/** Navigate to the app, skip the tour, and log in with the test account. */
+/**
+ * Navigate to the app, skip the tour, and log in.
+ * New flow: app starts in guest mode → click navbar "Anmelden" → fill form.
+ */
 export async function login(page, username = TEST_USERNAME, password = TEST_PASSWORD) {
   await skipTour(page);
   await page.goto('/');
+  // Wait for the guest-mode navbar to appear.
+  await page.waitForSelector('.sm-nav', { timeout: 10000 });
+  // Open the auth form via the navbar login button.
+  await page.locator('.sm-nav button:has-text("Anmelden")').click();
+  // Auth form is now visible (NavBar is hidden in auth view).
+  await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
   await page.locator('input[placeholder="dein_username"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
-  await page.locator('button:has-text("Anmelden")').click();
+  // Submit — only one primary button visible now that the navbar is hidden.
+  await page.locator('button.sm-btn-primary').click();
   await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 }
 
-/** Log out via the sidebar logout button. */
+/** Open the auth form without logging in (useful for testing the form itself). */
+export async function goToAuthForm(page) {
+  await skipTour(page);
+  await page.goto('/');
+  await page.waitForSelector('.sm-nav', { timeout: 10000 });
+  await page.locator('.sm-nav button:has-text("Anmelden")').click();
+  await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
+}
+
+/** Log out via the navbar logout button. */
 export async function logout(page) {
-  const logoutBtn = page.locator('button[title="Abmelden"], button:has-text("Abmelden")').first();
-  await logoutBtn.click();
+  await page.locator('button:has-text("Logout")').click();
+  // After logout the app returns to the auth form (navbar is hidden in auth view).
   await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 10000 });
 }
 
