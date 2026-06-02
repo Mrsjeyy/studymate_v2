@@ -25,7 +25,7 @@ test.describe('Mobile Ansicht', () => {
   test('Set-Cards passen sich an schmale Bildschirme an', async ({ page }) => {
     await skipTour(page);
     await page.goto('/');
-    await page.locator('button:has-text("Als Gast fortfahren")').click();
+    // App auto-starts in guest/discover mode — no need to click "Als Gast fortfahren".
     await page.locator('.sm-card').first().waitFor({ timeout: 10000 });
 
     // No horizontal scroll should be needed (cards should wrap).

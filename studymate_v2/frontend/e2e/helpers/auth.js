@@ -54,12 +54,16 @@ export async function logout(page) {
 
 /** Switch to the "Meine Sets" tab. */
 export async function goToMineSets(page) {
-  await page.locator('.mine-tab-btn').click();
+  // Wait for any modal overlay to close before navigating (create/edit dialogs block clicks)
+  await page.locator('.sm-modal-overlay').waitFor({ state: 'hidden', timeout: 15000 });
+  await page.locator('button.sm-sidebar-item').filter({ hasText: 'Meine Sets' }).click();
   await page.waitForTimeout(500);
 }
 
 /** Switch to the "Entdecken" tab. */
 export async function goToDiscover(page) {
-  await page.locator('.discover-tab-btn').click();
+  // Wait for any modal overlay to close before navigating
+  await page.locator('.sm-modal-overlay').waitFor({ state: 'hidden', timeout: 15000 });
+  await page.locator('button.sm-sidebar-item').filter({ hasText: 'Entdecken' }).click();
   await page.waitForTimeout(500);
 }

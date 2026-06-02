@@ -7,6 +7,10 @@ test.describe('Guided Tour', () => {
   test('Tour erscheint für neue Nutzer (localStorage leer)', async ({ page }) => {
     // Do NOT call skipTour – we want to see the tour.
     await page.goto('/');
+    // App starts in guest mode; open the auth form via the navbar.
+    await page.waitForSelector('.sm-nav', { timeout: 10000 });
+    await page.locator('.sm-nav button:has-text("Anmelden")').click();
+    await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
     // Log in so the dashboard loads.
     await page.locator('input[placeholder="dein_username"]').fill(
       process.env.TEST_USERNAME || 'pw_test_user'
@@ -23,6 +27,9 @@ test.describe('Guided Tour', () => {
 
   test('Tour kann mit "Überspringen" beendet werden', async ({ page }) => {
     await page.goto('/');
+    await page.waitForSelector('.sm-nav', { timeout: 10000 });
+    await page.locator('.sm-nav button:has-text("Anmelden")').click();
+    await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
     await page.locator('input[placeholder="dein_username"]').fill(
       process.env.TEST_USERNAME || 'pw_test_user'
     );
@@ -41,6 +48,9 @@ test.describe('Guided Tour', () => {
   test('Tour erscheint nicht mehr nach dem Überspringen', async ({ page }) => {
     // First run: skip the tour.
     await page.goto('/');
+    await page.waitForSelector('.sm-nav', { timeout: 10000 });
+    await page.locator('.sm-nav button:has-text("Anmelden")').click();
+    await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
     await page.locator('input[placeholder="dein_username"]').fill(
       process.env.TEST_USERNAME || 'pw_test_user'
     );
