@@ -545,7 +545,8 @@ export default function StudyMate() {
 
   const handleSendFriendRequest = async (toUserId) => {
     if (!user) return;
-    await supabase.from("friendships").insert({ user_id: user.id, friend_id: toUserId, status: 'pending' });
+    const { error } = await supabase.from("friendships").insert({ user_id: user.id, friend_id: toUserId, status: 'pending' });
+    if (error) { showToast(`Fehler: ${error.message}`, 'error'); return; }
     await fetchFriends();
     showToast("Freundschaftsanfrage gesendet!", 'success');
   };
