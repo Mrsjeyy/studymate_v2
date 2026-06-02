@@ -52,12 +52,15 @@ export default function PublicProfileView({ profile, sets, friendStatus, onBack,
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20, marginBottom: 32 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "2px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
-            {profile?.initial || "?"}
+          <div style={{ width: 88, height: 88, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "2px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#00d4aa", flexShrink: 0, overflow: "hidden" }}>
+            {profile?.imageData
+              ? <img src={profile.imageData} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : profile?.initial || "?"}
           </div>
           <div>
             <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{profile?.name || "Unbekannt"}</div>
-            <div style={{ fontSize: 14, color: "#64748b" }}>@{username}</div>
+            <div style={{ fontSize: 14, color: "#64748b", marginBottom: profile?.bio ? 6 : 0 }}>@{username}</div>
+            {profile?.bio && <div style={{ fontSize: 13, color: "#94a3b8", maxWidth: 400, lineHeight: 1.5 }}>{profile.bio}</div>}
           </div>
         </div>
         {statusBtn()}
