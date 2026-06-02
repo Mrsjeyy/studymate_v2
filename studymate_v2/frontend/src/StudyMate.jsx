@@ -367,12 +367,12 @@ export default function StudyMate() {
       const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/sets/${forkSourceSet.id}/fork`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description: forkDescription }),
       });
       if (!response.ok) { const err = await response.json(); throw new Error(err.detail || "Fehler beim Forken des Sets."); }
       const forkedSet = await response.json();
       const normalizedSet = normalizeSet({ ...forkedSet, profiles: { username: user.name, displayname: user.name } });
       const updatedSet = { ...normalizedSet, title, description: forkDescription };
-      await supabase.from("flashcard_sets").update({ title, description: forkDescription }).eq("id", updatedSet.id).execute();
       setSets(prev => [updatedSet, ...prev]);
       setShowForkDialog(false);
       showToast(`Set erfolgreich als "${title}" geforkt!`, 'success');
