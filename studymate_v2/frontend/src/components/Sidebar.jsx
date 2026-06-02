@@ -1,4 +1,4 @@
-import { BookOpen, Brain, Globe, Sparkles, ChevronRight, ChevronLeft, Users } from "lucide-react";
+import { BookOpen, Brain, Globe, Sparkles, ChevronRight, ChevronLeft, Users, X } from "lucide-react";
 
 export default function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggleCollapse, onCloseMobile, pendingFriendCount = 0 }) {
   const items = [
@@ -16,9 +16,10 @@ export default function Sidebar({ user, activeView, onNavigate, openMobile, coll
           <div className="sm-sidebar-logo">S</div>
           <div className="sm-sidebar-title">Study<span style={{ color: '#00d4aa' }}>Mate</span></div>
         </div>
-        <button className="sm-sidebar-collapse" onClick={onToggleCollapse} title="Sidebar ein-/ausblenden">
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+        {openMobile
+          ? <button className="sm-sidebar-collapse" onClick={onCloseMobile} title="Schließen"><X size={16} /></button>
+          : <button className="sm-sidebar-collapse" onClick={onToggleCollapse} title="Sidebar ein-/ausblenden">{collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button>
+        }
       </div>
       <div className="sm-sidebar-menu">
         {items.map(it => {

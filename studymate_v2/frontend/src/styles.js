@@ -116,8 +116,8 @@ const styles = `
     .sm-hamburger { display: none !important; }
   }
   @media (max-width: 1099px) {
-    .sm-sidebar { display: none; }
-    .sm-sidebar.mobile-open { display: flex; }
+    .sm-sidebar { display: none !important; }
+    .sm-sidebar.mobile-open { display: flex !important; left: 0 !important; right: 0 !important; top: 62px !important; bottom: 0 !important; width: 100% !important; border-radius: 0 !important; z-index: 300; }
     .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: #cbd5e1; }
   }
 
