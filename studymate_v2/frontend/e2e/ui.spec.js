@@ -102,8 +102,6 @@ test.describe('Streaks', () => {
     await page.locator('button:has-text("Speichern")').first().click();
     await expect(page.locator('p').filter({ hasText: 'Streak Frage' })).toBeVisible({ timeout: 8000 });
 
-    // Read streak before the session.
-    await page.locator('button.sm-tab').filter({ hasText: 'Dashboard' }).click().catch(() => {});
     // Go back to the set, start a learn session, and complete it.
     await goToMineSets(page);
     await page.locator('.sm-card').filter({ hasText: `PW_StreakSet_${uid}` }).click();
