@@ -10,17 +10,20 @@ export function accentFor(id) {
 /** Maps a raw Supabase flashcard_set row to a normalized frontend object. */
 export function normalizeSet(raw) {
   const profile = raw.profiles;
-  const author = profile?.displayname || profile?.username || "Unbekannt";
+  const realAuthor = profile?.displayname || profile?.username || "Unbekannt";
+  const showAuthor = raw.show_author !== false;
+  const author = showAuthor ? realAuthor : "Unbekannt";
   return {
     id: raw.id,
     title: raw.title,
     description: raw.description || "",
     isPublic: raw.ispublic,
+    showAuthor,
     author,
     authorInitial: (author[0] || "?").toUpperCase(),
+    owneruserid: raw.owneruserid,
     accent: accentFor(raw.id),
     tags: [],
-    owneruserid: raw.owneruserid,
     cards: (raw.flashcards || [])
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
       .map(c => ({ id: c.id, q: c.question, a: c.answer })),
