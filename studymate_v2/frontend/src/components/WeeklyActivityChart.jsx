@@ -10,13 +10,14 @@ export default function WeeklyActivityChart({ activityData = {} }) {
   const pastData = data.filter(d => d.date <= todayStr);
   const maxVal = Math.max(...pastData.map(d => d.count), 1);
 
-  const W = 500, H = 140, PL = 36, PR = 16, PT = 12, PB = 28;
+  const W = 500, H = 100, PL = 30, PR = 12, PT = 12, PB = 22;
+  const LABEL_H = 14; // reserved px above the highest point for its value label
   const chartW = W - PL - PR;
-  const chartH = H - PT - PB;
+  const chartH = H - PT - PB - LABEL_H; // shrink usable height so max point is never flush to top
 
   const points = data.map((d, i) => ({
     x: PL + (i / 6) * chartW,
-    y: PT + chartH - (d.count / maxVal) * chartH,
+    y: PT + LABEL_H + chartH - (d.count / maxVal) * chartH,
     isFuture: d.date > todayStr,
     ...d,
   }));
