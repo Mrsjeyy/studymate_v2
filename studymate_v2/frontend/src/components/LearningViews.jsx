@@ -38,7 +38,7 @@ export function LearnView({ set, onBack, onCompleteSet }) {
   );
 
   return (
-    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 540, margin: "0 auto" }}>
+    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 780, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px" }} onClick={onBack}><ArrowLeft size={15} /></button>
         <div style={{ flex: 1 }}>
@@ -51,17 +51,17 @@ export function LearnView({ set, onBack, onCompleteSet }) {
       </div>
 
       <div className="sm-flip-scene" style={{ marginBottom: 16 }}>
-        <div className={`sm-flip-card ${flipped ? "flipped" : ""}`} style={{ height: 280 }} onClick={() => setFlipped(!flipped)}>
-          <div className="sm-flip-face" style={{ height: "100%", background: "rgba(255,255,255,.05)", border: `1px solid ${flipped ? "rgba(255,255,255,.08)" : `${set.accent}30`}`, borderRadius: 20, padding: 32, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", cursor: "pointer" }}>
-            <div style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: set.accent, display: "inline-block" }} /> Frage
+        <div className={`sm-flip-card ${flipped ? "flipped" : ""}`} style={{ height: 380 }} onClick={() => setFlipped(!flipped)}>
+          <div className="sm-flip-face" style={{ height: "100%", background: "rgba(255,255,255,.05)", border: `1px solid ${flipped ? "rgba(255,255,255,.08)" : `${set.accent}30`}`, borderRadius: 24, padding: "40px 48px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", cursor: "pointer" }}>
+            <div style={{ fontSize: 12, color: "#475569", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: set.accent, display: "inline-block" }} /> Frage
             </div>
-            <p style={{ fontSize: 18, fontWeight: 600, color: "#f1f5f9", lineHeight: 1.5, margin: 0 }}>{card.q}</p>
-            <p style={{ fontSize: 12, color: "#475569", marginTop: 24, display: "flex", alignItems: "center", gap: 6 }}><FlipHorizontal size={13} /> Klicken zum Umdrehen</p>
+            <p style={{ fontSize: 22, fontWeight: 600, color: "#f1f5f9", lineHeight: 1.55, margin: 0 }}>{card.q}</p>
+            <p style={{ fontSize: 13, color: "#475569", marginTop: 32, display: "flex", alignItems: "center", gap: 6 }}><FlipHorizontal size={14} /> Klicken zum Umdrehen</p>
           </div>
-          <div className="sm-flip-face sm-flip-back" style={{ height: "100%", background: `${set.accent}10`, border: `1px solid ${set.accent}40`, borderRadius: 20, padding: 32, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: set.accent, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><Check size={12} /> Antwort</div>
-            <p style={{ fontSize: 15, color: "#e2e8f0", lineHeight: 1.7, margin: 0 }}>{card.a}</p>
+          <div className="sm-flip-face sm-flip-back" style={{ height: "100%", background: `${set.accent}10`, border: `1px solid ${set.accent}40`, borderRadius: 24, padding: "40px 48px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: set.accent, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}><Check size={13} /> Antwort</div>
+            <p style={{ fontSize: 18, color: "#e2e8f0", lineHeight: 1.7, margin: 0 }}>{card.a}</p>
           </div>
         </div>
       </div>
