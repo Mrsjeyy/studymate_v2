@@ -84,8 +84,9 @@ const styles = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 24px; border-bottom: 1px solid var(--surface-border);
     background: var(--nav-bg); backdrop-filter: blur(12px);
-    position: sticky; top: 0; z-index: 100;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 250; height: 62px;
   }
+  .sm-main { padding-top: 62px; }
   .sm-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; color: var(--text); cursor: pointer; }
   .sm-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #00d4aa, #00b894); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .sm-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #00d4aa33, #8b5cf633); border: 1px solid rgba(0,212,170,.3); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #00d4aa; cursor: pointer; overflow: hidden; }
@@ -163,7 +164,7 @@ const styles = `
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Sidebar */
-  .sm-sidebar { position: fixed; left: 18px; top: 18px; bottom: 18px; width: 220px; background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); backdrop-filter: blur(8px); border-radius: 16px; padding: 18px; display: none; flex-direction: column; z-index: 200; transition: width .2s ease, padding .2s ease; }
+  .sm-sidebar { position: fixed; left: 18px; top: 80px; bottom: 18px; width: 220px; background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); backdrop-filter: blur(8px); border-radius: 16px; padding: 18px; display: none; flex-direction: column; z-index: 200; transition: width .2s ease, padding .2s ease; }
   .sm-sidebar.mobile-open { display: flex; left: 12px; right: 12px; width: auto; height: auto; top: 80px; bottom: 18px; }
   .sm-sidebar-top { padding-bottom: 12px; border-bottom: 1px solid var(--surface-border-soft); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
   .sm-sidebar.collapsed { width: 72px; padding: 14px 10px; }
