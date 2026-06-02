@@ -491,6 +491,14 @@ export default function StudyMate() {
     await fetchFriends();
   };
 
+  const handleRemoveFriend = async (friendshipId, friendName) => {
+    if (!window.confirm(`Möchtest du ${friendName} wirklich entfernen?`)) return;
+    const { error } = await supabase.from("friendships").delete().eq("id", friendshipId);
+    if (error) { showToast(`Fehler: ${error.message}`, 'error'); return; }
+    await fetchFriends();
+    showToast(`${friendName} wurde entfernt.`, 'success');
+  };
+
   const handleSearchUsers = async (query) => {
     if (!query || query.length < 2) return [];
     const [{ data: byUsername }, { data: byDisplayname }] = await Promise.all([
@@ -510,6 +518,17 @@ export default function StudyMate() {
     if (friends.find(f => f.userId === targetUserId)) return 'accepted';
     if (pendingSent.find(f => f.userId === targetUserId)) return 'pending_sent';
     if (pendingReceived.find(f => f.userId === targetUserId)) return 'pending_received';
+    return null;
+  };
+
+  const getFriendshipId = (targetUserId) => {
+    if (!user || !targetUserId) return null;
+    const friend = friends.find(f => f.userId === targetUserId);
+    if (friend) return friend.friendshipId;
+    const pendingSentFriend = pendingSent.find(f => f.userId === targetUserId);
+    if (pendingSentFriend) return pendingSentFriend.friendshipId;
+    const pendingReceivedFriend = pendingReceived.find(f => f.userId === targetUserId);
+    if (pendingReceivedFriend) return pendingReceivedFriend.friendshipId;
     return null;
   };
 
@@ -659,6 +678,7 @@ export default function StudyMate() {
             pendingSent={pendingSent}
             onAccept={handleAcceptFriend}
             onDecline={handleDeclineFriend}
+            onRemoveFriend={handleRemoveFriend}
             onOpenProfile={handleOpenUserProfile}
             onSearchUsers={handleSearchUsers}
             onSendFriendRequest={handleSendFriendRequest}
@@ -674,6 +694,9 @@ export default function StudyMate() {
             loading={publicProfileLoading}
             onBack={() => setView('dashboard')}
             onSendFriendRequest={() => handleSendFriendRequest(publicProfileUser.id)}
+            onAcceptFriend={() => handleAcceptFriend(getFriendshipId(publicProfileUser.id))}
+            onDeclineFriend={() => handleDeclineFriend(getFriendshipId(publicProfileUser.id))}
+            onRemoveFriend={() => handleRemoveFriend(getFriendshipId(publicProfileUser.id), publicProfileUser.name)}
             onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }}
           />
         )}

@@ -1,14 +1,19 @@
 import { useState } from "react";
-import { ArrowLeft, UserPlus, Check, BookOpen } from "lucide-react";
+import { ArrowLeft, UserPlus, Check, BookOpen, Trash2, X } from "lucide-react";
 import Spinner from "./Spinner";
 
-export default function PublicProfileView({ profile, sets, friendStatus, onBack, onSendFriendRequest, onOpenSet, loading }) {
+export default function PublicProfileView({ profile, sets, friendStatus, onBack, onSendFriendRequest, onAcceptFriend, onDeclineFriend, onRemoveFriend, onOpenSet, loading }) {
   const username = profile?.username || profile?.name?.toLowerCase().replace(/\s+/g, '_') || '?';
 
   const statusBtn = () => {
     if (friendStatus === 'accepted') return (
-      <div className="sm-btn sm-btn-ghost" style={{ cursor: "default", color: "#00d4aa", borderColor: "rgba(0,212,170,.3)" }}>
-        <Check size={14} /> Befreundet
+      <div style={{ display: "flex", gap: 8 }}>
+        <div className="sm-btn sm-btn-ghost" style={{ cursor: "default", color: "#00d4aa", borderColor: "rgba(0,212,170,.3)" }}>
+          <Check size={14} /> Befreundet
+        </div>
+        <button className="sm-btn sm-btn-danger" onClick={onRemoveFriend} title="Nicht mehr befreundet sein">
+          <Trash2 size={14} /> Entfernen
+        </button>
       </div>
     );
     if (friendStatus === 'pending_sent') return (
@@ -17,8 +22,13 @@ export default function PublicProfileView({ profile, sets, friendStatus, onBack,
       </div>
     );
     if (friendStatus === 'pending_received') return (
-      <div className="sm-btn sm-btn-ghost" style={{ cursor: "default", color: "#64748b" }}>
-        Hat dir eine Anfrage gesendet
+      <div style={{ display: "flex", gap: 8 }}>
+        <button className="sm-btn sm-btn-primary" onClick={onAcceptFriend}>
+          <Check size={14} /> Annehmen
+        </button>
+        <button className="sm-btn sm-btn-danger" onClick={onDeclineFriend}>
+          <X size={14} />
+        </button>
       </div>
     );
     return (

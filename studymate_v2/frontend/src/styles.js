@@ -180,6 +180,29 @@ const styles = `
   .sm-sidebar-item span { font-size: 14px; }
   .sm-sidebar-item.active { box-shadow: 0 0 18px rgba(0,212,170,.18); background: linear-gradient(90deg, rgba(0,212,170,.06), rgba(139,92,246,.03)); color: #00d4aa; }
   .sm-sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--surface-border-soft); }
+  
+  .sm-sidebar-collapse { 
+    padding: 8px 10px; 
+    border-radius: 10px; 
+    background: transparent; 
+    border: 1px solid rgba(0,212,170,.08);
+    color: var(--text-muted); 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    transition: all .2s ease;
+    font-size: 0;
+  }
+  .sm-sidebar-collapse:hover { 
+    background: rgba(0,212,170,.08);
+    border-color: rgba(0,212,170,.2);
+    color: #00d4aa;
+    transform: scale(1.08);
+  }
+  .sm-sidebar-collapse:active {
+    transform: scale(0.96);
+  }
 
   @media (min-width: 1100px) {
     .sm-sidebar { display: flex; }

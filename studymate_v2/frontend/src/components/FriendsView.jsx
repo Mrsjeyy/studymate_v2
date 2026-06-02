@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { UserPlus, Check, X, Users, Search } from "lucide-react";
+import { UserPlus, Check, X, Users, Search, Trash2 } from "lucide-react";
 import Spinner from "./Spinner";
 
-export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
+export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onRemoveFriend, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
   const [tab, setTab] = useState("friends");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -70,6 +70,9 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
                 </div>
                 <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onOpenProfile(f.userId)}>
                   Profil ansehen
+                </button>
+                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onRemoveFriend(f.friendshipId, f.name)} title="Freund entfernen">
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
