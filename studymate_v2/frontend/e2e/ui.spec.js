@@ -102,8 +102,6 @@ test.describe('Streaks', () => {
     await page.locator('button:has-text("Speichern")').first().click();
     await expect(page.locator('p').filter({ hasText: 'Streak Frage' })).toBeVisible({ timeout: 8000 });
 
-    // Read streak before the session.
-    await page.locator('button.sm-tab').filter({ hasText: 'Dashboard' }).click().catch(() => {});
     // Go back to the set, start a learn session, and complete it.
     await goToMineSets(page);
     await page.locator('.sm-card').filter({ hasText: `PW_StreakSet_${uid}` }).click();
@@ -111,14 +109,14 @@ test.describe('Streaks', () => {
 
     // Flip the card and mark as known.
     await page.locator('.sm-flip-card').click();
-    await page.locator('button:has-text("Gewusst")').click();
+    await page.locator('button:has-text("Gewusst!")').click();
 
     // Session complete screen.
     await expect(page.locator('text=Session beendet')).toBeVisible({ timeout: 8000 });
 
     // Navigate to Dashboard and verify streak is ≥ 1.
     await page.locator('button:has-text("Zurück")').click();
-    await page.locator('button.sm-tab').filter({ hasText: 'Dashboard' }).click();
+    await page.locator('.sm-sidebar-item').filter({ hasText: 'Dashboard' }).click();
     await page.waitForTimeout(500);
     const streakNum = page.locator('.sm-stat').filter({ hasText: 'Streak-Tage' }).locator('.sm-stat-num');
     const streakValue = parseInt(await streakNum.textContent(), 10);

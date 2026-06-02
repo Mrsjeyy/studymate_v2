@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft, SquarePen, Globe, Lock, Brain, Zap, FlipHorizontal, X, Plus, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, SquarePen, Globe, Lock, Brain, Zap, FlipHorizontal, X, Plus, Check, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
 import Spinner from "./Spinner";
 
-export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onImportCards, onUpdateSetTitle, onForkSet, onShowToast }) {
+export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCard, onToggleVisibility, onDeleteSet, onDeleteCard, onEditCard, onMoveCard, onImportCards, onUpdateSetTitle, onForkSet, onShowToast }) {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState("");
   const [newA, setNewA] = useState("");
@@ -107,6 +107,12 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
         </button>
       )}
 
+      {user && user.id === set.owneruserid && (
+        <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center", width: "100%", marginBottom: 20, borderColor: "rgba(100,116,139,.3)", color: "#94a3b8" }} onClick={() => onForkSet(set)}>
+          <FlipHorizontal size={15} /> Set kopieren
+        </button>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
         <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
         {user && user.id === set.owneruserid && (
@@ -203,6 +209,10 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
             </div>
             {user && user.id === set.owneruserid && (
               <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <button className="sm-btn sm-btn-ghost" style={{ padding: "3px 7px", fontSize: 11 }} disabled={i === 0} onClick={() => { onMoveCard?.(set.id, c.id, "up"); setCards(prev => { const a = [...prev]; [a[i-1], a[i]] = [a[i], a[i-1]]; return a; }); }} title="Nach oben"><ChevronUp size={12} /></button>
+                  <button className="sm-btn sm-btn-ghost" style={{ padding: "3px 7px", fontSize: 11 }} disabled={i === cards.length - 1} onClick={() => { onMoveCard?.(set.id, c.id, "down"); setCards(prev => { const a = [...prev]; [a[i], a[i+1]] = [a[i+1], a[i]]; return a; }); }} title="Nach unten"><ChevronDown size={12} /></button>
+                </div>
                 <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => openEditCard(c)}><Sparkles size={13} /></button>
                 <button className="sm-btn sm-btn-danger" style={{ padding: "6px 10px", fontSize: 12 }} onClick={() => deleteCard(c.id)}><X size={13} /></button>
               </div>
