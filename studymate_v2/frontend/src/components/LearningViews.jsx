@@ -186,10 +186,11 @@ export function QuizView({ set, onBack }) {
   const generateAIQuiz = async () => {
     setAiLoading(true); setAiError("");
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/quiz/generate`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/quiz/generate`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cards: set.cards.map(c => ({ q: c.q, a: c.a })), count: 5 }),
       });
+      if (res.status === 503) throw new Error("KI-Dienst nicht verfügbar. Bitte später erneut versuchen.");
       if (!res.ok) throw new Error("Generierung fehlgeschlagen.");
       const data = await res.json();
       setAiQuestions(data.questions);
