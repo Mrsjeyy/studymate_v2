@@ -149,6 +149,11 @@ export default function StudyMate() {
   }, [theme]);
 
   useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+    document.body.classList.toggle('light', theme === 'light');
+  }, [theme]);
+
+  useEffect(() => {
     if (user && view === 'dashboard' && !tourCompleted.dashboard && !tourActive) {
       setTimeout(() => startTour('dashboard'), 800);
     }
