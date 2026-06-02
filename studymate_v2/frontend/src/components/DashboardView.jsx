@@ -74,7 +74,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
           <input ref={searchRef} className="sm-input" style={{ paddingLeft: 40 }} placeholder={tab === 'discover' ? "Nach öffentlichen Sets suchen..." : "Sets suchen..."} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {user && (
-          <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3 }}>
+          <div className="sm-panel-soft" style={{ display: "flex", borderRadius: 10, padding: 3, gap: 3 }}>
             {["dashboard", "discover", "mine"].map(t => (
               <button key={t} className={`sm-tab ${t === "discover" ? "discover-tab-btn" : t === "mine" ? "mine-tab-btn" : ""} ${tab === t ? "active" : ""}`} onClick={() => { setTab(t); onTabChange?.(t); }} style={{ padding: "6px 14px", fontSize: 13 }}>
                 {t === "dashboard" ? "Dashboard" : t === "discover" ? "Entdecken" : "Meine Sets"}

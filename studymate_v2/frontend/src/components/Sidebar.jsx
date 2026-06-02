@@ -12,7 +12,7 @@ export default function Sidebar({ user, activeView, onNavigate, openMobile, coll
   return (
     <aside className={`sm-sidebar ${collapsed ? 'collapsed' : ''} ${openMobile ? 'mobile-open' : ''}`} onClick={e => e.stopPropagation()}>
       <div className="sm-sidebar-top">
-        <div className="sm-sidebar-brand">
+        <div className="sm-sidebar-brand" onClick={() => { onNavigate('dashboard'); onCloseMobile?.(); }} style={{ cursor: 'pointer' }}>
           <div className="sm-sidebar-logo">S</div>
           <div className="sm-sidebar-title">Study<span style={{ color: '#00d4aa' }}>Mate</span></div>
         </div>

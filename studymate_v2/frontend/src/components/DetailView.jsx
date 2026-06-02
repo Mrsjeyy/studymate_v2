@@ -125,7 +125,7 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
       </div>
 
       {showAdd && (
-        <div style={{ background: "rgba(0,212,170,.05)", border: "1px solid rgba(0,212,170,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+        <div className="sm-panel-soft" style={{ border: "1px solid rgba(0,212,170,.2)", padding: 18, marginBottom: 14 }}>
           <p className="sm-section-title">Neue Karte</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <input className="sm-input" placeholder="Frage..." value={newQ} onChange={e => setNewQ(e.target.value)} />
@@ -142,7 +142,7 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
       )}
 
       {showImport && (
-        <div style={{ background: "rgba(139,92,246,.05)", border: "1px solid rgba(139,92,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+        <div className="sm-panel-soft" style={{ border: "1px solid rgba(139,92,246,.2)", padding: 18, marginBottom: 14 }}>
           <p className="sm-section-title">Karten importieren</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ fontSize: 13, color: "#cbd5e1", margin: "0 0 10px", lineHeight: 1.5 }}>
@@ -161,7 +161,7 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
       )}
 
       {showEdit && (
-        <div style={{ background: "rgba(59,130,246,.05)", border: "1px solid rgba(59,130,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+        <div className="sm-panel-soft" style={{ border: "1px solid rgba(59,130,246,.2)", padding: 18, marginBottom: 14 }}>
           <p className="sm-section-title">Karte bearbeiten</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <input className="sm-input" placeholder="Frage..." value={editQ} onChange={e => setEditQ(e.target.value)} />
@@ -178,7 +178,7 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
       )}
 
       {showEditTitle && (
-        <div style={{ background: "rgba(59,130,246,.05)", border: "1px solid rgba(59,130,246,.2)", borderRadius: 14, padding: 18, marginBottom: 14 }}>
+        <div className="sm-panel-soft" style={{ border: "1px solid rgba(59,130,246,.2)", padding: 18, marginBottom: 14 }}>
           <p className="sm-section-title">Set bearbeiten</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <input className="sm-input" placeholder="Titel..." value={editTitle} onChange={e => setEditTitle(e.target.value)} />
@@ -195,7 +195,7 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {cards.map((c, i) => (
-          <div key={c.id} style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", gap: 16, alignItems: "flex-start" }}>
+          <div key={c.id} className="sm-panel-soft" style={{ padding: "14px 18px", display: "flex", gap: 16, alignItems: "flex-start" }}>
             <div style={{ width: 28, height: 28, minWidth: 28, borderRadius: 8, background: `${set.accent}18`, border: `1px solid ${set.accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: set.accent, fontFamily: "JetBrains Mono, monospace" }}>{String(i + 1).padStart(2, "0")}</div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 500, margin: "0 0 5px", color: "#e2e8f0" }}>{c.q}</p>
