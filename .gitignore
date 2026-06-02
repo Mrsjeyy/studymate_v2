@@ -15,3 +15,8 @@ studymate_v2/backend/app/db/__pycache__/*
 **/.env
 **/.env.local
 **/.env.production
+**/.env.test
+
+# Playwright
+**/playwright-report/
+**/test-results/

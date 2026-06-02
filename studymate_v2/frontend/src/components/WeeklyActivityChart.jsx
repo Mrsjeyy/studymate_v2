@@ -57,13 +57,13 @@ export default function WeeklyActivityChart({ activityData = {} }) {
   const yTicks = [0, Math.round(maxVal / 2), maxVal];
 
   return (
-    <div style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 14, padding: "16px 18px" }}>
+    <div className="sm-panel-soft" style={{ padding: "16px 18px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }}>Lernverlauf der letzten Woche</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={() => setWeekOffset(o => o - 1)} style={{ background: "rgba(255,255,255,.06)", border: "none", color: "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+          <button onClick={() => setWeekOffset(o => o - 1)} style={{ background: "var(--surface-strong)", border: "none", color: "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
           <span style={{ fontSize: 12, color: "#64748b", minWidth: 100, textAlign: "center" }}>{weekLabel}</span>
-          <button onClick={() => setWeekOffset(o => Math.min(o + 1, 0))} disabled={weekOffset >= 0} style={{ background: "rgba(255,255,255,.06)", border: "none", color: weekOffset >= 0 ? "#334155" : "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: weekOffset >= 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+          <button onClick={() => setWeekOffset(o => Math.min(o + 1, 0))} disabled={weekOffset >= 0} style={{ background: "var(--surface-strong)", border: "none", color: weekOffset >= 0 ? "#334155" : "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: weekOffset >= 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
         </div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
@@ -71,7 +71,7 @@ export default function WeeklyActivityChart({ activityData = {} }) {
           const y = PT + chartH - (v / maxVal) * chartH;
           return (
             <g key={v}>
-              <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="rgba(255,255,255,.05)" strokeWidth="1" />
+              <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="var(--surface-border-soft)" strokeWidth="1" />
               <text x={PL - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#475569">{v}</text>
             </g>
           );

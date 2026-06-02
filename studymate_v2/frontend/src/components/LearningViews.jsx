@@ -3,36 +3,97 @@ import { ArrowLeft, RotateCcw, FlipHorizontal, Check, X, ChevronLeft, Target, Sp
 import Spinner from "./Spinner";
 
 export function LearnView({ set, onBack, onCompleteSet }) {
+  const [sessionCards, setSessionCards] = useState(set.cards);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [done, setDone] = useState([]);
+  const [statusByCard, setStatusByCard] = useState({});
+  const [finished, setFinished] = useState(false);
 
-  const card = set.cards[idx];
-  const progress = (idx / set.cards.length) * 100;
+  const card = sessionCards[idx];
+  const progress = sessionCards.length ? (idx / sessionCards.length) * 100 : 0;
+  const summaryUnknown = sessionCards.filter(c => statusByCard[c.id] === "unknown");
+  const knownCount = Object.values(statusByCard).filter(status => status === "known").length;
+
+  const restartSession = (repeatUnknown = false) => {
+    const nextCards = repeatUnknown ? sessionCards.filter(c => statusByCard[c.id] === "unknown") : set.cards;
+    setSessionCards(nextCards);
+    setIdx(0);
+    setFlipped(false);
+    setStatusByCard({});
+    setFinished(false);
+  };
+
+  const finishSession = () => {
+    setFinished(true);
+    onCompleteSet?.(knownCount);
+  };
 
   const next = (knew) => {
+    if (!card) return;
     setFlipped(false);
-    if (knew) setDone([...done, idx]);
+    setStatusByCard(prev => ({ ...prev, [card.id]: knew ? "known" : "unknown" }));
+
     setTimeout(() => {
-      if (idx + 1 >= set.cards.length) { onCompleteSet?.(set.cards.length); setIdx(-1); }
-      else setIdx(idx + 1);
+      if (idx + 1 >= sessionCards.length) {
+        finishSession();
+        setIdx(-1);
+      } else {
+        setIdx(idx + 1);
+      }
     }, 100);
   };
 
   if (idx === -1) return (
     <div className="sm-z sm-fadeup" style={{ padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 500 }}>
-      <div style={{ textAlign: "center", maxWidth: 340 }}>
+      <div style={{ textAlign: "center", maxWidth: 360 }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Session beendet!</h2>
-        <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>Du hast alle {set.cards.length} Karten in <strong style={{ color: "#00d4aa" }}>{set.title}</strong> durchgearbeitet.</p>
+        <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>
+          Du hast {knownCount} von {sessionCards.length} Karten als bekannt markiert.
+          {summaryUnknown.length > 0 ? ` Die ${summaryUnknown.length} nicht gewussten Karten erscheinen weiter unten.` : " Alle Karten waren bekannt."}
+        </p>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
-          <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#00d4aa" }}>{done.length}</div><div className="sm-stat-label">Gewusst ✓</div></div>
-          <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#ef4444" }}>{set.cards.length - done.length}</div><div className="sm-stat-label">Noch lernen</div></div>
+          <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#00d4aa" }}>{knownCount}</div><div className="sm-stat-label">Gewusst</div></div>
+          <div className="sm-stat"><div className="sm-stat-num" style={{ color: "#ef4444" }}>{sessionCards.length - knownCount}</div><div className="sm-stat-label">Nicht gewusst</div></div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setIdx(0); setFlipped(false); setDone([]); }}><RotateCcw size={14} /> Nochmal</button>
-          <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={onBack}><ArrowLeft size={14} /> Zurück</button>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+          <button className="sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={() => restartSession(false)}><RotateCcw size={14} /> Alles wiederholen</button>
+          <button className="sm-btn sm-btn-ghost" style={{ justifyContent: "center" }} onClick={onBack}><ArrowLeft size={14} /> Zurück</button>
         </div>
+
+        {summaryUnknown.length > 0 && (
+          <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center", marginBottom: 20 }} onClick={() => restartSession(true)}>
+            <Sparkles size={14} /> Nur nicht gewusste Karten wiederholen
+          </button>
+        )}
+
+        {summaryUnknown.length > 0 && (
+          <div style={{ textAlign: "left", width: "100%", maxWidth: 380 }}>
+            <h3 style={{ fontSize: 16, marginBottom: 12 }}>Unbekannte Karten</h3>
+            <div style={{ display: "grid", gap: 10 }}>
+              {summaryUnknown.map((cardItem) => (
+                <div key={cardItem.id} style={{ background: "rgba(255,255,255,.05)", border: "1px solid rgba(148,163,184,.2)", borderRadius: 14, padding: 14 }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#94a3b8" }}>Frage</p>
+                  <p style={{ margin: "6px 0 10px", fontWeight: 600 }}>{cardItem.q}</p>
+                  <p style={{ margin: 0, fontSize: 13, color: "#94a3b8" }}>Antwort</p>
+                  <p style={{ margin: "6px 0 0", fontWeight: 600 }}>{cardItem.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (sessionCards.length === 0) return (
+    <div className="sm-z sm-fadeup" style={{ padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 500 }}>
+      <div style={{ textAlign: "center", maxWidth: 340 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>Keine Karten verfügbar</h2>
+        <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>Für diese Lernsession sind keine Karten geladen. Bitte gehe zurück und wähle ein Set aus.</p>
+        <button className="sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={onBack}><ArrowLeft size={14} /> Zurück</button>
       </div>
     </div>
   );
@@ -44,7 +105,7 @@ export function LearnView({ set, onBack, onCompleteSet }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#64748b" }}>{set.title}</span>
-            <span className="sm-mono" style={{ fontSize: 13, color: "#00d4aa" }}>{idx + 1} / {set.cards.length}</span>
+            <span className="sm-mono" style={{ fontSize: 13, color: "#00d4aa" }}>{idx + 1} / {sessionCards.length}</span>
           </div>
           <div className="sm-progress-bar"><div className="sm-progress-fill" style={{ width: `${progress}%` }} /></div>
         </div>
@@ -140,7 +201,7 @@ export function QuizView({ set, onBack }) {
   if (phase === "intro") return (
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 500, margin: "0 auto" }}>
       <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px", marginBottom: 20 }} onClick={onBack}><ArrowLeft size={15} /></button>
-      <div style={{ background: "rgba(139,92,246,.08)", border: "1px solid rgba(139,92,246,.25)", borderRadius: 20, padding: 28 }}>
+      <div className="sm-panel-soft" style={{ border: "1px solid rgba(139,92,246,.25)", borderRadius: 20, padding: 28 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ width: 44, height: 44, background: "rgba(139,92,246,.2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><Target size={22} color="#a78bfa" /></div>
           <div>
@@ -148,7 +209,7 @@ export function QuizView({ set, onBack }) {
             <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>{shuffled.length} Fragen · Multiple Choice</p>
           </div>
         </div>
-        <div style={{ background: "rgba(255,255,255,.04)", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+        <div className="sm-panel-soft" style={{ borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><Sparkles size={14} color="#a78bfa" /><span style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>KI-Quizgenerierung</span></div>
           <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>KI erstellt neue Fragen auf Basis deiner Karten – mit Erklärungen nach jeder Antwort.</p>
           {aiError && <p style={{ fontSize: 12, color: "#f87171", margin: "0 0 8px" }}>{aiError}</p>}
