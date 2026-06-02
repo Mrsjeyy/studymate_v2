@@ -28,6 +28,30 @@ test.describe('Login', () => {
   });
 });
 
+// ── Registrierung testen ──────────────────────────────────────────────────────
+
+test.describe('Registrierung', () => {
+  test('Kurzer Benutzername wird abgelehnt', async ({ page }) => {
+    await goToAuthForm(page);
+    await page.locator('span.sm-tab:has-text("Registrieren")').click();
+    await page.locator('input[placeholder="dein_username"]').fill('ab');
+    await page.locator('input[type="password"]').fill('password123');
+    await page.locator('button.sm-btn-primary').click();
+    const error = page.locator('.sm-alert').filter({ hasText: 'mindestens 3 Zeichen' });
+    await expect(error).toBeVisible({ timeout: 5000 });
+  });
+
+  test('Kurzes Passwort wird abgelehnt', async ({ page }) => {
+    await goToAuthForm(page);
+    await page.locator('span.sm-tab:has-text("Registrieren")').click();
+    await page.locator('input[placeholder="dein_username"]').fill('validuser');
+    await page.locator('input[type="password"]').fill('abc');
+    await page.locator('button.sm-btn-primary').click();
+    const error = page.locator('.sm-alert').filter({ hasText: 'mindestens 6 Zeichen' });
+    await expect(error).toBeVisible({ timeout: 5000 });
+  });
+});
+
 // ── Logout testen ─────────────────────────────────────────────────────────────
 
 test.describe('Logout', () => {

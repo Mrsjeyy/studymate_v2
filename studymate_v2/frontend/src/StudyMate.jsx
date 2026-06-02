@@ -56,6 +56,7 @@ function writeProfileSettings(userId, settings) {
 
 export default function StudyMate() {
   const [view, setView] = useState("dashboard");
+  const [appInitializing, setAppInitializing] = useState(true);
   const [user, setUser] = useState(null);
   const [sets, setSets] = useState([]);
   const [setsLoading, setSetsLoading] = useState(true);
@@ -168,14 +169,20 @@ export default function StudyMate() {
   }, [view, user, tourCompleted.dashboard, tourActive]);
 
   useEffect(() => {
+    if (view === 'detail' && !tourCompleted.detail && !tourActive) {
+      setTimeout(() => startTour('detail'), 600);
+    }
+  }, [view, tourCompleted.detail, tourActive]);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") { recoveryMode.current = true; setView("reset"); return; }
       if (!session) { recoveryMode.current = false; setUser(null); setSets([]); setView("auth"); }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (recoveryMode.current) return;
-      if (session) initUser(session.user);
-      else { setView("dashboard"); fetchSets(null); }
+      if (recoveryMode.current) { setAppInitializing(false); return; }
+      if (session) initUser(session.user).finally(() => setAppInitializing(false));
+      else { setView("dashboard"); fetchSets(null).finally(() => setAppInitializing(false)); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -187,9 +194,9 @@ export default function StudyMate() {
   }, []);
 
   useEffect(() => {
-    if (!user) { setFavorites([]); return; }
     try {
-      const raw = localStorage.getItem(`sm_favs_${user.id}`);
+      const key = user ? `sm_favs_${user.id}` : "sm_favs_guest";
+      const raw = localStorage.getItem(key);
       setFavorites(raw ? JSON.parse(raw) : []);
     } catch (e) { setFavorites([]); }
   }, [user?.id]);
@@ -197,12 +204,12 @@ export default function StudyMate() {
   // ── Navigation ─────────────────────────────────────────────────────────────
 
   const toggleFavorite = (setId) => {
-    if (!user) { setView('auth'); return; }
+    const key = user ? `sm_favs_${user.id}` : "sm_favs_guest";
     setFavorites(prev => {
       const s = new Set(prev);
       if (s.has(setId)) s.delete(setId); else s.add(setId);
       const arr = Array.from(s);
-      try { localStorage.setItem(`sm_favs_${user.id}`, JSON.stringify(arr)); } catch (e) {}
+      try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
       return arr;
     });
   };
@@ -232,6 +239,23 @@ export default function StudyMate() {
     setStreak(lastDate && getDaysSince(lastDate) <= 1 ? (profile?.streak_count || 0) : 0);
     setActivityData(profile?.activity_data || {});
 
+    // Migrate guest favourites to user account
+    try {
+      const guestRaw = localStorage.getItem("sm_favs_guest");
+      const guestFavs = guestRaw ? JSON.parse(guestRaw) : [];
+      if (guestFavs.length > 0) {
+        const userRaw = localStorage.getItem(`sm_favs_${authUser.id}`);
+        const userFavs = userRaw ? JSON.parse(userRaw) : [];
+        const merged = Array.from(new Set([...userFavs, ...guestFavs]));
+        localStorage.setItem(`sm_favs_${authUser.id}`, JSON.stringify(merged));
+        localStorage.removeItem("sm_favs_guest");
+        setFavorites(merged);
+      } else {
+        const userRaw = localStorage.getItem(`sm_favs_${authUser.id}`);
+        setFavorites(userRaw ? JSON.parse(userRaw) : []);
+      }
+    } catch (e) { /* ignore */ }
+
     setView("dashboard");
     await fetchSets(authUser.id);
   };
@@ -244,6 +268,13 @@ export default function StudyMate() {
   };
 
   const handleRegister = async (username, pass, recoveryEmail) => {
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username.toLowerCase())
+      .maybeSingle();
+    if (existingProfile) throw new Error("Benutzername bereits vergeben.");
+
     const { data, error } = await supabase.auth.signUp({
       email: toFakeEmail(username), password: pass,
       options: { data: { username, displayname: username, recovery_email: recoveryEmail || null } },
@@ -252,6 +283,15 @@ export default function StudyMate() {
       if (error.message.includes("already registered")) throw new Error("Benutzername bereits vergeben.");
       throw error;
     }
+    if (!data.user) throw new Error("Registrierung fehlgeschlagen. Bitte 'Confirm email' in Supabase deaktivieren.");
+
+    await supabase.from("profiles").upsert({
+      id: data.user.id,
+      username: username.toLowerCase(),
+      displayname: username,
+      recovery_email: recoveryEmail || null,
+    });
+
     if (data.session) await initUser(data.session.user);
     else throw new Error("Registrierung fehlgeschlagen. Bitte 'Confirm email' in Supabase deaktivieren.");
   };
@@ -314,6 +354,9 @@ export default function StudyMate() {
     if (!user) { showToast("Bitte melde dich an, um ein neues Set zu erstellen.", 'error'); setView("auth"); return; }
     setCreateTitle(""); setCreateDescription(""); setCreateIsPublic(false); setCreateError("");
     setShowCreateSetDialog(true);
+    if (!tourCompleted.createSet && !tourActive) {
+      setTimeout(() => startTour('createSet'), 300);
+    }
   };
 
   const submitCreateSet = async () => {
@@ -422,6 +465,34 @@ export default function StudyMate() {
     if (currentSet) setCurrentSet(prev => prev ? { ...prev, cards: prev.cards.map(c => c.id === cardId ? { ...c, q, a } : c) } : prev);
   };
 
+  const handleMoveCard = async (setId, cardId, direction) => {
+    const targetSet = sets.find(s => s.id === setId);
+    if (!targetSet) return;
+    const idx = targetSet.cards.findIndex(c => c.id === cardId);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= targetSet.cards.length) return;
+
+    const card = targetSet.cards[idx];
+    const swapCard = targetSet.cards[swapIdx];
+    const newPos = swapIdx;
+    const swapPos = idx;
+
+    await supabase.from("flashcards").update({ position: newPos }).eq("id", card.id);
+    await supabase.from("flashcards").update({ position: swapPos }).eq("id", swapCard.id);
+
+    const reorder = (cards) => {
+      const updated = cards.map(c => {
+        if (c.id === card.id) return { ...c, position: newPos };
+        if (c.id === swapCard.id) return { ...c, position: swapPos };
+        return c;
+      });
+      return [...updated].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    };
+
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, cards: reorder(s.cards) } : s));
+    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, cards: reorder(prev.cards) } : prev);
+  };
+
   const handleImportCards = async (setId, jsonText) => {
     try {
       const cards = JSON.parse(jsonText);
@@ -518,7 +589,7 @@ export default function StudyMate() {
   const tourView = view === 'dashboard' && dashboardTab === 'discover' ? 'discover'
     : view === 'dashboard' && dashboardTab === 'mine' ? 'mine' : view;
 
-  if (view === "loading") return (
+  if (appInitializing || view === "loading") return (
     <div className="sm" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 600 }}>
       <div style={{ color: "#64748b", textAlign: "center" }}>
         <Spinner size={32} />
@@ -640,6 +711,7 @@ export default function StudyMate() {
             set={currentSet} user={user}
             onBack={() => setView("dashboard")} onLearn={() => setView("learn")} onQuiz={() => setView("quiz")}
             onAddCard={handleAddCard} onEditCard={handleEditCard} onDeleteCard={handleDeleteCard}
+            onMoveCard={handleMoveCard}
             onImportCards={handleImportCards} onToggleVisibility={handleToggleSetVisibility}
             onDeleteSet={handleDeleteSet} onForkSet={handleForkSet} onUpdateSetTitle={handleUpdateSetTitle}
             onShowToast={showToast}
@@ -648,7 +720,7 @@ export default function StudyMate() {
 
         {view === "learn" && currentSet && <LearnView set={currentSet} onBack={() => setView("detail")} onCompleteSet={handleCompleteSet} />}
         {view === "quiz" && currentSet && <QuizView set={currentSet} onBack={() => setView("detail")} />}
-        {view === 'favorites' && user && <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} />}
+        {view === 'favorites' && <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} />}
 
         {view === 'friends' && user && (
           <FriendsView

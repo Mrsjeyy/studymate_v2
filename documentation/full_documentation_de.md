@@ -46,14 +46,14 @@
 |---|---|---|
 | Authentifizierung | Login, Registrierung, Gastmodus, Passwort-Reset | 2026-05-19 |
 | Lernset-Verwaltung | Erstellen, Bearbeiten (Titel, Beschreibung), Löschen, Sichtbarkeit umschalten | 2026-05-19 / 2026-05-26 |
-| Karteikarten-Verwaltung | Karten anlegen, bearbeiten, löschen, JSON-Import | 2026-05-19 |
+| Karteikarten-Verwaltung | Karten anlegen, bearbeiten, löschen, JSON-Import, Reihenfolge ändern | 2026-05-19 / 2026-06-02 |
 | Lernmodus | Flip-Card-Ansicht mit Fortschrittsanzeige und Streak | 2026-05-19 |
 | Standard-Quiz | Multiple-Choice auf Basis vorhandener Karten | 2026-05-19 |
-| KI-Quiz | Quiz-Generierung via Google Gemini API mit Erklärungen | 2026-05-26 |
-| Fork-Funktion | Öffentliche Sets in eigenes Konto kopieren | 2026-05-26 |
-| Favoritensystem | Sets als Favorit markieren und filtern | 2026-05-19 |
+| KI-Quiz | Quiz-Generierung via Groq API (Llama) mit Erklärungen | 2026-05-26 / 2026-06-02 |
+| Fork-Funktion | Öffentliche und eigene Sets kopieren (inkl. Priv-zu-Priv) | 2026-05-26 / 2026-06-02 |
+| Favoritensystem | Sets als Favorit markieren (auch als Gast), Migration bei Anmeldung | 2026-05-19 / 2026-06-02 |
 | Streak-Tracking | Tägliche Lernserie lokal im Browser gespeichert | 2026-05-26 |
-| Geführte Tour | Interaktive Erstbenutzerschulung mit localStorage-Persistenz | 2026-05-26 |
+| Geführte Tour | Interaktive Erstbenutzerschulung (Dashboard, Set-Ansicht, Set-Erstellung) | 2026-05-26 / 2026-06-02 |
 | Profil-Overlay | Profilansicht mit Statistiken und Bearbeitungsmöglichkeit | 2026-05-26 |
 | Profilbild in NavBar/Sidebar | Hochgeladenes Profilbild erscheint im Avatar der Navbar und Sidebar-Fußzeile | 2026-06-01 |
 | Light/Dark-Mode | Umschaltbares Farbschema (gespeichert per localStorage) | 2026-05-26 |
@@ -105,7 +105,8 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 **Akzeptanzkriterien:**
 - Ein „Als Gast fortfahren"-Button ist auf der Login-Seite sichtbar
 - Im Gastmodus sind nur öffentliche Sets sichtbar
-- Aktionen wie Set-Erstellen oder Forken leiten den Gast zur Anmeldeseite
+- Aktionen wie Set-Erstellen leiten den Gast zur Anmeldeseite
+- Gäste können Sets als Favoriten markieren; diese werden bei der Anmeldung automatisch ins Benutzerkonto übernommen
 
 **Implementiert:** `2026-05-19`  
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleGuest`)
@@ -209,12 +210,13 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 > *Als angemeldeter Benutzer möchte ich ein öffentliches Set in mein Konto kopieren (forken) können, damit ich es bearbeiten und an meine Bedürfnisse anpassen kann.*
 
 **Akzeptanzkriterien:**
-- Fork-Button ist bei öffentlichen, fremden Sets sichtbar (nicht für Eigentümer, nicht für Gäste)
-- Ein Dialog erlaubt das Umbenennen des geforkten Sets vor dem Speichern
-- Das geforkte Set ist zunächst privat
+- Fork-Button ist bei öffentlichen, fremden Sets sichtbar (nicht für Gäste)
+- „Set kopieren"-Button ist für eigene Sets sichtbar (öffentlich wie privat)
+- Ein Dialog erlaubt das Umbenennen des geforkten/kopierten Sets vor dem Speichern
+- Das geforkte/kopierte Set ist zunächst privat
 - Alle Karten des Original-Sets werden übernommen
 
-**Implementiert:** `2026-05-26` (Commits: `98d6cdf`, `4a41540`, `e46744c`)  
+**Implementiert:** `2026-05-26` (Commits: `98d6cdf`, `4a41540`, `e46744c`); Priv-zu-Priv-Fork: `2026-06-02`  
 **Dateien:** [backend/app/routers/sets.py](../studymate_v2/backend/app/routers/sets.py) (Funktion `fork_set`), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleForkSet`, `submitForkSet`)
 
 ---
@@ -277,6 +279,21 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 
 **Implementiert:** `2026-05-19`  
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `deleteCard`, `handleDeleteCard`)
+
+---
+
+**US-024 — Karten-Reihenfolge ändern**
+
+> *Als Eigentümer eines Sets möchte ich die Reihenfolge der Karteikarten anpassen können, damit ich thematisch verwandte Karten gruppieren kann.*
+
+**Akzeptanzkriterien:**
+- Pfeil-Buttons (▲/▼) neben jeder Karte (nur für Eigentümer)
+- Karte tauscht Position mit dem Nachbar oberhalb/unterhalb
+- Neue Reihenfolge wird dauerhaft in der Datenbank gespeichert (`position`-Feld)
+- Lern- und Quizmodus verwenden die aktualisierte Reihenfolge
+
+**Implementiert:** `2026-06-02`  
+**Dateien:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleMoveCard`), [frontend/src/components/DetailView.jsx](../studymate_v2/frontend/src/components/DetailView.jsx) (Buttons `ChevronUp`/`ChevronDown`)
 
 ---
 
@@ -370,11 +387,11 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 
 **Akzeptanzkriterien:**
 - Stern-Button bei jedem Set (aktiv = gelb)
-- Favoriten werden im Browser-localStorage gespeichert
-- Favoritenansicht zeigt ausschließlich markierte Sets
-- Für nicht eingeloggte Nutzer sind Favoriten nicht sichtbar (Commit: `b332a07`)
+- Favoriten werden im Browser-localStorage gespeichert (`sm_favs_{userId}` bzw. `sm_favs_guest` für Gäste)
+- Favoritenansicht zeigt ausschließlich markierte Sets (auch für Gäste sichtbar)
+- Beim Einloggen werden Gastfavoriten automatisch mit den Benutzerfavoriten zusammengeführt
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`; Gastfavoriten-Migration: `2026-06-02`  
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `toggleFavorite`, Komponente `FavoritesView`)
 
 ---
@@ -389,12 +406,14 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 
 **Akzeptanzkriterien:**
 - Tour startet automatisch beim ersten Dashboard-Besuch nach dem Login
+- Tour startet automatisch beim ersten Öffnen einer Set-Detailansicht
+- Tour startet automatisch beim ersten Öffnen des „Set erstellen"-Dialogs
 - Jeder Tour-Schritt hebt das relevante UI-Element hervor und zeigt eine Erklärung
 - Die Tour kann jederzeit übersprungen werden
 - Abgeschlossene Tours werden in localStorage gespeichert (kein erneuter Autostart)
 - Ein Hilfe-Button in der Navbar ermöglicht das manuelle Neustarten der Tour
 
-**Implementiert:** `2026-05-26` (Commit: `322ab03 feat: implement guided tour`)  
+**Implementiert:** `2026-05-26` (Commit: `322ab03`); Detail- & Erstellungs-Tour: `2026-06-02`  
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Komponente `GuidedTourOverlay`, Konstante `TOUR_STEPS`)
 
 ---
@@ -766,7 +785,6 @@ Die gesamte Frontend-Logik befindet sich in einer einzigen Datei: [frontend/src/
 | `favorites` | Favoritenansicht | `FavoritesView` |
 | `profile` | Profilansicht | `ProfileView` |
 | `profile_edit` | Profil bearbeiten | `ProfileEditView` |
-| `leaderboard` | Leaderboard (Platzhalter) | `LeaderboardView` |
 | `settings` | Einstellungen (Platzhalter) | `SettingsView` |
 
 ---
@@ -787,7 +805,7 @@ Zeigt im Avatar-Button das hochgeladene Profilbild (`user.imageData`) als `<img>
 
 #### `Sidebar` — Seitennavigation
 
-Collapsible Sidebar mit Links zu Dashboard, Meine Sets, Entdecken, Favoriten, Leaderboard, Einstellungen. Auf Mobilgeräten als Overlay, auf Desktop als feste Leiste.
+Collapsible Sidebar mit Links zu Dashboard, Meine Sets, Entdecken, Favoriten, Freunde. Auf Mobilgeräten als Overlay, auf Desktop als feste Leiste.
 
 Die Fußzeile der Sidebar zeigt seit `2026-06-01` einen kleinen Avatar (Profilbild oder Anfangsbuchstabe) neben dem Benutzernamen — konsistent mit dem NavBar-Avatar.
 
@@ -1295,7 +1313,23 @@ def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered
 
 ## 16. ChangeLog
 
-### Version 0.2.2 (2026-06-01) — Aktuelle Version
+### Version 0.3.0 (2026-06-02) — Aktuelle Version
+
+**Neue Funktionen:**
+- Registrierung erstellt jetzt explizit einen `profiles`-Eintrag (Benutzername-Eindeutigkeit wird vorab geprüft)
+- Ladezustand beim App-Start: Spinner wird angezeigt, bis Auth-Status bekannt ist
+- Karten-Reihenfolge ändern: Pfeil-Buttons (▲/▼) in der Set-Detailansicht verschieben Karten und aktualisieren das `position`-Feld in der Datenbank
+- Set kopieren: Eigentümer können ihre eigenen Sets (öffentlich und privat) über einen „Set kopieren"-Button duplizieren
+- Priv-zu-Priv-Fork: Backend erlaubt nun das Forken eigener privater Sets (Endpunkt `POST /sets/{id}/fork`)
+- KI-Quiz URL-Fallback: API-URL fällt auf `http://localhost:8000` zurück, wenn `VITE_API_URL` nicht gesetzt ist; 503-Antworten zeigen eine benutzerfreundliche Fehlermeldung
+- Gastfavoriten: Gäste können Sets als Favoriten markieren (gespeichert unter `sm_favs_guest`); beim Einloggen werden Gastfavoriten automatisch übernommen
+- Geführte Tour für Set-Detailansicht: startet automatisch beim ersten Öffnen eines Sets
+- Geführte Tour für Set-Erstellung: startet automatisch beim ersten Öffnen des Erstellungs-Dialogs
+- Leaderboard-Platzhalter aus Dokumentation und Code-Referenzen entfernt
+
+**Aktualisierte Dokumentationsabschnitte:** Feature-Tabelle, US-003, US-014, US-041, US-050, Sidebar-Beschreibung, ChangeLog
+
+### Version 0.2.2 (2026-06-01)
 
 **Änderungen gegenüber v0.2.1:**
 - Bugfix: Fork-Funktion kopiert Karteikarten jetzt mit korrektem `position`-Feld — Karten behalten ihre Reihenfolge im geforkten Set
@@ -1345,7 +1379,6 @@ Vollständige Überarbeitung der Dokumentation, basierend auf dem Stand der `mai
 |---|---|
 | Hoch | Automatisierte Tests (Unit + E2E) implementieren |
 | Hoch | Row Level Security (RLS) in Supabase konfigurieren |
-| Mittel | Leaderboard-View vollständig implementieren |
 | Mittel | Einstellungen-View vollständig implementieren |
 | Mittel | OpenAPI-Export in `docs/` ablegen |
 | Niedrig | Browser-Fallbacks für CSS-Features ergänzen |
