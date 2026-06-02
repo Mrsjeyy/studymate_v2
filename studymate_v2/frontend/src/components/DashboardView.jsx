@@ -119,10 +119,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
         <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
           <BookOpen size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
           <p style={{ fontSize: 15, marginBottom: 12 }}>Bitte melden Sie sich an, um Ihre eigenen Sets zu sehen.</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-            <button className="sm-btn sm-btn-primary" onClick={() => onRequireAuth?.()}>Anmelden</button>
-            <button className="sm-btn sm-btn-ghost" onClick={() => {}}>Weiter als Gast</button>
-          </div>
+          <button className="sm-btn sm-btn-primary" onClick={() => onRequireAuth?.()}>Anmelden</button>
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
