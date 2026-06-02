@@ -22,6 +22,8 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
   const [editTitle, setEditTitle] = useState(set.title);
   const [editDescription, setEditDescription] = useState(set.description);
   const [editTitleLoading, setEditTitleLoading] = useState(false);
+  const [showAuthorDialog, setShowAuthorDialog] = useState(false);
+  const [chosenShowAuthor, setChosenShowAuthor] = useState(true);
 
   const addCard = async () => {
     if (!newQ || !newA) return;
@@ -109,7 +111,10 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
         <p className="sm-section-title" style={{ padding: 0 }}>{cards.length} Karten</p>
         {user && user.id === set.owneruserid && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onToggleVisibility(set.id, set.isPublic)}>
+            <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => {
+              if (!set.isPublic) { setChosenShowAuthor(set.showAuthor !== false); setShowAuthorDialog(true); }
+              else onToggleVisibility(set.id, true, set.showAuthor);
+            }}>
               {set.isPublic ? <Lock size={13} /> : <Globe size={13} />} {set.isPublic ? "Privat machen" : "Öffentlich machen"}
             </button>
             <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onDeleteSet(set.id)}><X size={13} /> Set löschen</button>
@@ -205,6 +210,32 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
           </div>
         ))}
       </div>
+
+      {showAuthorDialog && (
+        <div className="sm-modal-overlay" onClick={() => setShowAuthorDialog(false)}>
+          <div className="sm-modal" onClick={e => e.stopPropagation()}>
+            <h3>Set veröffentlichen</h3>
+            <p style={{ color: "#94a3b8", fontSize: 13, margin: "0 0 18px" }}>Möchtest du als Autor angezeigt werden?</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+              {[
+                { value: true, label: `Als ${user?.name || 'du'} anzeigen`, desc: "Andere können dein Profil besuchen" },
+                { value: false, label: "Anonym bleiben", desc: "Autor wird als 'Unbekannt' angezeigt" },
+              ].map(opt => (
+                <button key={String(opt.value)} onClick={() => setChosenShowAuthor(opt.value)} style={{ background: chosenShowAuthor === opt.value ? "rgba(0,212,170,.12)" : "rgba(255,255,255,.04)", border: `1px solid ${chosenShowAuthor === opt.value ? "rgba(0,212,170,.45)" : "rgba(255,255,255,.1)"}`, borderRadius: 12, padding: "12px 16px", cursor: "pointer", textAlign: "left" }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: chosenShowAuthor === opt.value ? "#00d4aa" : "#cbd5e1" }}>{opt.label}</div>
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+            <div className="sm-modal-actions">
+              <button className="sm-btn sm-btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={() => { setShowAuthorDialog(false); onToggleVisibility(set.id, false, chosenShowAuthor); }}>
+                <Globe size={14} /> Veröffentlichen
+              </button>
+              <button className="sm-btn sm-btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={() => setShowAuthorDialog(false)}>Abbrechen</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

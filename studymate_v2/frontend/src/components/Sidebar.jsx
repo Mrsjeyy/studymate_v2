@@ -1,11 +1,12 @@
-import { BookOpen, Brain, Globe, Sparkles, ChevronRight, ChevronLeft } from "lucide-react";
+import { BookOpen, Brain, Globe, Sparkles, ChevronRight, ChevronLeft, Users } from "lucide-react";
 
-export default function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggleCollapse, onCloseMobile }) {
+export default function Sidebar({ user, activeView, onNavigate, openMobile, collapsed, onToggleCollapse, onCloseMobile, pendingFriendCount = 0 }) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: BookOpen },
     { id: 'mine', label: 'Meine Sets', icon: Brain },
     { id: 'discover', label: 'Entdecken', icon: Globe },
     ...(user ? [{ id: 'favorites', label: 'Favoriten', icon: Sparkles }] : []),
+    ...(user ? [{ id: 'friends', label: 'Freunde', icon: Users, badge: pendingFriendCount }] : []),
   ];
 
   return (
@@ -27,6 +28,9 @@ export default function Sidebar({ user, activeView, onNavigate, openMobile, coll
             <button key={it.id} className={`sm-sidebar-item ${active ? 'active' : ''}`} onClick={() => { onNavigate(it.id); onCloseMobile?.(); }}>
               <Icon size={16} />
               <span>{it.label}</span>
+              {it.badge > 0 && (
+                <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', borderRadius: 10, fontSize: 10, fontWeight: 700, padding: '1px 6px', minWidth: 16, textAlign: 'center' }}>{it.badge}</span>
+              )}
             </button>
           );
         })}

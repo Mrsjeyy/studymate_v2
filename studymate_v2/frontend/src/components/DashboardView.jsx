@@ -3,7 +3,7 @@ import { Plus, Search, BookOpen, Globe, Lock, FlipHorizontal, ChevronRight, Star
 import Spinner from "./Spinner";
 import WeeklyActivityChart from "./WeeklyActivityChart";
 
-export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak, activityData = {}, onRequireAuth, onForkSet }) {
+export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCreateSet, createLoading, initialTab, favorites = [], toggleFavorite, onTabChange, streak, activityData = {}, onRequireAuth, onForkSet, onOpenUserProfile }) {
   const [tab, setTab] = useState(initialTab || "discover");
   const [search, setSearch] = useState("");
   const searchRef = useRef(null);
@@ -158,9 +158,12 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
                 </div>
               )}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#475569" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#475569", cursor: set.showAuthor && set.owneruserid !== user?.id ? "pointer" : "default" }}
+                  onClick={e => { if (set.showAuthor && set.owneruserid !== user?.id) { e.stopPropagation(); onOpenUserProfile?.(set.owneruserid); } }}
+                >
                   <div style={{ width: 22, height: 22, borderRadius: "50%", background: `${set.accent}22`, border: `1px solid ${set.accent}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: set.accent }}>{set.authorInitial}</div>
-                  {set.author}
+                  <span style={{ textDecoration: set.showAuthor && set.owneruserid !== user?.id ? "underline" : "none" }}>{set.author}</span>
                 </div>
                 <ChevronRight size={16} style={{ color: "#475569" }} />
               </div>
