@@ -116,7 +116,7 @@ test.describe('Streaks', () => {
 
     // Navigate to Dashboard and verify streak is ≥ 1.
     await page.locator('button:has-text("Zurück")').click();
-    await page.locator('button.sm-tab').filter({ hasText: 'Dashboard' }).click();
+    await page.locator('.sm-sidebar-item').filter({ hasText: 'Dashboard' }).click();
     await page.waitForTimeout(500);
     const streakNum = page.locator('.sm-stat').filter({ hasText: 'Streak-Tage' }).locator('.sm-stat-num');
     const streakValue = parseInt(await streakNum.textContent(), 10);
