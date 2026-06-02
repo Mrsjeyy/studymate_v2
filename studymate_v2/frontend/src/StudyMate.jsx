@@ -78,6 +78,7 @@ export default function StudyMate() {
   const [publicProfileUser, setPublicProfileUser] = useState(null);
   const [publicProfileSets, setPublicProfileSets] = useState([]);
   const [publicProfileLoading, setPublicProfileLoading] = useState(false);
+  const [publicProfileFrom, setPublicProfileFrom] = useState('dashboard');
   const [showForkDialog, setShowForkDialog] = useState(false);
   const [forkSourceSet, setForkSourceSet] = useState(null);
   const [forkTitle, setForkTitle] = useState("");
@@ -467,8 +468,9 @@ export default function StudyMate() {
 
   useEffect(() => { if (user) fetchFriends(); }, [user?.id]);
 
-  const handleOpenUserProfile = async (userId) => {
+  const handleOpenUserProfile = async (userId, from = null) => {
     if (!userId) return;
+    setPublicProfileFrom(from || view);
     setPublicProfileLoading(true);
     setView("public_profile");
     const { data: profile } = await supabase.from("profiles").select("id, username, displayname, bio, image_data").eq("id", userId).single();
@@ -665,7 +667,7 @@ export default function StudyMate() {
             pendingSent={pendingSent}
             onAccept={handleAcceptFriend}
             onDecline={handleDeclineFriend}
-            onOpenProfile={handleOpenUserProfile}
+            onOpenProfile={(id) => handleOpenUserProfile(id, 'friends')}
             onSearchUsers={handleSearchUsers}
             onSendFriendRequest={handleSendFriendRequest}
             onBack={() => setView('dashboard')}
@@ -678,7 +680,7 @@ export default function StudyMate() {
             sets={publicProfileSets}
             friendStatus={getFriendStatus(publicProfileUser.id)}
             loading={publicProfileLoading}
-            onBack={() => setView('dashboard')}
+            onBack={() => setView(publicProfileFrom)}
             onSendFriendRequest={() => handleSendFriendRequest(publicProfileUser.id)}
             onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }}
           />
