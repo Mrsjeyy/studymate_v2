@@ -22,6 +22,8 @@ import DashboardView from "./components/DashboardView";
 import DetailView from "./components/DetailView";
 import { LearnView, QuizView } from "./components/LearningViews";
 import { ProfileView, ProfileEditView, FavoritesView } from "./components/ProfileViews";
+import FriendsView from "./components/FriendsView";
+import PublicProfileView from "./components/PublicProfileView";
 
 // ── Profile settings (localStorage, not Supabase — stores bio/avatar locally)
 
@@ -70,6 +72,12 @@ export default function StudyMate() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboardTab, setDashboardTab] = useState('discover');
   const [favorites, setFavorites] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [pendingReceived, setPendingReceived] = useState([]);
+  const [pendingSent, setPendingSent] = useState([]);
+  const [publicProfileUser, setPublicProfileUser] = useState(null);
+  const [publicProfileSets, setPublicProfileSets] = useState([]);
+  const [publicProfileLoading, setPublicProfileLoading] = useState(false);
   const [showForkDialog, setShowForkDialog] = useState(false);
   const [forkSourceSet, setForkSourceSet] = useState(null);
   const [forkTitle, setForkTitle] = useState("");
@@ -323,9 +331,9 @@ export default function StudyMate() {
     finally { setCreateLoading(false); }
   };
 
-  const handleToggleSetVisibility = async (setId, currentVisibility) => {
-    if (!window.confirm(`Möchtest du dieses Set wirklich ${currentVisibility ? "privat" : "öffentlich"} machen?`)) return;
-    const { data, error } = await supabase.from("flashcard_sets").update({ ispublic: !currentVisibility }).eq("id", setId).select().single();
+  const handleToggleSetVisibility = async (setId, currentVisibility, showAuthor = true) => {
+    if (currentVisibility && !window.confirm("Möchtest du dieses Set wirklich privat machen?")) return;
+    const { data, error } = await supabase.from("flashcard_sets").update({ ispublic: !currentVisibility, show_author: showAuthor }).eq("id", setId).select().single();
     if (error) { showToast(error.message || "Fehler beim Aktualisieren der Sichtbarkeit.", 'error'); return; }
     const updatedSet = normalizeSet({ ...data, profiles: { username: user?.name || "Unbekannt", displayname: user?.name || "Unbekannt" } });
     setSets(prev => prev.map(s => s.id === setId ? { ...s, isPublic: updatedSet.isPublic } : s));
@@ -425,6 +433,80 @@ export default function StudyMate() {
     } catch (e) { throw new Error(`Import-Fehler: ${e.message}`); }
   };
 
+  // ── Friends ────────────────────────────────────────────────────────────────
+
+  const fetchFriends = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("friendships").select("id, user_id, friend_id, status").or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
+    if (!data) return;
+    const otherIds = data.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
+    const { data: profiles } = otherIds.length ? await supabase.from("profiles").select("id, username, displayname").in("id", otherIds) : { data: [] };
+    const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+    const toEntry = (f) => {
+      const otherId = f.user_id === user.id ? f.friend_id : f.user_id;
+      const p = profileMap[otherId] || {};
+      const name = p.displayname || p.username || "Unbekannt";
+      return { friendshipId: f.id, userId: otherId, name, username: p.username || "?", initial: name[0]?.toUpperCase() || "?" };
+    };
+    setFriends(data.filter(f => f.status === 'accepted').map(toEntry));
+    setPendingReceived(data.filter(f => f.status === 'pending' && f.friend_id === user.id).map(toEntry));
+    setPendingSent(data.filter(f => f.status === 'pending' && f.user_id === user.id).map(toEntry));
+  };
+
+  useEffect(() => { if (user) fetchFriends(); }, [user?.id]);
+
+  const handleOpenUserProfile = async (userId) => {
+    if (!userId) return;
+    setPublicProfileLoading(true);
+    setView("public_profile");
+    const { data: profile } = await supabase.from("profiles").select("id, username, displayname").eq("id", userId).single();
+    const { data: setsData } = await supabase.from("flashcard_sets").select("*, flashcards(*)").eq("owneruserid", userId).eq("ispublic", true).eq("show_author", true);
+    const name = profile?.displayname || profile?.username || "Unbekannt";
+    setPublicProfileUser({ id: userId, name, username: profile?.username || "?", initial: name[0]?.toUpperCase() || "?" });
+    setPublicProfileSets((setsData || []).map(r => normalizeSet({ ...r, profiles: profile })));
+    setPublicProfileLoading(false);
+  };
+
+  const handleSendFriendRequest = async (toUserId) => {
+    if (!user) return;
+    await supabase.from("friendships").insert({ user_id: user.id, friend_id: toUserId, status: 'pending' });
+    await fetchFriends();
+    showToast("Freundschaftsanfrage gesendet!", 'success');
+  };
+
+  const handleAcceptFriend = async (friendshipId) => {
+    await supabase.from("friendships").update({ status: 'accepted' }).eq("id", friendshipId);
+    await fetchFriends();
+    showToast("Freundschaft angenommen!", 'success');
+  };
+
+  const handleDeclineFriend = async (friendshipId) => {
+    await supabase.from("friendships").delete().eq("id", friendshipId);
+    await fetchFriends();
+  };
+
+  const handleSearchUsers = async (query) => {
+    if (!query || query.length < 2) return [];
+    const [{ data: byUsername }, { data: byDisplayname }] = await Promise.all([
+      supabase.from("profiles").select("id, username, displayname").ilike("username", `%${query}%`).neq("id", user.id).limit(10),
+      supabase.from("profiles").select("id, username, displayname").ilike("displayname", `%${query}%`).neq("id", user.id).limit(10),
+    ]);
+    const combined = [...(byUsername || []), ...(byDisplayname || [])];
+    const unique = combined.filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
+    return unique.map(p => {
+      const name = p.displayname || p.username || "Unbekannt";
+      return { userId: p.id, name, username: p.username || "?", initial: name[0]?.toUpperCase() || "?" };
+    });
+  };
+
+  const getFriendStatus = (targetUserId) => {
+    if (!user || !targetUserId) return null;
+    if (friends.find(f => f.userId === targetUserId)) return 'accepted';
+    if (pendingSent.find(f => f.userId === targetUserId)) return 'pending_sent';
+    if (pendingReceived.find(f => f.userId === targetUserId)) return 'pending_received';
+    return null;
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const showSidebar = !["auth", "forgot", "reset"].includes(view);
@@ -445,7 +527,7 @@ export default function StudyMate() {
       <div className="sm-grid" />
 
       {showSidebar && (
-        <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(p => !p)} onCloseMobile={() => setSidebarOpenMobile(false)} />
+        <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(p => !p)} onCloseMobile={() => setSidebarOpenMobile(false)} pendingFriendCount={pendingReceived.length} />
       )}
 
       <div className="sm-main">
@@ -541,6 +623,7 @@ export default function StudyMate() {
             streak={streak} activityData={activityData}
             favorites={favorites} toggleFavorite={toggleFavorite}
             onRequireAuth={() => setView('auth')} onForkSet={handleForkSet}
+            onOpenUserProfile={handleOpenUserProfile}
           />
         )}
 
@@ -561,6 +644,33 @@ export default function StudyMate() {
         {view === "learn" && currentSet && <LearnView set={currentSet} onBack={() => setView("detail")} onCompleteSet={handleCompleteSet} />}
         {view === "quiz" && currentSet && <QuizView set={currentSet} onBack={() => setView("detail")} />}
         {view === 'favorites' && user && <FavoritesView onBack={() => setView('dashboard')} sets={sets} favorites={favorites} toggleFavorite={toggleFavorite} onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }} />}
+
+        {view === 'friends' && user && (
+          <FriendsView
+            user={user}
+            friends={friends}
+            pendingReceived={pendingReceived}
+            pendingSent={pendingSent}
+            onAccept={handleAcceptFriend}
+            onDecline={handleDeclineFriend}
+            onOpenProfile={handleOpenUserProfile}
+            onSearchUsers={handleSearchUsers}
+            onSendFriendRequest={handleSendFriendRequest}
+            onBack={() => setView('dashboard')}
+          />
+        )}
+
+        {view === 'public_profile' && publicProfileUser && (
+          <PublicProfileView
+            profile={publicProfileUser}
+            sets={publicProfileSets}
+            friendStatus={getFriendStatus(publicProfileUser.id)}
+            loading={publicProfileLoading}
+            onBack={() => setView('dashboard')}
+            onSendFriendRequest={() => handleSendFriendRequest(publicProfileUser.id)}
+            onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }}
+          />
+        )}
 
         {/* Toast */}
         {toast && (
