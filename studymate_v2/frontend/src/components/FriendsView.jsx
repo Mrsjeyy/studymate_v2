@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { UserPlus, Check, X, Users, Search, Trash2 } from "lucide-react";
+import { UserPlus, Check, X, Users, Search } from "lucide-react";
 import Spinner from "./Spinner";
 
-export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onRemoveFriend, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
+export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
   const [tab, setTab] = useState("friends");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -41,7 +41,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
         )}
       </div>
 
-      <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3, marginBottom: 20, width: "fit-content" }}>
+      <div style={{ display: "flex", background: "var(--surface)", border: "1px solid var(--surface-border-soft)", borderRadius: 10, padding: 3, gap: 3, marginBottom: 20, width: "fit-content" }}>
         {tabs.map(t => (
           <button key={t.id} className={`sm-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)} style={{ padding: "6px 16px", fontSize: 13 }}>
             {t.label}
@@ -60,17 +60,16 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {friends.map(f => (
-              <div key={f.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                <Avatar imageData={f.imageData} initial={f.initial} />
+              <div key={f.friendshipId} className="sm-panel-soft" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
+                  {f.initial}
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{f.name}</div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>@{f.username}</div>
                 </div>
                 <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onOpenProfile(f.userId)}>
                   Profil ansehen
-                </button>
-                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onRemoveFriend(f.friendshipId, f.name)} title="Freund entfernen">
-                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
@@ -112,7 +111,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
             {searchResults.map(r => {
               const status = getFriendStatus(r.userId);
               return (
-                <div key={r.userId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                <div key={r.userId} className="sm-panel-soft" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
                     {r.initial}
                   </div>
@@ -158,8 +157,10 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {pendingReceived.map(r => (
-              <div key={r.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(0,212,170,.15)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                <Avatar imageData={r.imageData} initial={r.initial} />
+              <div key={r.friendshipId} className="sm-panel-soft" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, border: "1px solid rgba(0,212,170,.15)" }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
+                  {r.initial}
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>möchte dich als Freund hinzufügen</div>
