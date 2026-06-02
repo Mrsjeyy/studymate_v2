@@ -111,7 +111,8 @@ const styles = `
 
   @media (min-width: 880px) {
     .sm-sidebar { display: flex; }
-    .sm:not(.no-sidebar) .sm-main { margin-left: 260px; }
+    .sm:not(.no-sidebar) .sm-main { margin-left: 260px; transition: margin-left 0.2s ease; }
+    .sm:not(.no-sidebar).sm-collapsed .sm-main { margin-left: 104px; }
     .sm-hamburger { display: none !important; }
   }
   @media (max-width: 879px) {
