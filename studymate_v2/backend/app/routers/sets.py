@@ -92,6 +92,7 @@ def delete_set(
 @router.post("/{set_id}/fork")
 def fork_set(
     set_id: str,
+    body: StudySetUpdate = StudySetUpdate(),
     user_id: str = Depends(get_current_user_id),
 ):
     supabase = get_supabase_admin()
@@ -103,8 +104,8 @@ def fork_set(
     new_set_result = supabase.table("flashcard_sets").insert(
         {
             "owneruserid": user_id,
-            "title": source_set["title"],
-            "description": source_set["description"],
+            "title": body.title if body.title is not None else source_set["title"],
+            "description": body.description if body.description is not None else source_set["description"],
             "ispublic": False,
         }
     ).execute()
