@@ -372,7 +372,7 @@ export default function StudyMate() {
       const forkedSet = await response.json();
       const normalizedSet = normalizeSet({ ...forkedSet, profiles: { username: user.name, displayname: user.name } });
       const updatedSet = { ...normalizedSet, title, description: forkDescription };
-      await supabase.from("flashcard_sets").update({ title, description: forkDescription }).eq("id", updatedSet.id).execute();
+      await supabase.from("flashcard_sets").update({ title, description: forkDescription }).eq("id", updatedSet.id);
       setSets(prev => [updatedSet, ...prev]);
       setShowForkDialog(false);
       showToast(`Set erfolgreich als "${title}" geforkt!`, 'success');
