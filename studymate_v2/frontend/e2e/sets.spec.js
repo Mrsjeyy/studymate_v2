@@ -130,6 +130,7 @@ test.describe('Lernset löschen', () => {
 
     await goToMineSets(page);
     await page.locator('.sm-card').filter({ hasText: title }).click();
+    page.once('dialog', dialog => dialog.accept());
     await page.locator('button:has-text("Set löschen")').click();
 
     await goToMineSets(page);

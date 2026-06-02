@@ -74,7 +74,7 @@ const styles = `
 
   .sm-grid {
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(0,212,170,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,170,.04) 1px, transparent 1px);
     background-size: 48px 48px;
   }
   .sm-glow { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
@@ -190,7 +190,7 @@ const styles = `
   @media (max-width: 1099px) {
     .sm-sidebar { display: none !important; }
     .sm-sidebar.mobile-open { display: flex !important; left: 0 !important; right: 0 !important; top: 62px !important; bottom: 0 !important; width: 100% !important; border-radius: 0 !important; z-index: 300; }
-    .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: var(--text); }
+    .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: #cbd5e1; }
   }
 
   .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.32); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.04); color: #94a3b8; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }

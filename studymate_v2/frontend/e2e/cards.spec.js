@@ -68,7 +68,7 @@ test.describe('Karten bearbeiten', () => {
     await expect(page.locator('p').filter({ hasText: originalQ })).toBeVisible({ timeout: 8000 });
 
     // Click the edit button (Sparkles icon) in the card row.
-    const cardRow = page.locator('div').filter({ has: page.locator('p').filter({ hasText: originalQ }) }).last();
+    const cardRow = page.locator('.sm-panel-soft').filter({ has: page.locator('p').filter({ hasText: originalQ }) });
     await cardRow.locator('button.sm-btn-ghost').last().click();
 
     // The edit form appears with the existing question.
@@ -101,7 +101,7 @@ test.describe('Karten löschen', () => {
     await expect(page.locator('p').filter({ hasText: question })).toBeVisible({ timeout: 8000 });
 
     // Click the delete button (X icon) in the card row.
-    const cardRow = page.locator('div').filter({ has: page.locator('p').filter({ hasText: question }) }).last();
+    const cardRow = page.locator('.sm-panel-soft').filter({ has: page.locator('p').filter({ hasText: question }) });
     await cardRow.locator('button.sm-btn-danger').click();
 
     await expect(page.locator('p').filter({ hasText: question })).not.toBeVisible({ timeout: 5000 });
