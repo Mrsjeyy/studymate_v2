@@ -4,7 +4,7 @@ export default function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onT
   return (
     <nav className="sm-nav">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button className="sm-hamburger" aria-label="Menü öffnen" onClick={e => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('toggle-sidebar')); }} style={{ marginRight: 6, display: 'none' }}>
+        <button className="sm-hamburger" aria-label="Menü öffnen" onClick={e => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('toggle-sidebar')); }} style={{ marginRight: 6 }}>
           <Menu size={16} />
         </button>
       </div>
