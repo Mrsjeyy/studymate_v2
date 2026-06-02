@@ -109,7 +109,7 @@ test.describe('Streaks', () => {
 
     // Flip the card and mark as known.
     await page.locator('.sm-flip-card').click();
-    await page.locator('button:has-text("Gewusst")').click();
+    await page.locator('button:has-text("Gewusst!")').click();
 
     // Session complete screen.
     await expect(page.locator('text=Session beendet')).toBeVisible({ timeout: 8000 });
