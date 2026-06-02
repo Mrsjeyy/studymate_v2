@@ -136,8 +136,9 @@ export default function StudyMate() {
   }, []);
 
   useEffect(() => {
-    const key = user?.id || "guest";
-    const refreshStreak = () => setStreak(getStreakState(key).count);
+    // For guests only — logged-in users get their streak from Supabase in initUser
+    if (user) return;
+    const refreshStreak = () => setStreak(getStreakState("guest").count);
     refreshStreak();
     const id = window.setInterval(refreshStreak, 60 * 1000);
     return () => window.clearInterval(id);
