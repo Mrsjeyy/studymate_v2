@@ -1,18 +1,8 @@
 import { useState } from "react";
-import { UserPlus, Check, X, Users, Search } from "lucide-react";
+import { UserPlus, Check, X, Users, Search, Trash2 } from "lucide-react";
 import Spinner from "./Spinner";
 
-function Avatar({ imageData, initial, size = 40 }) {
-  return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.4, fontWeight: 700, color: "#00d4aa", flexShrink: 0, overflow: "hidden" }}>
-      {imageData
-        ? <img src={imageData} alt="Profil" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        : initial}
-    </div>
-  );
-}
-
-export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
+export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onRemoveFriend, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
   const [tab, setTab] = useState("friends");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -78,6 +68,9 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
                 </div>
                 <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onOpenProfile(f.userId)}>
                   Profil ansehen
+                </button>
+                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onRemoveFriend(f.friendshipId, f.name)} title="Freund entfernen">
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
