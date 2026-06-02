@@ -68,7 +68,7 @@ export default function WeeklyActivityChart({ activityData = {} }) {
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
         {yTicks.map(v => {
-          const y = PT + chartH - (v / maxVal) * chartH;
+          const y = PT + LABEL_H + chartH - (v / maxVal) * chartH;
           return (
             <g key={v}>
               <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="var(--surface-border-soft)" strokeWidth="1" />

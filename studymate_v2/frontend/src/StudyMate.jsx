@@ -78,6 +78,7 @@ export default function StudyMate() {
   const [publicProfileUser, setPublicProfileUser] = useState(null);
   const [publicProfileSets, setPublicProfileSets] = useState([]);
   const [publicProfileLoading, setPublicProfileLoading] = useState(false);
+  const [publicProfileFrom, setPublicProfileFrom] = useState('dashboard');
   const [showForkDialog, setShowForkDialog] = useState(false);
   const [forkSourceSet, setForkSourceSet] = useState(null);
   const [forkTitle, setForkTitle] = useState("");
@@ -220,13 +221,21 @@ export default function StudyMate() {
   const initUser = async (authUser) => {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username, displayname, streak_count, streak_last_date, activity_data")
+      .select("username, displayname, streak_count, streak_last_date, activity_data, bio, image_data")
       .eq("id", authUser.id)
       .single();
 
     const name = profile?.displayname || profile?.username || authUser.email.split("@")[0];
-    const settings = readProfileSettings(authUser.id);
-    setUser({ id: authUser.id, email: authUser.email, name, initial: name[0]?.toUpperCase() || "U", bio: settings.bio || "", imageData: settings.imageData || null });
+
+    // Migrate localStorage data to Supabase if not yet stored there
+    const local = readProfileSettings(authUser.id);
+    const bio = profile?.bio || local.bio || "";
+    const imageData = profile?.image_data || local.imageData || null;
+    if ((local.bio || local.imageData) && !profile?.bio && !profile?.image_data) {
+      supabase.from("profiles").update({ bio, image_data: imageData }).eq("id", authUser.id);
+    }
+
+    setUser({ id: authUser.id, email: authUser.email, name, initial: name[0]?.toUpperCase() || "U", bio, imageData });
 
     const lastDate = profile?.streak_last_date || null;
     setStreak(lastDate && getDaysSince(lastDate) <= 1 ? (profile?.streak_count || 0) : 0);
@@ -284,9 +293,8 @@ export default function StudyMate() {
 
   const handleSaveProfile = async (displayName, bio, imageData) => {
     if (!user) throw new Error("Kein Benutzer angemeldet.");
-    const { error } = await supabase.from("profiles").update({ displayname: displayName }).eq("id", user.id);
+    const { error } = await supabase.from("profiles").update({ displayname: displayName, bio, image_data: imageData }).eq("id", user.id);
     if (error) { console.warn("Profil-Update fehlgeschlagen:", error.message); throw new Error("Profil konnte nicht gespeichert werden."); }
-    writeProfileSettings(user.id, { bio, imageData });
     setUser(prev => prev ? { ...prev, name: displayName, initial: displayName[0]?.toUpperCase() || "U", bio, imageData } : prev);
   };
 
@@ -445,13 +453,13 @@ export default function StudyMate() {
     const { data } = await supabase.from("friendships").select("id, user_id, friend_id, status").or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
     if (!data) return;
     const otherIds = data.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
-    const { data: profiles } = otherIds.length ? await supabase.from("profiles").select("id, username, displayname").in("id", otherIds) : { data: [] };
+    const { data: profiles } = otherIds.length ? await supabase.from("profiles").select("id, username, displayname, image_data").in("id", otherIds) : { data: [] };
     const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
     const toEntry = (f) => {
       const otherId = f.user_id === user.id ? f.friend_id : f.user_id;
       const p = profileMap[otherId] || {};
       const name = p.displayname || p.username || "Unbekannt";
-      return { friendshipId: f.id, userId: otherId, name, username: p.username || "?", initial: name[0]?.toUpperCase() || "?" };
+      return { friendshipId: f.id, userId: otherId, name, username: p.username || "?", initial: name[0]?.toUpperCase() || "?", imageData: p.image_data || null };
     };
     setFriends(data.filter(f => f.status === 'accepted').map(toEntry));
     setPendingReceived(data.filter(f => f.status === 'pending' && f.friend_id === user.id).map(toEntry));
@@ -460,14 +468,15 @@ export default function StudyMate() {
 
   useEffect(() => { if (user) fetchFriends(); }, [user?.id]);
 
-  const handleOpenUserProfile = async (userId) => {
+  const handleOpenUserProfile = async (userId, from = null) => {
     if (!userId) return;
+    setPublicProfileFrom(from || view);
     setPublicProfileLoading(true);
     setView("public_profile");
-    const { data: profile } = await supabase.from("profiles").select("id, username, displayname").eq("id", userId).single();
+    const { data: profile } = await supabase.from("profiles").select("id, username, displayname, bio, image_data").eq("id", userId).single();
     const { data: setsData } = await supabase.from("flashcard_sets").select("*, flashcards(*)").eq("owneruserid", userId).eq("ispublic", true).eq("show_author", true);
     const name = profile?.displayname || profile?.username || "Unbekannt";
-    setPublicProfileUser({ id: userId, name, username: profile?.username || "?", initial: name[0]?.toUpperCase() || "?" });
+    setPublicProfileUser({ id: userId, name, username: profile?.username || "?", initial: name[0]?.toUpperCase() || "?", bio: profile?.bio || "", imageData: profile?.image_data || null });
     setPublicProfileSets((setsData || []).map(r => normalizeSet({ ...r, profiles: profile })));
     setPublicProfileLoading(false);
   };
@@ -532,6 +541,19 @@ export default function StudyMate() {
     <div className={`sm ${theme === 'light' ? 'light' : ''} ${sidebarCollapsed ? 'sm-collapsed' : ''} ${!showSidebar ? 'no-sidebar' : ''}`}>
       <div className="sm-grid" />
 
+      {/* Navbar immer volle Breite — außerhalb von sm-main */}
+      <NavBar
+        user={user}
+        onHome={() => setView("dashboard")}
+        onLogout={handleLogout}
+        onProfile={() => setView('profile')}
+        onGoToLogin={() => setView("auth")}
+        theme={theme}
+        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+        onTourRestart={() => startTour(tourView)}
+        currentViewHasTour={!!TOUR_STEPS[tourView]}
+      />
+
       {showSidebar && (
         <Sidebar user={user} activeView={view === 'dashboard' ? dashboardTab : view} onNavigate={handleNavigate} openMobile={sidebarOpenMobile} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(p => !p)} onCloseMobile={() => setSidebarOpenMobile(false)} pendingFriendCount={pendingReceived.length} />
       )}
@@ -539,20 +561,6 @@ export default function StudyMate() {
       <div className="sm-main">
         <div className="sm-glow" style={{ width: 500, height: 500, background: "rgba(0,212,170,.04)", top: -150, right: -100 }} />
         <div className="sm-glow" style={{ width: 400, height: 400, background: "rgba(139,92,246,.04)", bottom: -100, left: -80 }} />
-
-        {showSidebar && (
-          <NavBar
-            user={user}
-            onHome={() => setView("dashboard")}
-            onLogout={handleLogout}
-            onProfile={() => setView('profile')}
-            onGoToLogin={() => setView("auth")}
-            theme={theme}
-            onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            onTourRestart={() => startTour(tourView)}
-            currentViewHasTour={!!TOUR_STEPS[tourView]}
-          />
-        )}
 
         {/* Create Set Dialog */}
         {showCreateSetDialog && (
@@ -659,7 +667,7 @@ export default function StudyMate() {
             pendingSent={pendingSent}
             onAccept={handleAcceptFriend}
             onDecline={handleDeclineFriend}
-            onOpenProfile={handleOpenUserProfile}
+            onOpenProfile={(id) => handleOpenUserProfile(id, 'friends')}
             onSearchUsers={handleSearchUsers}
             onSendFriendRequest={handleSendFriendRequest}
             onBack={() => setView('dashboard')}
@@ -672,7 +680,7 @@ export default function StudyMate() {
             sets={publicProfileSets}
             friendStatus={getFriendStatus(publicProfileUser.id)}
             loading={publicProfileLoading}
-            onBack={() => setView('dashboard')}
+            onBack={() => setView(publicProfileFrom)}
             onSendFriendRequest={() => handleSendFriendRequest(publicProfileUser.id)}
             onOpenSet={(s) => { setCurrentSet(s); setView('detail'); }}
           />
