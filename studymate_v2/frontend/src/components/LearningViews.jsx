@@ -129,8 +129,8 @@ export function LearnView({ set, onBack, onCompleteSet }) {
 
       {flipped ? (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <button className="sm-btn sm-btn-danger" style={{ justifyContent: "center" }} onClick={() => next(false)}><X size={15} /> Nicht gewusst</button>
-          <button className="sm-btn sm-btn-primary" style={{ justifyContent: "center" }} onClick={() => next(true)}><Check size={15} /> Gewusst!</button>
+          <button className="sm-btn sm-btn-danger learn-unknown-btn" style={{ justifyContent: "center" }} onClick={() => next(false)}><X size={15} /> Nicht gewusst</button>
+          <button className="sm-btn sm-btn-primary learn-known-btn" style={{ justifyContent: "center" }} onClick={() => next(true)}><Check size={15} /> Gewusst!</button>
         </div>
       ) : (
         <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
@@ -202,7 +202,7 @@ export function QuizView({ set, onBack }) {
   if (phase === "intro") return (
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 500, margin: "0 auto" }}>
       <button className="sm-btn sm-btn-ghost" style={{ padding: "8px 12px", marginBottom: 20 }} onClick={onBack}><ArrowLeft size={15} /></button>
-      <div className="sm-panel-soft" style={{ border: "1px solid rgba(139,92,246,.25)", borderRadius: 20, padding: 28 }}>
+      <div className="sm-panel-soft quiz-intro-panel" style={{ border: "1px solid rgba(139,92,246,.25)", borderRadius: 20, padding: 28 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ width: 44, height: 44, background: "rgba(139,92,246,.2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><Target size={22} color="#a78bfa" /></div>
           <div>
@@ -214,12 +214,12 @@ export function QuizView({ set, onBack }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><Sparkles size={14} color="#a78bfa" /><span style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>KI-Quizgenerierung</span></div>
           <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>KI erstellt neue Fragen auf Basis deiner Karten – mit Erklärungen nach jeder Antwort.</p>
           {aiError && <p style={{ fontSize: 12, color: "#f87171", margin: "0 0 8px" }}>{aiError}</p>}
-          <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={generateAIQuiz} disabled={aiLoading}>
+          <button className="sm-btn sm-btn-ghost quiz-ai-btn" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={generateAIQuiz} disabled={aiLoading}>
             {aiLoading ? <><Spinner size={12} color="#a78bfa" /> Generiere...</> : <><Sparkles size={13} /> KI-Quiz erstellen</>}
           </button>
         </div>
         {set.cards.length >= 4 && (
-          <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
+          <button className="sm-btn sm-btn-primary quiz-start-btn" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
             <Zap size={15} /> Standard-Quiz starten
           </button>
         )}
