@@ -2,9 +2,10 @@ import { useState } from "react";
 import { ArrowLeft, Star } from "lucide-react";
 
 export function ProfileView({ user, sets, streak, onBack, onEdit }) {
-  const totalCards = sets.reduce((sum, set) => sum + (set.cards?.length || 0), 0);
+  const ownSets = sets.filter(s => s.owneruserid === user?.id && !s.forkedFrom);
+  const totalCards = ownSets.reduce((sum, set) => sum + (set.cards?.length || 0), 0);
   const username = user?.name ? user.name.toLowerCase().replace(/\s+/g, '_') : 'gast';
-  const previewSets = sets.slice(0, 4);
+  const previewSets = ownSets.slice(0, 4);
 
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 1080, margin: '0 auto' }}>
@@ -30,7 +31,7 @@ export function ProfileView({ user, sets, streak, onBack, onEdit }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginBottom: 28 }}>
         <div className="sm-stat" style={{ padding: 22 }}><div className="sm-stat-num" style={{ color: '#00d4aa' }}>{totalCards}</div><div className="sm-stat-label">Karteikarten</div></div>
-        <div className="sm-stat" style={{ padding: 22 }}><div className="sm-stat-num" style={{ color: '#8b5cf6' }}>{sets.length}</div><div className="sm-stat-label">Karteikartensets</div></div>
+        <div className="sm-stat" style={{ padding: 22 }}><div className="sm-stat-num" style={{ color: '#8b5cf6' }}>{ownSets.length}</div><div className="sm-stat-label">Karteikartensets</div></div>
         <div className="sm-stat" style={{ padding: 22 }}><div className="sm-stat-num" style={{ color: '#f59e0b' }}>{streak || 0}</div><div className="sm-stat-label">Tage am Stück</div></div>
       </div>
 

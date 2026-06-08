@@ -19,7 +19,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
   });
 
   const mineSets = sets.filter(s => s.owneruserid === user?.id);
-  const totalCards = sets.reduce((acc, s) => acc + s.cards.length, 0);
+  const totalCards = mineSets.reduce((acc, s) => acc + s.cards.length, 0);
   const suggestions = sets.filter(s => s.isPublic && s.owneruserid !== user?.id).slice(0, 6);
   const actionSpace = 48;
   const cardInsetStyle = {

@@ -22,6 +22,7 @@ export function normalizeSet(raw) {
     author,
     authorInitial: (author[0] || "?").toUpperCase(),
     owneruserid: raw.owneruserid,
+    forkedFrom: raw.forked_from ?? null,
     accent: accentFor(raw.id),
     tags: [],
     cards: (raw.flashcards || [])
