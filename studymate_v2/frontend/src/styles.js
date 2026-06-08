@@ -224,9 +224,12 @@ const styles = `
     .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: #cbd5e1; }
   }
 
-  .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.32); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.04); color: #94a3b8; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
-  .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; }
-  .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.12); }
+  .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.24); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.08); color: #cbd5e1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s ease; backdrop-filter: blur(8px); }
+  .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; background: rgba(255,255,255,.08); }
+  .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.18); }
+  .sm.light .sm-fav-btn { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(241,245,249,.95)); border-color: rgba(148,163,184,.32); color: #475569; box-shadow: 0 10px 24px rgba(15,23,42,.08); }
+  .sm.light .sm-fav-btn:hover { background: #f8fafc; color: #0f172a; transform: scale(1.05); }
+  .sm.light .sm-fav-btn.active { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(241,245,249,.95)); color: #ffd166; border-color: rgba(245,158,11,.3); box-shadow: 0 10px 24px rgba(245,158,11,.12); }
 
   /* Tour */
   .tour-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1001; }
