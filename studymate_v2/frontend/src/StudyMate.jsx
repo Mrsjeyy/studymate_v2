@@ -64,6 +64,8 @@ export default function StudyMate() {
   const [createLoading, setCreateLoading] = useState(false);
   const [streak, setStreak] = useState(0);
   const [activityData, setActivityData] = useState({});
+  const activityDataRef = useRef({});
+  const streakRef = useRef(0);
   const [showCreateSetDialog, setShowCreateSetDialog] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -136,6 +138,10 @@ export default function StudyMate() {
     setTourCurrentView(null);
     setCurrentTourStep(0);
   };
+
+  // ── Refs sync ──────────────────────────────────────────────────────────────
+  useEffect(() => { activityDataRef.current = activityData; }, [activityData]);
+  useEffect(() => { streakRef.current = streak; }, [streak]);
 
   // ── Effects ────────────────────────────────────────────────────────────────
 
@@ -374,9 +380,11 @@ export default function StudyMate() {
   const handleCompleteSet = async (cardCount = 1) => {
     const today = toISODate();
     const yesterday = toISODate(new Date(Date.now() - 86400000));
-    const newStreak = (streak > 0 && (activityData[today] !== undefined || activityData[yesterday] !== undefined))
-      ? streak + (activityData[today] !== undefined ? 0 : 1) : 1;
-    const newActivity = { ...activityData, [today]: (activityData[today] || 0) + cardCount };
+    const currentActivity = activityDataRef.current;
+    const currentStreak = streakRef.current;
+    const newStreak = (currentStreak > 0 && (currentActivity[today] !== undefined || currentActivity[yesterday] !== undefined))
+      ? currentStreak + (currentActivity[today] !== undefined ? 0 : 1) : 1;
+    const newActivity = { ...currentActivity, [today]: (currentActivity[today] || 0) + cardCount };
 
     setStreak(newStreak);
     setActivityData(newActivity);
