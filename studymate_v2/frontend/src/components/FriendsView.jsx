@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, Check, X, Users, Search, Trash2 } from "lucide-react";
+import { UserPlus, Check, X, Users, Search } from "lucide-react";
 import Spinner from "./Spinner";
 
 function Avatar({ imageData, initial }) {
@@ -10,7 +10,7 @@ function Avatar({ imageData, initial }) {
   );
 }
 
-export default function FriendsView({ user, friends, pendingReceived, pendingSent, loading, onAccept, onDecline, onRemoveFriend, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
+export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onRemoveFriend, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
   const [tab, setTab] = useState("friends");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -41,12 +41,6 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
     { id: "requests", label: `Anfragen${pendingReceived.length > 0 ? ` (${pendingReceived.length})` : ''}` },
   ];
 
-  if (loading) return (
-    <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 700, margin: "0 auto", textAlign: "center", paddingTop: 80 }}>
-      <Spinner size={28} />
-    </div>
-  );
-
   return (
     <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 700, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
@@ -69,25 +63,24 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
       {/* ── Freundesliste ── */}
       {tab === "friends" && (
         friends.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-secondary)" }}>
+          <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
             <Users size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
             <p style={{ fontSize: 15 }}>Noch keine Freunde</p>
-            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Suche nach Nutzern um jemanden hinzuzufügen.</p>
+            <p style={{ fontSize: 13, color: "#334155" }}>Suche nach Nutzern um jemanden hinzuzufügen.</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {friends.map(f => (
-              <div key={f.friendshipId} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                <Avatar imageData={f.imageData} initial={f.initial} />
+              <div key={f.friendshipId} className="sm-panel-soft" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
+                  {f.initial}
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{f.name}</div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>@{f.username}</div>
                 </div>
                 <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onOpenProfile(f.userId)}>
                   Profil ansehen
-                </button>
-                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onRemoveFriend(f.friendshipId, f.name)} title="Freund entfernen">
-                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
@@ -99,7 +92,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
       {tab === "search" && (
         <div>
           <div style={{ position: "relative", marginBottom: 16 }}>
-            <Search size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)" }} />
+            <Search size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#475569" }} />
             <input
               className="sm-input"
               style={{ paddingLeft: 40 }}
@@ -113,13 +106,13 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
           {searching && <div style={{ textAlign: "center", padding: 24 }}><Spinner size={20} /></div>}
 
           {!searching && searchQuery.length >= 2 && searchResults.length === 0 && (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-secondary)" }}>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#475569" }}>
               <p style={{ fontSize: 14 }}>Kein Nutzer gefunden</p>
             </div>
           )}
 
           {!searching && searchQuery.length < 2 && (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-secondary)" }}>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#475569" }}>
               <Search size={32} style={{ margin: "0 auto 10px", opacity: .3 }} />
               <p style={{ fontSize: 14 }}>Mindestens 2 Zeichen eingeben</p>
             </div>
@@ -129,7 +122,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
             {searchResults.map(r => {
               const status = getFriendStatus(r.userId);
               return (
-                <div key={r.userId} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                <div key={r.userId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                   <Avatar imageData={r.imageData} initial={r.initial} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
@@ -171,7 +164,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
               <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 10 }}>Eingehend</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {pendingReceived.map(r => (
-                  <div key={r.friendshipId} style={{ background: "var(--card-bg)", border: "1px solid rgba(0,212,170,.15)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div key={r.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(0,212,170,.15)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                     <Avatar imageData={r.imageData} initial={r.initial} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
@@ -196,7 +189,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
               <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 10 }}>Gesendet</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {pendingSent.map(r => (
-                  <div key={r.friendshipId} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div key={r.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                     <Avatar imageData={r.imageData} initial={r.initial} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
@@ -210,7 +203,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
           )}
 
           {pendingReceived.length === 0 && pendingSent.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text-secondary)" }}>
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
               <UserPlus size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
               <p style={{ fontSize: 15 }}>Keine offenen Anfragen</p>
             </div>
