@@ -8,23 +8,26 @@ export default function WeeklyActivityChart({ activityData = {} }) {
 
   const todayStr = toISODate();
   const pastData = data.filter(d => d.date <= todayStr);
-  const maxVal = Math.max(...pastData.map(d => d.count), 1);
+  const maxVal = Math.max(...pastData.map(d => d.count), 50);
+  const Y_STEP = 10;
+  const chartMax = Math.ceil(maxVal / Y_STEP) * Y_STEP;
 
-  const W = 500, H = 100, PL = 30, PR = 12, PT = 12, PB = 22;
-  const LABEL_H = 14; // reserved px above the highest point for its value label
+  const W = 500, H = 160, PL = 30, PR = 12, PT = 12, PB = 22;
+  const LABEL_H = 14;
   const chartW = W - PL - PR;
-  const chartH = H - PT - PB - LABEL_H; // shrink usable height so max point is never flush to top
+  const chartH = H - PT - PB - LABEL_H;
 
   const points = data.map((d, i) => ({
     x: PL + (i / 6) * chartW,
-    y: PT + LABEL_H + chartH - (d.count / maxVal) * chartH,
+    y: PT + LABEL_H + chartH - (d.count / chartMax) * chartH,
     isFuture: d.date > todayStr,
     ...d,
   }));
 
   const pastPoints = points.filter(p => !p.isFuture);
 
-  /** Generates a smooth SVG cubic-bezier path through the given points (Catmull-Rom). */
+  const baseY = PT + LABEL_H + chartH;
+
   const smoothPath = (pts) => {
     if (pts.length === 0) return "";
     if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
@@ -32,16 +35,16 @@ export default function WeeklyActivityChart({ activityData = {} }) {
       if (i === 0) return `M ${p.x} ${p.y}`;
       const prev = pts[i - 1];
       const cp1x = prev.x + (p.x - (pts[i - 2]?.x ?? prev.x)) / 6;
-      const cp1y = prev.y + (p.y - (pts[i - 2]?.y ?? prev.y)) / 6;
+      const cp1y = Math.min(prev.y + (p.y - (pts[i - 2]?.y ?? prev.y)) / 6, baseY);
       const cp2x = p.x - ((pts[i + 1]?.x ?? p.x) - prev.x) / 6;
-      const cp2y = p.y - ((pts[i + 1]?.y ?? p.y) - prev.y) / 6;
+      const cp2y = Math.min(p.y - ((pts[i + 1]?.y ?? p.y) - prev.y) / 6, baseY);
       return `C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p.x} ${p.y}`;
     }).join(" ");
   };
 
   const pathD = smoothPath(pastPoints);
   const areaD = pastPoints.length > 1
-    ? `${pathD} L ${pastPoints[pastPoints.length - 1].x} ${PT + chartH} L ${pastPoints[0].x} ${PT + chartH} Z`
+    ? `${pathD} L ${pastPoints[pastPoints.length - 1].x} ${baseY} L ${pastPoints[0].x} ${baseY} Z`
     : "";
 
   const monday = (() => {
@@ -54,7 +57,7 @@ export default function WeeklyActivityChart({ activityData = {} }) {
   sunday.setDate(monday.getDate() + 6);
   const fmt = d => `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}`;
   const weekLabel = `${fmt(monday)} – ${fmt(sunday)}`;
-  const yTicks = [0, Math.round(maxVal / 2), maxVal];
+  const yTicks = Array.from({ length: chartMax / Y_STEP + 1 }, (_, i) => i * Y_STEP);
 
   return (
     <div className="sm-panel-soft" style={{ padding: "16px 18px" }}>
@@ -66,13 +69,13 @@ export default function WeeklyActivityChart({ activityData = {} }) {
           <button onClick={() => setWeekOffset(o => Math.min(o + 1, 0))} disabled={weekOffset >= 0} style={{ background: "var(--surface-strong)", border: "none", color: weekOffset >= 0 ? "#334155" : "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: weekOffset >= 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
         </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", userSelect: "none" }}>
         {yTicks.map(v => {
-          const y = PT + LABEL_H + chartH - (v / maxVal) * chartH;
+          const y = PT + LABEL_H + chartH - (v / chartMax) * chartH;
           return (
             <g key={v}>
               <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="var(--surface-border-soft)" strokeWidth="1" />
-              <text x={PL - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#475569">{v}</text>
+              <text x={PL - 6} y={y + 4} textAnchor="end" fontSize="8" fill="#475569">{v}</text>
             </g>
           );
         })}
@@ -81,9 +84,12 @@ export default function WeeklyActivityChart({ activityData = {} }) {
             <stop offset="0%" stopColor="#00d4aa" stopOpacity="0.18" />
             <stop offset="100%" stopColor="#00d4aa" stopOpacity="0.01" />
           </linearGradient>
+          <clipPath id="chartClip">
+            <rect x={PL} y={PT} width={chartW} height={LABEL_H + chartH} />
+          </clipPath>
         </defs>
-        {areaD && <path d={areaD} fill="url(#areaGrad)" />}
-        {pathD && <path d={pathD} fill="none" stroke="#00d4aa" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />}
+        {areaD && <path d={areaD} fill="url(#areaGrad)" clipPath="url(#chartClip)" />}
+        {pathD && <path d={pathD} fill="none" stroke="#00d4aa" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" clipPath="url(#chartClip)" />}
         {points.map((p, i) => (
           <g key={i}>
             <text x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill={p.isFuture ? "#2d3748" : "#475569"}>{p.label}</text>
