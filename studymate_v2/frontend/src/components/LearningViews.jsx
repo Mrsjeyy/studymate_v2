@@ -215,10 +215,16 @@ export function QuizView({ set, onBack }) {
         <div className="sm-panel-soft" style={{ borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><Sparkles size={14} color="#a78bfa" /><span style={{ fontSize: 13, fontWeight: 600, color: "#a78bfa" }}>KI-Quizgenerierung</span></div>
           <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 10px", lineHeight: 1.6 }}>KI erstellt neue Fragen auf Basis deiner Karten – mit Erklärungen nach jeder Antwort.</p>
-          {aiError && <p style={{ fontSize: 12, color: "#f87171", margin: "0 0 8px" }}>{aiError}</p>}
-          <button className="sm-btn sm-btn-ghost quiz-ai-btn" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={generateAIQuiz} disabled={aiLoading}>
-            {aiLoading ? <><Spinner size={12} color="#a78bfa" /> Generiere...</> : <><Sparkles size={13} /> KI-Quiz erstellen</>}
-          </button>
+          {set.cards.length === 0 ? (
+            <p style={{ fontSize: 13, color: "#f59e0b", margin: 0 }}>Bitte füge zuerst eine Karteikarte hinzu.</p>
+          ) : (
+            <>
+              {aiError && <p style={{ fontSize: 12, color: "#f87171", margin: "0 0 8px" }}>{aiError}</p>}
+              <button className="sm-btn sm-btn-ghost quiz-ai-btn" style={{ fontSize: 13, padding: "7px 14px", borderColor: "rgba(139,92,246,.3)", color: "#a78bfa" }} onClick={generateAIQuiz} disabled={aiLoading}>
+                {aiLoading ? <><Spinner size={12} color="#a78bfa" /> Generiere...</> : <><Sparkles size={13} /> KI-Quiz erstellen</>}
+              </button>
+            </>
+          )}
         </div>
         {set.cards.length >= 4 && (
           <button className="sm-btn sm-btn-primary quiz-start-btn" style={{ width: "100%", justifyContent: "center" }} onClick={() => { setQIdx(0); setSelected(null); setScore(0); setPhase("quiz"); }}>
