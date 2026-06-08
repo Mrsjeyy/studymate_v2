@@ -5,10 +5,12 @@ StudyMate ist eine Lernplattform für Karteikarten, Sets, Quiz und tägliche Ler
 ## Features
 - Registrierung, Login, Gastmodus und Passwort-Reset
 - Öffentliche und private Lernsets
-- Karteikarten anlegen, bearbeiten, löschen und per JSON importieren
+- Karteikarten anlegen, bearbeiten, löschen, per JSON importieren und Reihenfolge per Pfeil-Buttons anpassen
 - Lernmodus mit Kartenumdrehen
-- Quizmodus mit Standardfragen und KI-generierten Fragen
-- Favoriten im Dashboard
+- Quizmodus mit Standardfragen und KI-generierten Fragen (Groq Llama)
+- Öffentliche Sets forken sowie eigene Sets kopieren (inkl. private Sets)
+- Favoriten im Dashboard (auch als Gast; Migration beim Login)
+- Geführte Tour für Dashboard, Set-Detailansicht und Set-Erstellung
 - Tagesstreaks, die nach mehr als einem Kalendertag ohne Lernen zurückgesetzt werden
 - Dashboard mit Statistiken und Set-Übersicht
 
