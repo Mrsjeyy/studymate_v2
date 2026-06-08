@@ -17,8 +17,9 @@ export default function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onT
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {currentViewHasTour && (
-          <button className="sm-btn sm-btn-ghost" onClick={onTourRestart} title="Tour ansehen" style={{ padding: "7px 10px", fontSize: 13, color: "#00d4aa" }}>
+          <button className="sm-btn sm-btn-ghost" onClick={onTourRestart} title="Tour für diese Ansicht starten" style={{ padding: "7px 10px", fontSize: 13, color: "#00d4aa", gap: 5 }}>
             <HelpCircle size={14} />
+            <span style={{ fontSize: 12 }}>Tour</span>
           </button>
         )}
         <button className="sm-btn sm-btn-ghost" onClick={onToggleTheme} title="Theme umschalten" style={{ padding: "7px 10px", fontSize: 13 }}>
