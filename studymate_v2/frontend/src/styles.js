@@ -154,17 +154,17 @@ const styles = `
   .sm-stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
   .sm-modal-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index: 250; padding: 20px; }
-  .sm-modal { width: min(100%, 480px); background: #ffffff; border: 1px solid rgba(15,23,42,.12); border-radius: 20px; padding: 26px; box-shadow: 0 32px 80px rgba(0,0,0,.25); color: #0f172a; }
-  .sm-modal h3 { margin: 0 0 8px; font-size: 18px; color: #0f172a; }
-  .sm-modal p { color: #64748b; }
-  .sm-modal label { color: #374151; font-size: 13px; font-weight: 500; }
-  .sm-modal .sm-input { background: #f1f5f9; border-color: rgba(15,23,42,.12); color: #0f172a; }
-  .sm-modal .sm-input::placeholder { color: #94a3b8; }
+  .sm-modal { width: min(100%, 480px); background: var(--surface); border: 1px solid var(--panel-border); border-radius: 20px; padding: 26px; box-shadow: 0 32px 80px rgba(0,0,0,.25); color: var(--text); }
+  .sm-modal h3 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
+  .sm-modal p { color: var(--text-muted); }
+  .sm-modal label { color: var(--text); font-size: 13px; font-weight: 500; }
+  .sm-modal .sm-input { background: var(--input-bg); border-color: var(--input-border); color: var(--input-text); }
+  .sm-modal .sm-input::placeholder { color: var(--text-muted); }
   .sm-modal .sm-toggle-group { display: flex; gap: 10px; margin-bottom: 14px; }
-  .sm-modal .sm-toggle-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15,23,42,.12); background: #f1f5f9; color: #374151; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .18s; }
+  .sm-modal .sm-toggle-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); background: var(--surface); color: var(--text); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .18s; }
   .sm-modal .sm-toggle-btn.active { background: rgba(0,212,170,.12); border-color: rgba(0,212,170,.45); color: #00b894; }
-  .sm-modal .sm-btn-ghost { background: rgba(15,23,42,.06); color: #64748b; border-color: rgba(15,23,42,.1); }
-  .sm-modal .sm-btn-ghost:hover { background: rgba(15,23,42,.1); color: #0f172a; }
+  .sm-modal .sm-btn-ghost { background: var(--ghost-bg); color: var(--text-muted); border-color: var(--ghost-border); }
+  .sm-modal .sm-btn-ghost:hover { background: var(--hover-bg); color: var(--text); }
   .sm-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
   .sm-modal-error { color: #dc2626; font-size: 13px; margin-top: -6px; margin-bottom: 10px; }
 
