@@ -154,17 +154,17 @@ const styles = `
   .sm-stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
   .sm-modal-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index: 250; padding: 20px; }
-  .sm-modal { width: min(100%, 480px); background: #ffffff; border: 1px solid rgba(15,23,42,.12); border-radius: 20px; padding: 26px; box-shadow: 0 32px 80px rgba(0,0,0,.25); color: #0f172a; }
-  .sm-modal h3 { margin: 0 0 8px; font-size: 18px; color: #0f172a; }
-  .sm-modal p { color: #64748b; }
-  .sm-modal label { color: #374151; font-size: 13px; font-weight: 500; }
-  .sm-modal .sm-input { background: #f1f5f9; border-color: rgba(15,23,42,.12); color: #0f172a; }
-  .sm-modal .sm-input::placeholder { color: #94a3b8; }
+  .sm-modal { width: min(100%, 480px); background: var(--surface); border: 1px solid var(--panel-border); border-radius: 20px; padding: 26px; box-shadow: 0 32px 80px rgba(0,0,0,.25); color: var(--text); }
+  .sm-modal h3 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
+  .sm-modal p { color: var(--text-muted); }
+  .sm-modal label { color: var(--text); font-size: 13px; font-weight: 500; }
+  .sm-modal .sm-input { background: var(--input-bg); border-color: var(--input-border); color: var(--input-text); }
+  .sm-modal .sm-input::placeholder { color: var(--text-muted); }
   .sm-modal .sm-toggle-group { display: flex; gap: 10px; margin-bottom: 14px; }
-  .sm-modal .sm-toggle-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15,23,42,.12); background: #f1f5f9; color: #374151; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .18s; }
+  .sm-modal .sm-toggle-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); background: var(--surface); color: var(--text); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .18s; }
   .sm-modal .sm-toggle-btn.active { background: rgba(0,212,170,.12); border-color: rgba(0,212,170,.45); color: #00b894; }
-  .sm-modal .sm-btn-ghost { background: rgba(15,23,42,.06); color: #64748b; border-color: rgba(15,23,42,.1); }
-  .sm-modal .sm-btn-ghost:hover { background: rgba(15,23,42,.1); color: #0f172a; }
+  .sm-modal .sm-btn-ghost { background: var(--ghost-bg); color: var(--text-muted); border-color: var(--ghost-border); }
+  .sm-modal .sm-btn-ghost:hover { background: var(--hover-bg); color: var(--text); }
   .sm-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
   .sm-modal-error { color: #dc2626; font-size: 13px; margin-top: -6px; margin-bottom: 10px; }
 
@@ -224,9 +224,12 @@ const styles = `
     .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: #cbd5e1; }
   }
 
-  .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.32); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.04); color: #94a3b8; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s; }
-  .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; }
-  .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.12); }
+  .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.24); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.08); color: #cbd5e1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s ease; backdrop-filter: blur(8px); }
+  .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; background: rgba(255,255,255,.08); }
+  .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.18); }
+  .sm.light .sm-fav-btn { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(241,245,249,.95)); border-color: rgba(148,163,184,.32); color: #475569; box-shadow: 0 10px 24px rgba(15,23,42,.08); }
+  .sm.light .sm-fav-btn:hover { background: #f8fafc; color: #0f172a; transform: scale(1.05); }
+  .sm.light .sm-fav-btn.active { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(241,245,249,.95)); color: #ffd166; border-color: rgba(245,158,11,.3); box-shadow: 0 10px 24px rgba(245,158,11,.12); }
 
   /* Tour */
   .tour-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1001; }
