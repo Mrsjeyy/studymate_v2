@@ -21,6 +21,14 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
   const mineSets = sets.filter(s => s.owneruserid === user?.id);
   const totalCards = sets.reduce((acc, s) => acc + s.cards.length, 0);
   const suggestions = sets.filter(s => s.isPublic && s.owneruserid !== user?.id).slice(0, 6);
+  const actionSpace = 48;
+  const cardInsetStyle = {
+    position: "relative",
+    overflow: "hidden",
+    paddingBottom: actionSpace,
+    paddingRight: actionSpace,
+    boxSizing: "border-box",
+  };
 
   const CreateBtn = () => user ? (
     <button className="sm-create-btn sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
@@ -92,7 +100,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
           </div>
           <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
             {suggestions.map(s => (
-              <div key={s.id} className="sm-card" style={{ minWidth: 220, cursor: 'pointer', position: 'relative' }} onClick={() => onOpenSet(s)}>
+              <div key={s.id} className="sm-card" style={{ ...cardInsetStyle, minWidth: 220, cursor: 'pointer' }} onClick={() => onOpenSet(s)}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <strong style={{ fontSize: 14 }}>{s.title}</strong>
                   <div style={{ color: '#64748b', fontSize: 12 }}>{s.cards.length} Karten</div>
@@ -128,7 +136,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
-            <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ position: "relative", overflow: "hidden" }}>
+            <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ ...cardInsetStyle, cursor: "pointer" }}>
               {user && set.isPublic && set.owneruserid !== user.id && (
                 <button className="fork-btn" onClick={(e) => { e.stopPropagation(); onForkSet?.(set); }} style={{ position: "absolute", top: 8, right: 50, background: "transparent", border: "none", color: "#00d4aa", cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", height: "32px", zIndex: 20 }} title="Dieses Set forken">
                   <FlipHorizontal size={14} /> Fork
