@@ -107,6 +107,7 @@ def fork_set(
             "title": body.title if body.title is not None else source_set["title"],
             "description": body.description if body.description is not None else source_set["description"],
             "ispublic": False,
+            "forked_from": set_id,
         }
     ).execute()
 

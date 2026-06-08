@@ -9,7 +9,7 @@ export default function WeeklyActivityChart({ activityData = {} }) {
   const todayStr = toISODate();
   const pastData = data.filter(d => d.date <= todayStr);
   const maxVal = Math.max(...pastData.map(d => d.count), 50);
-  const Y_STEP = 10;
+  const Y_STEP = [10, 20, 25, 50, 100, 200, 500].find(s => s >= maxVal / 5) ?? 500;
   const chartMax = Math.ceil(maxVal / Y_STEP) * Y_STEP;
 
   const W = 500, H = 160, PL = 30, PR = 12, PT = 12, PB = 22;
@@ -69,7 +69,8 @@ export default function WeeklyActivityChart({ activityData = {} }) {
           <button onClick={() => setWeekOffset(o => Math.min(o + 1, 0))} disabled={weekOffset >= 0} style={{ background: "var(--surface-strong)", border: "none", color: weekOffset >= 0 ? "#334155" : "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: weekOffset >= 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
         </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", userSelect: "none" }}>
+      <div style={{ height: 320, overflow: "hidden" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block", userSelect: "none" }}>
         {yTicks.map(v => {
           const y = PT + LABEL_H + chartH - (v / chartMax) * chartH;
           return (
@@ -98,6 +99,7 @@ export default function WeeklyActivityChart({ activityData = {} }) {
           </g>
         ))}
       </svg>
+      </div>
     </div>
   );
 }

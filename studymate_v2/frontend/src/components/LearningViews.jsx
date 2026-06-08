@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ArrowLeft, RotateCcw, FlipHorizontal, Check, X, ChevronLeft, Target, Sparkles, Zap, Brain, ChevronRight } from "lucide-react";
 import Spinner from "./Spinner";
 
@@ -8,6 +8,7 @@ export function LearnView({ set, onBack, onCompleteSet }) {
   const [flipped, setFlipped] = useState(false);
   const [statusByCard, setStatusByCard] = useState({});
   const [finished, setFinished] = useState(false);
+  const reviewedRef = useRef(0);
 
   const card = sessionCards[idx];
   const progress = sessionCards.length ? (idx / sessionCards.length) * 100 : 0;
@@ -16,6 +17,7 @@ export function LearnView({ set, onBack, onCompleteSet }) {
 
   const restartSession = (repeatUnknown = false) => {
     const nextCards = repeatUnknown ? sessionCards.filter(c => statusByCard[c.id] === "unknown") : set.cards;
+    reviewedRef.current = 0;
     setSessionCards(nextCards);
     setIdx(0);
     setFlipped(false);
@@ -23,19 +25,17 @@ export function LearnView({ set, onBack, onCompleteSet }) {
     setFinished(false);
   };
 
-  const finishSession = () => {
-    setFinished(true);
-    onCompleteSet?.(knownCount);
-  };
-
   const next = (knew) => {
     if (!card) return;
+    reviewedRef.current += 1;
     setFlipped(false);
-    setStatusByCard(prev => ({ ...prev, [card.id]: knew ? "known" : "unknown" }));
+    const newStatus = { ...statusByCard, [card.id]: knew ? "known" : "unknown" };
+    setStatusByCard(newStatus);
 
     setTimeout(() => {
       if (idx + 1 >= sessionCards.length) {
-        finishSession();
+        setFinished(true);
+        onCompleteSet?.(reviewedRef.current);
         setIdx(-1);
       } else {
         setIdx(idx + 1);
