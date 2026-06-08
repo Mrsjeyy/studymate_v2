@@ -18,7 +18,7 @@ test.describe('Guided Tour', () => {
     await page.locator('input[type="password"]').fill(
       process.env.TEST_PASSWORD || 'test_pw_123!'
     );
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
     await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 
     // The tour modal must appear.
@@ -36,7 +36,7 @@ test.describe('Guided Tour', () => {
     await page.locator('input[type="password"]').fill(
       process.env.TEST_PASSWORD || 'test_pw_123!'
     );
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
     await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 
     // Skip the tour.
@@ -57,7 +57,7 @@ test.describe('Guided Tour', () => {
     await page.locator('input[type="password"]').fill(
       process.env.TEST_PASSWORD || 'test_pw_123!'
     );
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
     await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 
     if (await page.locator('.tour-modal').isVisible()) {
