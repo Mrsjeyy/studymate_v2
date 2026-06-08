@@ -21,21 +21,14 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
   const mineSets = sets.filter(s => s.owneruserid === user?.id);
   const totalCards = sets.reduce((acc, s) => acc + s.cards.length, 0);
   const suggestions = sets.filter(s => s.isPublic && s.owneruserid !== user?.id).slice(0, 6);
-  const actionSpace = 56;
-  const cardWrapperStyle = {
+  const actionSpace = 48;
+  const cardInsetStyle = {
     position: "relative",
     overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-    paddingRight: actionSpace,
     paddingBottom: actionSpace,
+    paddingRight: actionSpace,
     boxSizing: "border-box",
   };
-  const cardTopRowStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 };
-  const cardTitleStyle = { fontSize: 16, fontWeight: 600, margin: 0, lineHeight: 1.3 };
-  const cardDescriptionStyle = { fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5, marginBottom: 10 };
-  const cardFooterStyle = { position: "absolute", left: 12, right: 12, bottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 };
 
   const CreateBtn = () => user ? (
     <button className="sm-create-btn sm-btn sm-btn-primary" onClick={onCreateSet} disabled={createLoading}>
@@ -105,16 +98,16 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
             <div style={{ fontSize: 13, fontWeight: 700 }}>Vorgeschlagen für dich</div>
             <div style={{ fontSize: 12, color: '#94a3b8' }}>Basierend auf öffentlichen Sets</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'stretch', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
             {suggestions.map(s => (
-              <div key={s.id} className="sm-card" style={{ ...cardWrapperStyle, minWidth: 220, cursor: 'pointer' }} onClick={() => onOpenSet(s)}>
-                <div style={cardTopRowStyle}>
-                  <strong style={{ fontSize: 14, margin: 0 }}>{s.title}</strong>
+              <div key={s.id} className="sm-card" style={{ ...cardInsetStyle, minWidth: 220, cursor: 'pointer' }} onClick={() => onOpenSet(s)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong style={{ fontSize: 14 }}>{s.title}</strong>
                   <div style={{ color: '#64748b', fontSize: 12 }}>{s.cards.length} Karten</div>
                 </div>
-                <p style={cardDescriptionStyle}>{s.description}</p>
+                <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>{s.description}</p>
                 {s.isPublic && s.owneruserid !== user?.id && (
-                  <div style={{ position: 'absolute', bottom: 12, right: 12 }}>
+                  <div style={{ position: 'absolute', bottom: 8, right: 8 }}>
                     <button className="sm-btn sm-btn-ghost" style={{ padding: '4px 8px', fontSize: 12, height: 'auto' }} onClick={(e) => { e.stopPropagation(); onOpenSet(s); }} title="Set öffnen">
                       <ChevronRight size={14} />
                     </button>
@@ -143,7 +136,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
           {filtered.map(set => (
-            <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ ...cardWrapperStyle, cursor: "pointer" }}>
+            <div key={set.id} className="sm-card" onClick={() => onOpenSet(set)} style={{ ...cardInsetStyle, cursor: "pointer" }}>
               {user && set.isPublic && set.owneruserid !== user.id && (
                 <button className="fork-btn" onClick={(e) => { e.stopPropagation(); onForkSet?.(set); }} style={{ position: "absolute", top: 8, right: 50, background: "transparent", border: "none", color: "#00d4aa", cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", height: "32px", zIndex: 20 }} title="Dieses Set forken">
                   <FlipHorizontal size={14} /> Fork
@@ -153,7 +146,7 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
                 <Star size={14} />
               </button>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${set.accent}, transparent)` }} />
-              <div style={cardTopRowStyle}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                 <span className={`sm-badge ${set.isPublic ? "sm-badge-public" : "sm-badge-private"}`}>
                   {set.isPublic ? <Globe size={10} /> : <Lock size={10} />}
                   {set.isPublic ? "Öffentlich" : "Privat"}
@@ -162,14 +155,14 @@ export default function DashboardView({ user, sets, setsLoading, onOpenSet, onCr
                   <BookOpen size={12} /> {set.cards.length} Karten
                 </div>
               </div>
-              <h3 style={cardTitleStyle}>{set.title}</h3>
-              <p style={cardDescriptionStyle}>{set.description}</p>
+              <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px" }}>{set.title}</h3>
+              <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 14px", lineHeight: 1.5 }}>{set.description}</p>
               {set.tags.length > 0 && (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
                   {set.tags.map(t => <span key={t} className="sm-tag">{t}</span>)}
                 </div>
               )}
-              <div style={cardFooterStyle}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div
                   style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "#475569", cursor: set.showAuthor && set.owneruserid !== user?.id ? "pointer" : "default" }}
                   onClick={e => { if (set.showAuthor && set.owneruserid !== user?.id) { e.stopPropagation(); onOpenUserProfile?.(set.owneruserid); } }}
