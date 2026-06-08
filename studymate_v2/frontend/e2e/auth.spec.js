@@ -13,7 +13,7 @@ test.describe('Login', () => {
     await goToAuthForm(page);
     await page.locator('input[placeholder="dein_username"]').fill(TEST_USERNAME);
     await page.locator('input[type="password"]').fill('falsches_passwort');
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
 
     const error = page.locator('div').filter({ hasText: 'Benutzername oder Passwort falsch' }).first();
     await expect(error).toBeVisible({ timeout: 8000 });
@@ -21,7 +21,7 @@ test.describe('Login', () => {
 
   test('Fehlermeldung bei leeren Feldern', async ({ page }) => {
     await goToAuthForm(page);
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
 
     const error = page.locator('div').filter({ hasText: 'Bitte alle Felder ausfüllen' }).first();
     await expect(error).toBeVisible();
@@ -36,7 +36,7 @@ test.describe('Registrierung', () => {
     await page.locator('span.sm-tab:has-text("Registrieren")').click();
     await page.locator('input[placeholder="dein_username"]').fill('ab');
     await page.locator('input[type="password"]').fill('password123');
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
     const error = page.locator('.sm-alert').filter({ hasText: 'mindestens 3 Zeichen' });
     await expect(error).toBeVisible({ timeout: 5000 });
   });
@@ -46,7 +46,7 @@ test.describe('Registrierung', () => {
     await page.locator('span.sm-tab:has-text("Registrieren")').click();
     await page.locator('input[placeholder="dein_username"]').fill('validuser');
     await page.locator('input[type="password"]').fill('abc');
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
     const error = page.locator('.sm-alert').filter({ hasText: 'mindestens 6 Zeichen' });
     await expect(error).toBeVisible({ timeout: 5000 });
   });

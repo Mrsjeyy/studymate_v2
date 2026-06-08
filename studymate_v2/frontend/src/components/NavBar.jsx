@@ -4,16 +4,16 @@ export default function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onT
   return (
     <nav className="sm-nav">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button className="sm-hamburger" aria-label="Menü öffnen" onClick={e => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('toggle-sidebar')); }} style={{ marginRight: 6 }}>
+        <div className="sm-logo" onClick={onHome}>
+          <div className="sm-logo-icon">
+            <Shield size={16} color="#080c18" strokeWidth={2.5} />
+          </div>
+          <span>Study<span style={{ color: "#00d4aa" }}>Mate</span></span>
+          <span className="sm-mono" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
+        </div>
+        <button className="sm-hamburger" aria-label="Menü öffnen" onClick={e => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('toggle-sidebar')); }} style={{ marginLeft: 6 }}>
           <Menu size={16} />
         </button>
-      </div>
-      <div className="sm-logo" onClick={onHome}>
-        <div className="sm-logo-icon">
-          <Shield size={16} color="#080c18" strokeWidth={2.5} />
-        </div>
-        <span>Study<span style={{ color: "#00d4aa" }}>Mate</span></span>
-        <span className="sm-mono" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {currentViewHasTour && (
