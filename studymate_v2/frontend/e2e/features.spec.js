@@ -44,7 +44,7 @@ test.describe('Registrierung', () => {
     const newUser = `pw_reg_${uid()}`;
     await page.locator('input[placeholder="dein_username"]').fill(newUser);
     await page.locator('input[type="password"]').fill('password123');
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
 
     // After registration the user lands on the dashboard.
     await expect(page.locator('.sm-create-btn')).toBeVisible({ timeout: 15000 });
@@ -61,7 +61,7 @@ test.describe('Registrierung', () => {
     await page.locator('span.sm-tab:has-text("Registrieren")').click();
     await page.locator('input[placeholder="dein_username"]').fill(TEST_USERNAME);
     await page.locator('input[type="password"]').fill('password123');
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
 
     const error = page.locator('.sm-alert').filter({ hasText: 'bereits vergeben' });
     await expect(error).toBeVisible({ timeout: 8000 });
@@ -217,7 +217,7 @@ test.describe('Gastfavoriten', () => {
     await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
     await page.locator('input[placeholder="dein_username"]').fill(TEST_USERNAME);
     await page.locator('input[type="password"]').fill(TEST_PASSWORD);
-    await page.locator('button.sm-btn-primary').click();
+    await page.locator('.sm-panel button.sm-btn-primary').click();
     await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 
     // Navigate to Favorites view and verify the set is still there.
