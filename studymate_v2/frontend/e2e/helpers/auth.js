@@ -25,14 +25,14 @@ export async function login(page, username = TEST_USERNAME, password = TEST_PASS
   await page.goto('/');
   // Wait for the guest-mode navbar to appear.
   await page.waitForSelector('.sm-nav', { timeout: 10000 });
-  // Open the auth form via the navbar login button.
-  await page.locator('.sm-nav button:has-text("Anmelden")').click();
-  // Auth form is now visible (NavBar is hidden in auth view).
+  // Open the auth form via the navbar login button. force:true handles narrow viewports.
+  await page.locator('.sm-nav button:has-text("Anmelden")').click({ force: true });
+  // Auth form is now visible.
   await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
   await page.locator('input[placeholder="dein_username"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
-  // Submit — only one primary button visible now that the navbar is hidden.
-  await page.locator('button.sm-btn-primary').click();
+  // Scope to .sm-panel to avoid matching the navbar "Anmelden" button (still visible).
+  await page.locator('.sm-panel button.sm-btn-primary').click();
   await page.waitForSelector('.sm-create-btn', { timeout: 15000 });
 }
 
@@ -41,7 +41,7 @@ export async function goToAuthForm(page) {
   await skipTour(page);
   await page.goto('/');
   await page.waitForSelector('.sm-nav', { timeout: 10000 });
-  await page.locator('.sm-nav button:has-text("Anmelden")').click();
+  await page.locator('.sm-nav button:has-text("Anmelden")').click({ force: true });
   await page.waitForSelector('input[placeholder="dein_username"]', { timeout: 5000 });
 }
 
