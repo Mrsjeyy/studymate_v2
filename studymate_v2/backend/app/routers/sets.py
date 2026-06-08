@@ -98,8 +98,8 @@ def fork_set(
     supabase = get_supabase_admin()
 
     source_set = require_set_access(set_id)
-    if not source_set.get("ispublic"):
-        raise HTTPException(status_code=403, detail="Can only fork public sets")
+    if not source_set.get("ispublic") and source_set.get("owneruserid") != user_id:
+        raise HTTPException(status_code=403, detail="Can only fork public sets or your own sets")
 
     new_set_result = supabase.table("flashcard_sets").insert(
         {
