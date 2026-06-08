@@ -5,10 +5,13 @@ export default function GuidedTourOverlay({ active, step, viewName, onNext, onPr
   if (!active || !viewName || !TOUR_STEPS[viewName] || !TOUR_STEPS[viewName][step]) return null;
 
   const tourStep = TOUR_STEPS[viewName][step];
-  const totalSteps = TOUR_STEPS[viewName].length;
 
   const targetEl = document.querySelector(tourStep.target);
   if (!targetEl) return null;
+
+  const visibleSteps = TOUR_STEPS[viewName].filter(s => document.querySelector(s.target));
+  const visibleIndex = visibleSteps.indexOf(tourStep);
+  const totalSteps = visibleSteps.length;
 
   const rect = targetEl.getBoundingClientRect();
 
@@ -24,11 +27,11 @@ export default function GuidedTourOverlay({ active, step, viewName, onNext, onPr
         <div className="tour-title">{tourStep.title}</div>
         <div className="tour-text">{tourStep.text}</div>
         <div className="tour-actions">
-          <div className="tour-step-counter">{step + 1} von {totalSteps}</div>
+          <div className="tour-step-counter">{visibleIndex + 1} von {totalSteps}</div>
           <button className="tour-btn tour-btn-skip" onClick={onSkip}>Überspringen</button>
-          {step > 0 && <button className="tour-btn tour-btn-skip" onClick={onPrev}>Zurück</button>}
+          {visibleIndex > 0 && <button className="tour-btn tour-btn-skip" onClick={onPrev}>Zurück</button>}
           <button className="tour-btn tour-btn-primary" onClick={onNext}>
-            {step === totalSteps - 1 ? 'Fertig' : 'Weiter'}
+            {visibleIndex === totalSteps - 1 ? 'Fertig' : 'Weiter'}
           </button>
         </div>
       </div>
