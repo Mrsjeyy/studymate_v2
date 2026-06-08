@@ -76,6 +76,7 @@ export default function StudyMate() {
   const [friends, setFriends] = useState([]);
   const [pendingReceived, setPendingReceived] = useState([]);
   const [pendingSent, setPendingSent] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
   const [publicProfileUser, setPublicProfileUser] = useState(null);
   const [publicProfileSets, setPublicProfileSets] = useState([]);
   const [publicProfileLoading, setPublicProfileLoading] = useState(false);
@@ -174,6 +175,36 @@ export default function StudyMate() {
       setTimeout(() => startTour('detail'), 600);
     }
   }, [view, tourCompleted.detail, tourActive]);
+
+  useEffect(() => {
+    if (view === 'learn' && !tourCompleted.learn && !tourActive) {
+      setTimeout(() => startTour('learn'), 600);
+    }
+  }, [view, tourCompleted.learn, tourActive]);
+
+  useEffect(() => {
+    if (view === 'quiz' && !tourCompleted.quiz && !tourActive) {
+      setTimeout(() => startTour('quiz'), 600);
+    }
+  }, [view, tourCompleted.quiz, tourActive]);
+
+  useEffect(() => {
+    if (view === 'favorites' && !tourCompleted.favorites && !tourActive) {
+      setTimeout(() => startTour('favorites'), 600);
+    }
+  }, [view, tourCompleted.favorites, tourActive]);
+
+  useEffect(() => {
+    if (view === 'friends' && !tourCompleted.friends && !tourActive) {
+      setTimeout(() => startTour('friends'), 600);
+    }
+  }, [view, tourCompleted.friends, tourActive]);
+
+  useEffect(() => {
+    if (view === 'profile' && !tourCompleted.profile && !tourActive) {
+      setTimeout(() => startTour('profile'), 600);
+    }
+  }, [view, tourCompleted.profile, tourActive]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -521,8 +552,9 @@ export default function StudyMate() {
 
   const fetchFriends = async () => {
     if (!user) return;
+    setFriendsLoading(true);
     const { data } = await supabase.from("friendships").select("id, user_id, friend_id, status").or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
-    if (!data) return;
+    if (!data) { setFriendsLoading(false); return; }
     const otherIds = data.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
     const { data: profiles } = otherIds.length ? await supabase.from("profiles").select("id, username, displayname, image_data").in("id", otherIds) : { data: [] };
     const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
@@ -535,6 +567,7 @@ export default function StudyMate() {
     setFriends(data.filter(f => f.status === 'accepted').map(toEntry));
     setPendingReceived(data.filter(f => f.status === 'pending' && f.friend_id === user.id).map(toEntry));
     setPendingSent(data.filter(f => f.status === 'pending' && f.user_id === user.id).map(toEntry));
+    setFriendsLoading(false);
   };
 
   useEffect(() => { if (user) fetchFriends(); }, [user?.id]);
@@ -756,6 +789,7 @@ export default function StudyMate() {
             friends={friends}
             pendingReceived={pendingReceived}
             pendingSent={pendingSent}
+            loading={friendsLoading}
             onAccept={handleAcceptFriend}
             onDecline={handleDeclineFriend}
             onRemoveFriend={handleRemoveFriend}
