@@ -193,7 +193,9 @@ export function QuizView({ set, onBack }) {
       if (res.status === 503) throw new Error("KI-Dienst nicht verfügbar. Bitte später erneut versuchen.");
       if (!res.ok) throw new Error("Generierung fehlgeschlagen.");
       const data = await res.json();
-      setAiQuestions(data.questions);
+      const questions = data.questions;
+      if (!questions?.length) throw new Error("KI hat keine Fragen generiert. Bitte erneut versuchen.");
+      setAiQuestions(questions);
       setQIdx(0); setSelected(null); setScore(0); setShowExpl(false); setPhase("aiquiz");
     } catch (e) { setAiError(e.message); }
     finally { setAiLoading(false); }
@@ -253,8 +255,9 @@ export function QuizView({ set, onBack }) {
     );
   }
 
-  if (phase === "aiquiz" && aiQuestions) {
+  if (phase === "aiquiz" && aiQuestions?.length > 0) {
     const q = aiQuestions[qIdx];
+    if (!q) return null;
     return (
       <div className="sm-z sm-fadeup" style={{ padding: 24, maxWidth: 520, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
