@@ -1,6 +1,14 @@
 import { useState } from "react";
-import { UserPlus, Check, X, Users, Search, Trash2 } from "lucide-react";
+import { UserPlus, Check, X, Users, Search } from "lucide-react";
 import Spinner from "./Spinner";
+
+function Avatar({ imageData, initial }) {
+  return (
+    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0, overflow: "hidden" }}>
+      {imageData ? <img src={imageData} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+    </div>
+  );
+}
 
 export default function FriendsView({ user, friends, pendingReceived, pendingSent, onAccept, onDecline, onRemoveFriend, onOpenProfile, onSearchUsers, onSendFriendRequest }) {
   const [tab, setTab] = useState("friends");
@@ -12,9 +20,12 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
     setSearchQuery(q);
     if (q.trim().length < 2) { setSearchResults([]); return; }
     setSearching(true);
-    const results = await onSearchUsers(q.trim());
-    setSearchResults(results);
-    setSearching(false);
+    try {
+      const results = await onSearchUsers(q.trim());
+      setSearchResults(results || []);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const getFriendStatus = (userId) => {
@@ -41,7 +52,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
         )}
       </div>
 
-      <div style={{ display: "flex", background: "rgba(255,255,255,.04)", borderRadius: 10, padding: 3, gap: 3, marginBottom: 20, width: "fit-content" }}>
+      <div style={{ display: "flex", background: "var(--surface)", border: "1px solid var(--surface-border-soft)", borderRadius: 10, padding: 3, gap: 3, marginBottom: 20, width: "fit-content" }}>
         {tabs.map(t => (
           <button key={t.id} className={`sm-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)} style={{ padding: "6px 16px", fontSize: 13 }}>
             {t.label}
@@ -60,17 +71,16 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {friends.map(f => (
-              <div key={f.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                <Avatar imageData={f.imageData} initial={f.initial} />
+              <div key={f.friendshipId} className="sm-panel-soft" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
+                  {f.initial}
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{f.name}</div>
                   <div style={{ fontSize: 12, color: "#64748b" }}>@{f.username}</div>
                 </div>
                 <button className="sm-btn sm-btn-ghost" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onOpenProfile(f.userId)}>
                   Profil ansehen
-                </button>
-                <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onRemoveFriend(f.friendshipId, f.name)} title="Freund entfernen">
-                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
@@ -113,9 +123,7 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
               const status = getFriendStatus(r.userId);
               return (
                 <div key={r.userId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #00d4aa33, #8b5cf633)", border: "1px solid rgba(0,212,170,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#00d4aa", flexShrink: 0 }}>
-                    {r.initial}
-                  </div>
+                  <Avatar imageData={r.imageData} initial={r.initial} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
                     <div style={{ fontSize: 12, color: "#64748b" }}>@{r.username}</div>
@@ -150,32 +158,57 @@ export default function FriendsView({ user, friends, pendingReceived, pendingSen
 
       {/* ── Anfragen ── */}
       {tab === "requests" && (
-        pendingReceived.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
-            <UserPlus size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
-            <p style={{ fontSize: 15 }}>Keine offenen Anfragen</p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {pendingReceived.map(r => (
-              <div key={r.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(0,212,170,.15)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                <Avatar imageData={r.imageData} initial={r.initial} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>möchte dich als Freund hinzufügen</div>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="sm-btn sm-btn-primary" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onAccept(r.friendshipId)}>
-                    <Check size={14} /> Annehmen
-                  </button>
-                  <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onDecline(r.friendshipId)}>
-                    <X size={14} />
-                  </button>
-                </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {pendingReceived.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 10 }}>Eingehend</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {pendingReceived.map(r => (
+                  <div key={r.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(0,212,170,.15)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                    <Avatar imageData={r.imageData} initial={r.initial} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
+                      <div style={{ fontSize: 12, color: "#64748b" }}>möchte dich als Freund hinzufügen</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button className="sm-btn sm-btn-primary" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onAccept(r.friendshipId)}>
+                        <Check size={14} /> Annehmen
+                      </button>
+                      <button className="sm-btn sm-btn-danger" style={{ padding: "6px 12px", fontSize: 13 }} onClick={() => onDecline(r.friendshipId)}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )
+            </div>
+          )}
+
+          {pendingSent.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 10 }}>Gesendet</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {pendingSent.map(r => (
+                  <div key={r.friendshipId} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                    <Avatar imageData={r.imageData} initial={r.initial} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{r.name}</div>
+                      <div style={{ fontSize: 12, color: "#64748b" }}>Anfrage ausstehend</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: "#64748b" }}>Gesendet</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {pendingReceived.length === 0 && pendingSent.length === 0 && (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+              <UserPlus size={40} style={{ margin: "0 auto 12px", opacity: .4 }} />
+              <p style={{ fontSize: 15 }}>Keine offenen Anfragen</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
