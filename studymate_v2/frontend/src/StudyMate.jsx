@@ -122,11 +122,19 @@ export default function StudyMate() {
   const nextStep = () => {
     if (!tourCurrentView) return;
     const steps = TOUR_STEPS[tourCurrentView];
-    if (currentTourStep < steps.length - 1) setCurrentTourStep(prev => prev + 1);
+    let next = currentTourStep + 1;
+    while (next < steps.length && !document.querySelector(steps[next].target)) next++;
+    if (next < steps.length) setCurrentTourStep(next);
     else finishTour(tourCurrentView);
   };
 
-  const prevStep = () => { if (currentTourStep > 0) setCurrentTourStep(prev => prev - 1); };
+  const prevStep = () => {
+    if (!tourCurrentView || currentTourStep <= 0) return;
+    const steps = TOUR_STEPS[tourCurrentView];
+    let prev = currentTourStep - 1;
+    while (prev > 0 && !document.querySelector(steps[prev].target)) prev--;
+    setCurrentTourStep(prev);
+  };
 
   const finishTour = (viewName) => {
     const updated = { ...tourCompleted, [viewName]: { completed: true, completedAt: new Date().toISOString() } };
