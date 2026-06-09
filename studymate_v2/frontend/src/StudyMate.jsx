@@ -772,7 +772,7 @@ export default function StudyMate() {
           />
         )}
 
-        {view === "profile" && <ProfileView user={user} sets={sets} streak={streak} onBack={() => setView('dashboard')} onEdit={() => setView('profile_edit')} />}
+        {view === "profile" && <ProfileView user={user} sets={sets} streak={streak} onBack={() => setView('dashboard')} onEdit={() => setView('profile_edit')} onViewAllSets={() => { setDashboardTab('mine'); setView('dashboard'); }} />}
         {view === "profile_edit" && <ProfileEditView user={user} onBack={() => setView('profile')} onSave={async (name, bio, img) => { await handleSaveProfile(name, bio, img); setView('profile'); }} />}
 
         {view === "detail" && currentSet && (
