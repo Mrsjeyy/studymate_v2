@@ -26,9 +26,19 @@ export default function WeeklyActivityChart({ activityData = {} }) {
   const chartMax = Math.ceil(maxVal / Y_STEP) * Y_STEP;
 
   const W = containerWidth;
-  const H = Math.max(110, Math.round(W * 0.28));
-  const PL = 30, PR = 12, PT = 12, PB = 22;
-  const LABEL_H = 14;
+  const H = Math.max(140, Math.round(W * 0.28));
+
+  // font sizes scale with container width, clamped to readable range
+  const fsTick  = Math.round(Math.max(11, Math.min(15, W / 60)));
+  const fsLabel = Math.round(Math.max(12, Math.min(16, W / 55)));
+  const fsCount = Math.round(Math.max(12, Math.min(16, W / 55)));
+  const dotR    = Math.max(4, Math.round(W / 130));
+  const dotRSm  = Math.max(3, Math.round(W / 170));
+
+  const PL = fsTick * 3 + 4;
+  const PR = 14, PT = 14;
+  const PB = fsLabel + 10;
+  const LABEL_H = fsLabel + 4;
   const chartW = W - PL - PR;
   const chartH = H - PT - PB - LABEL_H;
 
@@ -90,7 +100,7 @@ export default function WeeklyActivityChart({ activityData = {} }) {
             return (
               <g key={v}>
                 <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="var(--surface-border-soft)" strokeWidth="1" />
-                <text x={PL - 6} y={y + 4} textAnchor="end" fontSize="8" fill="#475569">{v}</text>
+                <text x={PL - 6} y={y + fsTick * 0.4} textAnchor="end" fontSize={fsTick} fill="#475569">{v}</text>
               </g>
             );
           })}
@@ -107,11 +117,11 @@ export default function WeeklyActivityChart({ activityData = {} }) {
           {pathD && <path d={pathD} fill="none" stroke="#00d4aa" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" clipPath="url(#chartClip)" />}
           {points.map((p, i) => (
             <g key={i}>
-              <text x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill={p.isFuture ? "var(--text-muted, #94a3b8)" : "#475569"}>{p.label}</text>
+              <text x={p.x} y={H - 4} textAnchor="middle" fontSize={fsLabel} fill={p.isFuture ? "var(--text-muted, #94a3b8)" : "#475569"}>{p.label}</text>
               {p.isFuture
-                ? <circle cx={p.x} cy={baseY} r="2.5" fill="var(--surface-strong, #e2e8f0)" stroke="var(--surface-border-soft, #cbd5e1)" strokeWidth="1" />
-                : <circle cx={p.x} cy={p.y} r="3.5" fill="#00d4aa" />}
-              {!p.isFuture && p.count > 0 && <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#00d4aa">{p.count}</text>}
+                ? <circle cx={p.x} cy={baseY} r={dotRSm} fill="var(--surface-strong, #e2e8f0)" stroke="var(--surface-border-soft, #cbd5e1)" strokeWidth="1" />
+                : <circle cx={p.x} cy={p.y} r={dotR} fill="#00d4aa" />}
+              {!p.isFuture && p.count > 0 && <text x={p.x} y={p.y - dotR - 4} textAnchor="middle" fontSize={fsCount} fontWeight="600" fill="#00d4aa">{p.count}</text>}
             </g>
           ))}
         </svg>
