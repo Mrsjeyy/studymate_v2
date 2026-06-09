@@ -63,9 +63,8 @@ export default function DetailView({ set, user, onBack, onLearn, onQuiz, onAddCa
   const importCards = async () => {
     setImportLoading(true); setImportErr("");
     try {
-      await onImportCards(set.id, importJson);
-      const updated = JSON.parse(importJson);
-      setCards(prev => [...prev, ...updated.map((u, i) => ({ id: `temp-${i}`, q: u.question, a: u.answer }))]);
+      const addedCards = await onImportCards(set.id, importJson);
+      setCards(prev => [...prev, ...addedCards]);
       setImportJson(""); setShowImport(false);
     } catch (e) { setImportErr(e.message || "Fehler beim Importieren."); }
     finally { setImportLoading(false); }

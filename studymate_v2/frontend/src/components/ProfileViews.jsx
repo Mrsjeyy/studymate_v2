@@ -2,8 +2,9 @@ import { useState } from "react";
 import { ArrowLeft, Star } from "lucide-react";
 
 export function ProfileView({ user, sets, streak, onBack, onEdit, onViewAllSets }) {
-  const ownSets = sets.filter(s => s.owneruserid === user?.id && !s.forkedFrom);
-  const totalCards = ownSets.reduce((sum, set) => sum + (set.cards?.length || 0), 0);
+  const allOwnSets = sets.filter(s => s.owneruserid === user?.id);
+  const ownSets = allOwnSets.filter(s => !s.forkedFrom);
+  const totalCards = allOwnSets.reduce((sum, set) => sum + (set.cards?.length || 0), 0);
   const username = user?.name ? user.name.toLowerCase().replace(/\s+/g, '_') : 'gast';
   const previewSets = ownSets.slice(0, 4);
 
