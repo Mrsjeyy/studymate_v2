@@ -440,8 +440,8 @@ export default function StudyMate() {
     const { data, error } = await supabase.from("flashcard_sets").update({ title: newTitle.trim(), description: newDescription.trim() }).eq("id", setId).select().single();
     if (error) { alert(error.message || "Fehler beim Aktualisieren des Sets."); return; }
     const updatedSet = normalizeSet({ ...data, profiles: { username: user?.name || "Unbekannt", displayname: user?.name || "Unbekannt" } });
-    setSets(prev => prev.map(s => s.id === setId ? { ...s, title: updatedSet.title } : s));
-    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, title: updatedSet.title } : prev);
+    setSets(prev => prev.map(s => s.id === setId ? { ...s, title: updatedSet.title, description: updatedSet.description } : s));
+    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, title: updatedSet.title, description: updatedSet.description } : prev);
   };
 
   const handleDeleteSet = async (setId) => {
@@ -494,6 +494,7 @@ export default function StudyMate() {
     if (error) throw new Error(error.message);
     const newCard = { id: data.id, q: data.question, a: data.answer };
     setSets(prev => prev.map(s => s.id === setId ? { ...s, cards: [...s.cards, newCard] } : s));
+    if (currentSet?.id === setId) setCurrentSet(prev => prev ? { ...prev, cards: [...prev.cards, newCard] } : prev);
     return newCard;
   };
 
@@ -545,14 +546,14 @@ export default function StudyMate() {
       const cards = JSON.parse(jsonText);
       if (!Array.isArray(cards)) throw new Error("JSON muss ein Array sein.");
       if (cards.length === 0) throw new Error("Array ist leer.");
-      let imported = 0;
+      const addedCards = [];
       for (const card of cards) {
         if (!card.question || !card.answer) throw new Error(`Karte fehlt 'question' oder 'answer': ${JSON.stringify(card)}`);
-        await handleAddCard(setId, card.question, card.answer);
-        imported++;
+        const newCard = await handleAddCard(setId, card.question, card.answer);
+        addedCards.push(newCard);
       }
-      showToast(`${imported} Karten erfolgreich importiert!`, 'success');
-      return imported;
+      showToast(`${addedCards.length} Karten erfolgreich importiert!`, 'success');
+      return addedCards;
     } catch (e) { throw new Error(`Import-Fehler: ${e.message}`); }
   };
 
