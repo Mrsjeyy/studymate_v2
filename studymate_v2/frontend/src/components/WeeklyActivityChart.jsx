@@ -1,18 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toISODate } from "../utils/dates";
 import { getWeekActivity } from "../utils/activity";
 
 export default function WeeklyActivityChart({ activityData = {} }) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const data = getWeekActivity(activityData, weekOffset);
+  const [containerWidth, setContainerWidth] = useState(500);
+  const containerRef = useRef(null);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width;
+      if (width > 0) setContainerWidth(width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const data = getWeekActivity(activityData, weekOffset);
   const todayStr = toISODate();
   const pastData = data.filter(d => d.date <= todayStr);
   const maxVal = Math.max(...pastData.map(d => d.count), 50);
   const Y_STEP = [10, 20, 25, 50, 100, 200, 500].find(s => s >= maxVal / 5) ?? 500;
   const chartMax = Math.ceil(maxVal / Y_STEP) * Y_STEP;
 
-  const W = 500, H = 160, PL = 30, PR = 12, PT = 12, PB = 22;
+  const W = containerWidth;
+  const H = Math.max(110, Math.round(W * 0.28));
+  const PL = 30, PR = 12, PT = 12, PB = 22;
   const LABEL_H = 14;
   const chartW = W - PL - PR;
   const chartH = H - PT - PB - LABEL_H;
@@ -25,7 +40,6 @@ export default function WeeklyActivityChart({ activityData = {} }) {
   }));
 
   const pastPoints = points.filter(p => !p.isFuture);
-
   const baseY = PT + LABEL_H + chartH;
 
   const smoothPath = (pts) => {
@@ -69,36 +83,38 @@ export default function WeeklyActivityChart({ activityData = {} }) {
           <button onClick={() => setWeekOffset(o => Math.min(o + 1, 0))} disabled={weekOffset >= 0} style={{ background: "var(--surface-strong)", border: "none", color: weekOffset >= 0 ? "#334155" : "#94a3b8", borderRadius: 6, width: 26, height: 26, cursor: weekOffset >= 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
         </div>
       </div>
-      <div style={{ height: 320, overflow: "hidden" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block", userSelect: "none" }}>
-        {yTicks.map(v => {
-          const y = PT + LABEL_H + chartH - (v / chartMax) * chartH;
-          return (
-            <g key={v}>
-              <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="var(--surface-border-soft)" strokeWidth="1" />
-              <text x={PL - 6} y={y + 4} textAnchor="end" fontSize="8" fill="#475569">{v}</text>
+      <div ref={containerRef}>
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ width: "100%", height: "auto", display: "block", userSelect: "none" }}>
+          {yTicks.map(v => {
+            const y = PT + LABEL_H + chartH - (v / chartMax) * chartH;
+            return (
+              <g key={v}>
+                <line x1={PL} y1={y} x2={W - PR} y2={y} stroke="var(--surface-border-soft)" strokeWidth="1" />
+                <text x={PL - 6} y={y + 4} textAnchor="end" fontSize="8" fill="#475569">{v}</text>
+              </g>
+            );
+          })}
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#00d4aa" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#00d4aa" stopOpacity="0.01" />
+            </linearGradient>
+            <clipPath id="chartClip">
+              <rect x={PL} y={PT} width={chartW} height={LABEL_H + chartH} />
+            </clipPath>
+          </defs>
+          {areaD && <path d={areaD} fill="url(#areaGrad)" clipPath="url(#chartClip)" />}
+          {pathD && <path d={pathD} fill="none" stroke="#00d4aa" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" clipPath="url(#chartClip)" />}
+          {points.map((p, i) => (
+            <g key={i}>
+              <text x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill={p.isFuture ? "var(--text-muted, #94a3b8)" : "#475569"}>{p.label}</text>
+              {p.isFuture
+                ? <circle cx={p.x} cy={baseY} r="2.5" fill="var(--surface-strong, #e2e8f0)" stroke="var(--surface-border-soft, #cbd5e1)" strokeWidth="1" />
+                : <circle cx={p.x} cy={p.y} r="3.5" fill="#00d4aa" />}
+              {!p.isFuture && p.count > 0 && <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#00d4aa">{p.count}</text>}
             </g>
-          );
-        })}
-        <defs>
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#00d4aa" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#00d4aa" stopOpacity="0.01" />
-          </linearGradient>
-          <clipPath id="chartClip">
-            <rect x={PL} y={PT} width={chartW} height={LABEL_H + chartH} />
-          </clipPath>
-        </defs>
-        {areaD && <path d={areaD} fill="url(#areaGrad)" clipPath="url(#chartClip)" />}
-        {pathD && <path d={pathD} fill="none" stroke="#00d4aa" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" clipPath="url(#chartClip)" />}
-        {points.map((p, i) => (
-          <g key={i}>
-            <text x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill={p.isFuture ? "#2d3748" : "#475569"}>{p.label}</text>
-            {!p.isFuture && <circle cx={p.x} cy={p.y} r="3.5" fill="#00d4aa" />}
-            {!p.isFuture && p.count > 0 && <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#00d4aa">{p.count}</text>}
-          </g>
-        ))}
-      </svg>
+          ))}
+        </svg>
       </div>
     </div>
   );
