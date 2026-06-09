@@ -93,9 +93,9 @@ export default function WeeklyActivityChart({ activityData = {} }) {
         {pathD && <path d={pathD} fill="none" stroke="#00d4aa" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" clipPath="url(#chartClip)" />}
         {points.map((p, i) => (
           <g key={i}>
-            <text x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill={p.isFuture ? "#2d3748" : "#475569"}>{p.label}</text>
+            <text x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill={p.isFuture ? "var(--text-muted, #94a3b8)" : "#475569"}>{p.label}</text>
             {p.isFuture
-              ? <circle cx={p.x} cy={baseY} r="2.5" fill="#1e293b" stroke="#334155" strokeWidth="1"/>
+              ? <circle cx={p.x} cy={baseY} r="2.5" fill="var(--surface-strong, #e2e8f0)" stroke="var(--surface-border-soft, #cbd5e1)" strokeWidth="1"/>
               : <circle cx={p.x} cy={p.y} r="3.5" fill="#00d4aa" />}
             {!p.isFuture && p.count > 0 && <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#00d4aa">{p.count}</text>}
           </g>
