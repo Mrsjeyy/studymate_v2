@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Star } from "lucide-react";
 
-export function ProfileView({ user, sets, streak, onBack, onEdit }) {
+export function ProfileView({ user, sets, streak, onBack, onEdit, onViewAllSets }) {
   const ownSets = sets.filter(s => s.owneruserid === user?.id && !s.forkedFrom);
   const totalCards = ownSets.reduce((sum, set) => sum + (set.cards?.length || 0), 0);
   const username = user?.name ? user.name.toLowerCase().replace(/\s+/g, '_') : 'gast';
@@ -40,7 +40,7 @@ export function ProfileView({ user, sets, streak, onBack, onEdit }) {
           <h2 style={{ margin: 0, fontSize: 22 }}>Meine Karteikartensets</h2>
           <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: 14 }}>Schnell zu deinen letzten Sets.</p>
         </div>
-        <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13 }} onClick={onBack}>Alle anzeigen</button>
+        <button className="sm-btn sm-btn-ghost" style={{ fontSize: 13 }} onClick={onViewAllSets ?? onBack}>Alle anzeigen</button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
