@@ -38,7 +38,7 @@
 
 - Bereitstellung einer leichtgewichtigen, erweiterbaren Plattform für Karteikarten-basiertes Lernen
 - Praxisnahe Anwendung moderner Software-Engineering-Methoden (agile Entwicklung, Git-Workflow, CI/CD)
-- Integration externer Dienste (Supabase, Google Gemini KI, Resend E-Mail)
+- Integration externer Dienste (Supabase, Groq KI, Resend E-Mail)
 
 ### Implementierte Hauptfunktionen
 
@@ -119,12 +119,14 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 
 **Akzeptanzkriterien:**
 - Über „Passwort vergessen?" gelangt man zur Reset-Seite
-- Eingabe des Benutzernamens sendet einen Reset-Link an die hinterlegte Recovery-E-Mail
+- Eingabe des Benutzernamens sendet einen 6-stelligen Code an die hinterlegte Recovery-E-Mail
 - Die Antwort des Servers gibt keine Information darüber, ob ein Benutzer existiert (Schutz vor Enumeration)
-- Der Reset-Link ist 1 Stunde gültig
+- Der Code ist 1 Stunde gültig und wird direkt im Formular eingegeben (kein Klick-Link)
 
-**Implementiert:** `2026-05-19`  
-**Datei:** [backend/app/routers/auth.py](../studymate_v2/backend/app/routers/auth.py), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `ForgotPasswordView`, `ResetPasswordView`)
+**Implementiert:** `2026-05-19`; auf OTP-Code umgestellt: `2026-06-23`  
+**Datei:** [backend/app/routers/auth.py](../studymate_v2/backend/app/routers/auth.py), [frontend/src/components/AuthViews.jsx](../studymate_v2/frontend/src/components/AuthViews.jsx) (Funktion `ForgotPasswordView`)
+
+> **Hinweis (2026-06-23):** Ursprünglich wurde ein klickbarer Magic-Link verwendet. In der Praxis verbrauchten E-Mail-Sicherheitsscanner (z. B. von Gmail/Antivirus-Software) den Einweg-Token bereits beim Öffnen der Mail, bevor der Nutzer selbst klickte — der Link landete dann ohne gültige Session auf der normalen Startseite. Die Umstellung auf einen manuell eingegebenen OTP-Code behebt das, da kein automatisierter Request den Code mehr „verbrauchen" kann.
 
 ---
 
@@ -185,9 +187,10 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Umschalten nur für Eigentümer möglich
 - Bestätigungsdialog vor der Änderung
 - Badge im Set zeigt aktuellen Status (Öffentlich/Privat)
+- Beim Veröffentlichen fragt ein Dialog, ob der Ersteller (Avatar/Name) auf dem Set sichtbar sein soll (`show_author`); Standard ist sichtbar
 
-**Implementiert:** `2026-05-19`  
-**Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleToggleSetVisibility`)
+**Implementiert:** `2026-05-19`; Autoren-Sichtbarkeits-Dialog: `2026-06-02`  
+**Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleToggleSetVisibility`), [frontend/src/components/DetailView.jsx](../studymate_v2/frontend/src/components/DetailView.jsx) (`showAuthorDialog`)
 
 ---
 
@@ -356,9 +359,9 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - KI-Quiz wird über den Backend-Endpoint `/quiz/generate` generiert
 - Jede Frage enthält 4 Antwortoptionen (3 falsche, 1 richtige) und eine Erklärung
 - Nach der Antwort wird die Erklärung angezeigt
-- Ist kein Gemini-API-Key konfiguriert, erscheint eine Hinweismeldung
+- Ist kein Groq-API-Key konfiguriert, erscheint eine Hinweismeldung (HTTP 503)
 
-**Implementiert:** `2026-05-26` (Commit: `cb47bd8 fix: migrate to google-genai SDK`)  
+**Implementiert:** `2026-05-19` (Commit: `db4dcbb`, initial mit Google Gemini); auf Groq (Llama) umgestellt: `2026-06-01` (Commit: `5e42b21 feat: update API keys and dependencies for quiz generation functionality`)  
 **Dateien:** [backend/app/routers/quiz.py](../studymate_v2/backend/app/routers/quiz.py), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `generateAIQuiz`, Phase `aiquiz`)
 
 ---
@@ -393,6 +396,36 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 
 **Implementiert:** `2026-05-19`; Gastfavoriten-Migration: `2026-06-02`  
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `toggleFavorite`, Komponente `FavoritesView`)
+
+---
+
+**US-042 — Freunde finden und verwalten**
+
+> *Als Benutzer möchte ich andere Benutzer suchen und als Freund hinzufügen können, damit ich mich mit ihnen vernetzen kann.*
+
+**Akzeptanzkriterien:**
+- Suche nach Benutzername oder Anzeigename in der Freunde-Ansicht
+- Freundschaftsanfrage senden, annehmen oder ablehnen
+- Bestehende Freundschaften können entfernt werden
+- Eingehende Anfragen werden in einem eigenen Tab mit Badge-Zähler in der Sidebar angezeigt
+
+**Implementiert:** `2026-06-02` (Commit: `a15800c feat: implement friends feature with friend requests and public profiles`)  
+**Datei:** [frontend/src/components/FriendsView.jsx](../studymate_v2/frontend/src/components/FriendsView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `handleSendFriendRequest`, `handleAcceptFriend`, `handleDeclineFriend`, `handleRemoveFriend`, `handleSearchUsers`)
+
+---
+
+**US-043 — Öffentliches Profil ansehen**
+
+> *Als Benutzer möchte ich das öffentliche Profil eines anderen Benutzers ansehen können, damit ich seine öffentlichen Sets entdecken und ihn als Freund hinzufügen kann.*
+
+**Akzeptanzkriterien:**
+- Aufrufbar über den Autorennamen eines öffentlichen Sets (sofern `show_author` aktiv) oder aus der Freundesliste
+- Zeigt Avatar, Anzeigename, Bio und öffentliche Sets des Benutzers
+- Zeigt den aktuellen Freundschaftsstatus mit passender Aktion (Anfrage senden / Annehmen / Ablehnen / Entfernen)
+- Zurück-Button führt zur ursprünglichen Ansicht zurück (Dashboard oder Freundesliste)
+
+**Implementiert:** `2026-06-02` (Commit: `a15800c`)  
+**Datei:** [frontend/src/components/PublicProfileView.jsx](../studymate_v2/frontend/src/components/PublicProfileView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleOpenUserProfile`)
 
 ---
 
@@ -450,7 +483,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 └──────────────┬───────────────────────────┬───────────────────┘
                │ Supabase Python Client    │ Externe APIs
 ┌──────────────▼──────────────┐   ┌───────▼───────────────────┐
-│  Supabase (PostgreSQL + Auth)│   │  Google Gemini API (Quiz) │
+│  Supabase (PostgreSQL + Auth)│   │  Groq API (Quiz)          │
 │  Tabellen: flashcard_sets,  │   │  Resend API (E-Mail)      │
 │  flashcards, profiles       │   └───────────────────────────┘
 └─────────────────────────────┘
@@ -469,7 +502,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 | Validierung | Pydantic v2 | aktuell |
 | Datenbank & Auth | Supabase (PostgreSQL) | aktuell |
 | E-Mail | Resend API | — |
-| KI-Integration | Google Gemini 2.0 Flash Lite | — |
+| KI-Integration | Groq (Llama 3.1 8B Instant, OpenAI-kompatible API) | — |
 | Deployment | Vercel | — |
 
 ---
@@ -532,6 +565,8 @@ Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabe
 | `description` | `text` | Beschreibung (optional) |
 | `ispublic` | `boolean` | Öffentlich oder privat (Standard: `false`) |
 | `createdat` | `timestamptz` | Erstellungszeitpunkt |
+| `forked_from` | `uuid` (FK → flashcard_sets, optional) | Verweist auf das Quell-Set, falls dieses Set durch Forken entstanden ist |
+| `show_author` | `boolean` | Ob bei öffentlichen Sets der Ersteller (Avatar/Name, anklickbar zum Profil) angezeigt wird (Standard: `true`) |
 
 #### `flashcards` — Karteikarten
 
@@ -541,7 +576,7 @@ Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabe
 | `setid` | `uuid` (FK → flashcard_sets) | Zugehöriges Set |
 | `question` | `text` | Frage (Pflichtfeld) |
 | `answer` | `text` | Antwort (Pflichtfeld) |
-| `position` | `integer` | Reihenfolge im Set |
+| `position` | `integer` | Reihenfolge im Set (Sortierschlüssel für Lern-/Quiz-Modus) |
 
 #### `profiles` — Benutzerprofile
 
@@ -551,6 +586,22 @@ Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabe
 | `username` | `text` | Benutzername (eindeutig, lowercase) |
 | `displayname` | `text` | Anzeigename |
 | `recovery_email` | `text` | E-Mail für Passwort-Reset (optional) |
+| `bio` | `text` | Kurzbeschreibung im Profil (optional) |
+| `image_data` | `text` | Profilbild, Base64-kodiert (optional) |
+| `streak_count` | `integer` | Aktueller Lern-Streak (Tage in Folge) |
+| `streak_last_date` | `text` | Datum (ISO) des letzten Streak-Updates |
+| `activity_data` | `jsonb` | Tägliche Lernaktivität für die Wochenansicht (`WeeklyActivityChart`) |
+
+#### `friendships` — Freundschaften
+
+| Spalte | Typ | Beschreibung |
+|---|---|---|
+| `id` | `uuid` (PK) | Eindeutige ID |
+| `user_id` | `uuid` (FK → auth.users) | Anfragender Benutzer |
+| `friend_id` | `uuid` (FK → auth.users) | Angefragter Benutzer |
+| `status` | `text` | `pending` (Anfrage offen) oder `accepted` (befreundet) |
+
+> **Hinweis:** `profiles` und `friendships` werden ausschließlich direkt über den Supabase JS Client im Frontend gelesen/geschrieben (kein eigener Backend-Endpunkt) — anders als `flashcard_sets`/`flashcards`, die über die FastAPI-Routen `sets.py`/`cards.py` laufen. Beide Tabellen sowie die Spalten `forked_from` und `show_author` fehlen aktuell in `sql_schema.sql` (siehe unten); das Referenzschema wurde nicht synchron zur Live-Datenbank gepflegt.
 
 ### SQL-Referenzschema (aus `sql_schema.sql`)
 
@@ -609,10 +660,9 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
-    frontend_url: str = "http://localhost:5173"
     resend_api_key: str = ""
     resend_from: str = "StudyMate <onboarding@resend.dev>"
-    gemini_api_key: str = ""
+    groq_api_key: str = ""
 ```
 
 ---
@@ -639,7 +689,7 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 
 | Methode | Pfad | Auth | Beschreibung |
 |---|---|---|---|
-| `POST` | `/auth/forgot-password` | Nein | Sendet Passwort-Reset-Link per E-Mail |
+| `POST` | `/auth/forgot-password` | Nein | Sendet 6-stelligen Passwort-Reset-Code per E-Mail |
 
 **Request:** `POST /auth/forgot-password`
 
@@ -649,7 +699,7 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 
 **Response:** `{ "message": "ok" }` (immer, unabhängig ob Benutzer existiert — Schutz vor Username-Enumeration)
 
-**Implementierungsdetail:** Der Backend-Router sucht die Recovery-E-Mail aus der `profiles`-Tabelle. Falls vorhanden, wird ein Supabase Admin Recovery Link generiert und via Resend versandt.
+**Implementierungsdetail:** Der Backend-Router sucht die Recovery-E-Mail aus der `profiles`-Tabelle. Falls vorhanden, wird über die Supabase Admin API (`generate_link`, Typ `recovery`) ein `email_otp`-Code erzeugt und via Resend versandt. Das Frontend ruft anschließend direkt `supabase.auth.verifyOtp({ email, token, type: "recovery" })` auf, um eine Session zu erhalten, und setzt darüber das neue Passwort via `supabase.auth.updateUser()`. Es gibt **keinen** klickbaren Link und keinen Redirect — der Code wird manuell im Formular eingegeben.
 
 ---
 
@@ -715,7 +765,7 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 
 | Methode | Pfad | Auth | Beschreibung |
 |---|---|---|---|
-| `POST` | `/quiz/generate` | Nein | KI-Quiz generieren (Gemini) |
+| `POST` | `/quiz/generate` | Nein | KI-Quiz generieren (Groq/Llama) |
 
 **Request-Schema `QuizGenerateRequest`:**
 
@@ -743,9 +793,9 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 }
 ```
 
-**Implementierungsdetail:** Die KI (Gemini 2.0 Flash Lite) generiert ausschließlich die drei falschen Antwortoptionen und eine Erklärung. Die richtige Antwort kommt direkt aus der Datenbank und wird an einer zufälligen Position eingefügt.
+**Implementierungsdetail:** Die KI (Groq, Modell `llama-3.1-8b-instant`, angesprochen über die OpenAI-kompatible Chat-Completions-API unter `https://api.groq.com/openai/v1`) generiert ausschließlich die drei falschen Antwortoptionen und eine Erklärung. Die richtige Antwort kommt direkt aus der Datenbank und wird an einer zufälligen Position eingefügt.
 
-**Implementiert:** `2026-05-26` (Commit: `cb47bd8`)
+**Implementiert:** `2026-05-26` (Commit: `cb47bd8`); KI-Anbieter auf Groq umgestellt: `2026-06-01` (Commit: `5e42b21`)
 
 ---
 
@@ -776,13 +826,14 @@ Die gesamte Frontend-Logik befindet sich in einer einzigen Datei: [frontend/src/
 | View-Name | Beschreibung | Komponente |
 |---|---|---|
 | `auth` | Login/Registrierung | `AuthView` |
-| `forgot` | Passwort-Reset (Eingabe) | `ForgotPasswordView` |
-| `reset` | Neues Passwort setzen | `ResetPasswordView` |
+| `forgot` | Passwort-Reset (Benutzername → Code + neues Passwort, 2 Schritte intern) | `ForgotPasswordView` |
 | `dashboard` | Hauptansicht mit Tabs | `DashboardView` |
 | `detail` | Set-Detailansicht | `DetailView` |
 | `learn` | Lernmodus | `LearnView` |
 | `quiz` | Quiz-Modus | `QuizView` |
 | `favorites` | Favoritenansicht | `FavoritesView` |
+| `friends` | Freundesliste, Anfragen, Benutzersuche | `FriendsView` |
+| `public_profile` | Öffentliches Profil eines anderen Benutzers | `PublicProfileView` |
 | `profile` | Profilansicht | `ProfileView` |
 | `profile_edit` | Profil bearbeiten | `ProfileEditView` |
 | `settings` | Einstellungen (Platzhalter) | `SettingsView` |
@@ -823,9 +874,9 @@ Tabs für Login und Registrierung. Validierung der Eingaben (Benutzername: min. 
 
 #### `DashboardView` — Dashboard
 
-Drei Tabs: Dashboard (Statistiken), Entdecken (öffentliche Sets), Meine Sets. Enthält Suchfeld, Statistikkarten (Sets, Karten, Streak), Vorschlagskarussell für öffentliche Sets.
+Drei Tabs: Dashboard (Statistiken), Entdecken (öffentliche Sets), Meine Sets. Enthält Suchfeld, Statistikkarten (Sets, Karten, Streak), Vorschlagskarussell für öffentliche Sets und das `WeeklyActivityChart` (Lernaktivität der letzten 7 Tage, aus `profiles.activity_data`). Auf öffentlichen Set-Karten wird bei aktiviertem `show_author` der Ersteller mit Avatar/Name angezeigt und ist anklickbar (öffnet `public_profile`).
 
-**Implementiert:** `2026-05-19`
+**Implementiert:** `2026-05-19`; `WeeklyActivityChart`: `2026-06-01`, responsives Feintuning: `2026-06-02`
 
 ---
 
@@ -860,7 +911,7 @@ Flip-Card-Ansicht mit CSS-3D-Transformation. Benutzer markiert jede Karte als ge
 
 Unterstützt zwei Modi:
 - **Standard-Quiz:** Multiple-Choice aus vorhandenen Karten (mind. 4 Karten erforderlich)
-- **KI-Quiz:** Gemini-generierte Fragen mit Erklärung nach jeder Antwort
+- **KI-Quiz:** Groq-generierte Fragen (Llama 3.1) mit Erklärung nach jeder Antwort
 
 **Implementiert:** Standard: `2026-05-19`; KI: `2026-05-26`
 
@@ -876,7 +927,12 @@ const TOUR_STEPS = {
   discover: [...],   // 3 Schritte
   mine: [...],       // 2 Schritte
   detail: [...],     // 3 Schritte
-  createSet: [...],  // 3 Schritte
+  createSet: [...],  // 2 Schritte
+  learn: [...],      // 4 Schritte
+  quiz: [...],       // 3 Schritte
+  favorites: [...],  // 3 Schritte
+  friends: [...],    // 2 Schritte
+  profile: [...],    // 2 Schritte
 };
 ```
 
@@ -890,9 +946,27 @@ Tour-Status wird in `localStorage` unter `sm_tour_completed` gespeichert.
 
 `ProfileView`: Zeigt Avatar, Name, Bio, Statistiken (Karten, Sets, Streak), Vorschau der letzten Sets.
 
-`ProfileEditView`: Formular zum Ändern von Anzeigename, Bio und Profilbild. Das Profilbild wird als Base64 in localStorage gespeichert. Der Anzeigename wird in Supabase (`profiles.displayname`) aktualisiert.
+`ProfileEditView`: Formular zum Ändern von Anzeigename, Bio und Profilbild. Anzeigename, Bio und Profilbild (Base64) werden in Supabase (`profiles.displayname`, `profiles.bio`, `profiles.image_data`) aktualisiert. Aus einer früheren, rein lokalen Version existiert noch eine einmalige Migration: Beim Login werden alte `localStorage`-Profildaten (`readProfileSettings`) in die Supabase-Spalten übernommen, falls dort noch nichts hinterlegt ist.
 
 **Implementiert:** `2026-05-26` (Commits: `3d4d234`, `184d550`)
+
+---
+
+#### `FriendsView` — Freunde
+
+Drei Tabs: Freunde (akzeptierte Freundschaften), Anfragen (eingehende Freundschaftsanfragen mit Annehmen/Ablehnen), Suchen (Benutzersuche nach Username/Anzeigename). Lädt und schreibt direkt über den Supabase-Client auf die Tabelle `friendships` (kein Backend-Endpunkt).
+
+**Implementiert:** `2026-06-02` (Commit: `a15800c feat: implement friends feature with friend requests and public profiles`)  
+**Datei:** [frontend/src/components/FriendsView.jsx](../studymate_v2/frontend/src/components/FriendsView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `fetchFriends`, `handleSendFriendRequest`, `handleAcceptFriend`, `handleDeclineFriend`, `handleRemoveFriend`, `handleSearchUsers`)
+
+---
+
+#### `PublicProfileView` — Öffentliches Profil
+
+Zeigt Avatar, Name, Bio und öffentliche Sets eines anderen Benutzers sowie den aktuellen Freundschaftsstatus mit passender Aktion (Anfrage senden/Annehmen/Ablehnen/Entfernen). Erreichbar über einen Klick auf den Autorennamen eines öffentlichen Sets (Dashboard) oder aus der Freundesliste. Merkt sich die aufrufende View (`publicProfileFrom`), um beim Zurück-Button korrekt zu navigieren.
+
+**Implementiert:** `2026-06-02` (Commit: `a15800c`)  
+**Datei:** [frontend/src/components/PublicProfileView.jsx](../studymate_v2/frontend/src/components/PublicProfileView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `handleOpenUserProfile`, `getFriendStatus`, `getFriendshipId`)
 
 ---
 
@@ -910,7 +984,9 @@ const toFakeEmail = (username) => `${username.toLowerCase()}@studymate.local`;
 
 2. **Backend-Auth:** Geschützte Endpoints erwarten einen `Bearer`-Token im Authorization-Header. Der Token wird via Supabase Public Client validiert.
 
-3. **Session-Management:** `supabase.auth.onAuthStateChange` wird vor `getSession()` registriert (wichtig: Reihenfolge!), um den `PASSWORD_RECOVERY`-Event abzufangen.
+3. **Session-Management:** `supabase.auth.onAuthStateChange` wird vor `getSession()` registriert, um Login/Logout-Events korrekt abzufangen.
+
+4. **Passwort-Reset:** Läuft seit `2026-06-23` über `supabase.auth.verifyOtp()` (Code-Eingabe) statt über einen Redirect-Link — es ist kein URL-/Hash-Parsing beim App-Start mehr nötig.
 
 ### Sicherheitsrichtlinien
 
@@ -965,6 +1041,31 @@ const toFakeEmail = (username) => `${username.toLowerCase()}@studymate.local`;
 | 2026-05-26 | `184d550` | Profil-Bug behoben |
 | 2026-06-01 | `cf603c0` | Profilbild in NavBar-Avatar und Sidebar-Footer; Learn/Quiz-Button-Guard bei leeren Sets entfernt; `handleAddCard`-State-Duplizierung gefixt |
 
+### Phase 4 — Soziale Funktionen, KI-Anbieter-Wechsel, UI-Feinschliff (2026-06-01 — 2026-06-09)
+
+| Datum | Commit | Beschreibung |
+|---|---|---|
+| 2026-06-01 | `5e42b21` | KI-Anbieter von Google Gemini auf Groq (Llama 3.1) umgestellt — Bibliothek, Modellname und Env-Var (`GEMINI_API_KEY` → `GROQ_API_KEY`) geändert |
+| 2026-06-01 | `70bb322` | Aktivitäts-Tracking + neue Komponente `WeeklyActivityChart` (Lernaktivität der letzten 7 Tage im Dashboard) |
+| 2026-06-01 | `a52e919` | Eigenständige `Sidebar`-Komponente mit Navigation und Profilanzeige (vorher Teil von `StudyMate.jsx`) |
+| 2026-06-01 | `596b27b` | Playwright-E2E-Testframework eingeführt (erste Testdateien) |
+| 2026-06-02 | `a15800c` | Neues Freunde-Feature: Freundschaftsanfragen, öffentliche Profile (`FriendsView`, `PublicProfileView`, Tabelle `friendships`); Autoren-Sichtbarkeits-Dialog (`show_author`) beim Veröffentlichen eines Sets |
+| 2026-06-02 | `4ceec09` | Neue `Avatar`-Komponente, Modal-Styling überarbeitet |
+| 2026-06-02 – 06-08 | mehrere | UI-Feinschliff: Sidebar-Einklapp-Button, Light/Dark-Mode-Korrekturen, NavBar/Logo-Positionierung, Pfeil-Buttons-Layout in der Detailansicht |
+| 2026-06-08 | `fd41c1e` | Globaler Exception-Handler im Backend; verbessertes Fehlerhandling bei KI-Quiz-Antworten |
+| 2026-06-08 | `06fea88` | Hinweistext bei leerem Kartenset im Quiz-Modus |
+| 2026-06-08 | `5d401d4` | Ladezustand für Freundesliste; geführte Tour um die Views `learn`, `quiz`, `friends`, `profile` erweitert |
+| 2026-06-09 | `a50d7d1` | Set-Detailansicht: Karten-Update-Logik überarbeitet, Spalte `forked_from` zur Nachverfolgung des Quell-Sets bei Forks ergänzt |
+| 2026-06-09 | `18b6bcc`, `4ddf635` | `WeeklyActivityChart`: responsives Layout, Schriftgrößen-Skalierung, Farbschema für vergangene/zukünftige Aktivitätspunkte |
+
+---
+
+### Phase 5 — Sicherheits-Fix Passwort-Reset (2026-06-23)
+
+| Datum | Commit | Beschreibung |
+|---|---|---|
+| 2026-06-23 | — | Passwort-Reset von Magic-Link auf OTP-Code umgestellt. Grund: E-Mail-Sicherheitsscanner konsumierten den Einweg-Link-Token bereits vor dem Klick des Nutzers, wodurch der Reset clientseitig nie ankam (User landete ohne Session auf der normalen Startseite). `ResetPasswordView` und der `PASSWORD_RECOVERY`-Auth-Event-Handler in `StudyMate.jsx` wurden entfernt, `FRONTEND_URL` ist dadurch kein benötigter Konfigurationswert mehr. |
+
 ---
 
 ## 10. Konfiguration und Umgebungsvariablen
@@ -976,10 +1077,9 @@ const toFakeEmail = (username) => `${username.toLowerCase()}@studymate.local`;
 | `SUPABASE_URL` | Ja | URL des Supabase-Projekts |
 | `SUPABASE_ANON_KEY` | Ja | Supabase Anon/Public Key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Ja | Supabase Service Role Key (nur Backend!) |
-| `FRONTEND_URL` | Ja | Frontend-URL für Redirects |
 | `RESEND_API_KEY` | Empfohlen | Resend API Key für E-Mail-Versand |
 | `RESEND_FROM` | Nein | Absenderadresse (Standard: `StudyMate <onboarding@resend.dev>`) |
-| `GEMINI_API_KEY` | Optional | Google Gemini API Key für KI-Quiz |
+| `GROQ_API_KEY` | Optional | Groq API Key für KI-Quiz (Llama 3.1) |
 
 ### Frontend (`.env.local` in `frontend/`)
 
@@ -1218,11 +1318,12 @@ npm run test:e2e:report
 
 | Datei | Abgedeckte Szenarien |
 |---|---|
-| [`e2e/auth.spec.js`](../studymate_v2/frontend/e2e/auth.spec.js) | Login, Logout, Gastansicht (3 Beschreibungen, 7 Tests) |
-| [`e2e/sets.spec.js`](../studymate_v2/frontend/e2e/sets.spec.js) | Supabase-Verbindung, Set erstellen/bearbeiten/löschen, Private Sets (5 Beschreibungen, 7 Tests) |
-| [`e2e/cards.spec.js`](../studymate_v2/frontend/e2e/cards.spec.js) | Karten laden, erstellen, bearbeiten, löschen (4 Beschreibungen, 5 Tests) |
-| [`e2e/ui.spec.js`](../studymate_v2/frontend/e2e/ui.spec.js) | Guided Tour, Streaks (2 Beschreibungen, 4 Tests) |
+| [`e2e/auth.spec.js`](../studymate_v2/frontend/e2e/auth.spec.js) | Login, Registrierung, Logout, Gastansicht (4 Beschreibungen, 9 Tests) |
+| [`e2e/sets.spec.js`](../studymate_v2/frontend/e2e/sets.spec.js) | Supabase-Verbindung, Set erstellen/bearbeiten/löschen, Private Sets (4 Beschreibungen + 1 eigenständiger Test, 7 Tests) |
+| [`e2e/cards.spec.js`](../studymate_v2/frontend/e2e/cards.spec.js) | Karten laden, erstellen, bearbeiten, löschen (3 Beschreibungen + 1 eigenständiger Test, 4 Tests) |
+| [`e2e/ui.spec.js`](../studymate_v2/frontend/e2e/ui.spec.js) | Guided Tour, Streaks (2 Beschreibungen, 5 Tests) |
 | [`e2e/mobile.spec.js`](../studymate_v2/frontend/e2e/mobile.spec.js) | Mobile Ansicht auf Pixel-5-Viewport (1 Beschreibung, 3 Tests) |
+| [`e2e/features.spec.js`](../studymate_v2/frontend/e2e/features.spec.js) | Registrierung, Karten-Reihenfolge ändern, Set kopieren (Priv-zu-Priv), Gastfavoriten, KI-Quiz-Fehlerbehandlung, Geführte Tour (Detailansicht + Set-Erstellung) (7 Beschreibungen, 11 Tests) |
 
 #### Konfiguration
 
@@ -1280,7 +1381,14 @@ def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered
 ### Problem: Supabase Token-Fehler (401)
 
 **Ursache:** Abgelaufene Session oder falsche Keys.  
-**Lösung:** `SUPABASE_URL` und `SUPABASE_ANON_KEY` prüfen. In Supabase Dashboard: Auth-Settings und Redirect-URLs kontrollieren.
+**Lösung:** `SUPABASE_URL` und `SUPABASE_ANON_KEY` prüfen.
+
+---
+
+### Problem: Passwort-Reset-Code wird abgelehnt ("Code ungültig oder abgelaufen")
+
+**Ursache:** Code falsch eingegeben, älter als 1 Stunde, oder bereits einmal verwendet (jeder Code ist Einweg).  
+**Lösung:** Neuen Code über „Passwort vergessen?" anfordern. Bei wiederholtem Auftreten: Supabase Dashboard → Authentication → Logs prüfen, ob der Code z. B. durch einen automatisierten Request (Mail-Scanner) bereits verbraucht wurde, bevor der Nutzer ihn eingegeben hat.
 
 ---
 
@@ -1292,7 +1400,7 @@ def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered
 
 ### Problem: KI-Quiz schlägt fehl
 
-**Ursache:** `GEMINI_API_KEY` nicht konfiguriert.  
+**Ursache:** `GROQ_API_KEY` nicht konfiguriert.  
 **Lösung:** API-Key in Backend `.env` setzen. Die Antwort `503 KI nicht konfiguriert.` bestätigt fehlendes Key.
 
 ---
@@ -1313,7 +1421,34 @@ def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered
 
 ## 16. ChangeLog
 
-### Version 0.3.0 (2026-06-02) — Aktuelle Version
+### Version 0.3.2 (2026-06-23) — Aktuelle Version
+
+**Sicherheits-Fix:**
+- Passwort-Reset von klickbarem Magic-Link auf manuell eingegebenen 6-stelligen OTP-Code umgestellt (`backend/app/routers/auth.py`, `frontend/src/components/AuthViews.jsx`). Ursache war, dass E-Mail-Sicherheitsscanner den Einweg-Token des Links vor dem eigentlichen Klick des Nutzers verbrauchten — der Reset landete dadurch nie auf einer gültigen Session.
+- `ResetPasswordView` und der `PASSWORD_RECOVERY`-Event-Handler (`onAuthStateChange`) in `StudyMate.jsx` entfernt, da nicht mehr benötigt.
+- Konfigurationsvariable `FRONTEND_URL` entfernt (war nur für den Redirect des alten Magic-Links nötig).
+
+**Aktualisierte Dokumentationsabschnitte:** US-004, Abschnitt 6.2, 6.4, 7.2, 8, 10, 15, ChangeLog
+
+### Version 0.3.1 (2026-06-09)
+
+Schließt die Dokumentationslücke zwischen `cf603c0` (2026-06-02) und `18b6bcc` (2026-06-09) auf `main` — dieser Stand war zuvor nicht dokumentiert.
+
+**Neue Funktionen:**
+- Freunde-Feature: Freundschaftsanfragen senden/annehmen/ablehnen/entfernen, Benutzersuche, öffentliche Profile (`FriendsView`, `PublicProfileView`, neue Tabelle `friendships`) — US-042, US-043
+- Autoren-Sichtbarkeits-Dialog (`show_author`) beim Veröffentlichen eines Sets
+- `WeeklyActivityChart`-Komponente im Dashboard (Lernaktivität der letzten 7 Tage aus `profiles.activity_data`), inkl. responsivem Feinschliff und Farbschema für vergangene/zukünftige Tage
+- Eigenständige `Sidebar`-Komponente (Navigation + Profilanzeige), neue `Avatar`-Komponente
+- Geführte Tour um die Views `learn`, `quiz`, `friends`, `profile` erweitert (vorher nur `dashboard`, `discover`, `mine`, `detail`, `createSet`)
+- Spalte `forked_from` auf `flashcard_sets` zur Nachverfolgung des Quell-Sets bei Forks
+- Globaler Exception-Handler im Backend; Hinweistext bei leerem Kartenset im Quiz-Modus
+
+**Breaking Change:**
+- KI-Anbieter von Google Gemini auf Groq (Llama 3.1 8B Instant) umgestellt — Env-Var `GEMINI_API_KEY` existiert nicht mehr, ersetzt durch `GROQ_API_KEY`; Bibliothek `google-genai` durch `openai` (mit Groqs OpenAI-kompatiblem Endpunkt) ersetzt
+
+**Aktualisierte Dokumentationsabschnitte:** US-012, US-042, US-043, Abschnitt 3, 5, 6.2, 6.4, 7.2, 7.3, 9, 10, 14, 15, ChangeLog
+
+### Version 0.3.0 (2026-06-02)
 
 **Neue Funktionen:**
 - Registrierung erstellt jetzt explizit einen `profiles`-Eintrag (Benutzername-Eindeutigkeit wird vorab geprüft)
@@ -1384,6 +1519,7 @@ Vollständige Überarbeitung der Dokumentation, basierend auf dem Stand der `mai
 | Niedrig | Browser-Fallbacks für CSS-Features ergänzen |
 | Niedrig | Profilbild-Speicherung zu Supabase Storage migrieren |
 | Niedrig | Karteikarten-Bearbeitung via Backend-API (statt direkt Supabase) |
+| Mittel | `sql_schema.sql` an Live-Datenbank synchronisieren — `profiles`-Erweiterungen, `friendships`, `flashcard_sets.forked_from`/`show_author` fehlen aktuell im Referenzschema |
 
 ---
 
@@ -1492,5 +1628,5 @@ curl -X POST http://localhost:8000/auth/forgot-password \
 
 ---
 
-*Dokumentation zuletzt aktualisiert: 2026-06-01*  
-*Basierend auf git-Stand: `cf603c0` (main branch)*
+*Dokumentation zuletzt aktualisiert: 2026-06-23*  
+*Basierend auf git-Stand: `18b6bcc` (main branch, PR #63) + ungecommitteter Passwort-Reset-Umstellung auf OTP-Code*

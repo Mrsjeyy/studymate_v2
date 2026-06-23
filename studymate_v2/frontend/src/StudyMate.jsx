@@ -17,7 +17,7 @@ import Spinner from "./components/Spinner";
 import NavBar from "./components/NavBar";
 import Sidebar from "./components/Sidebar";
 import GuidedTourOverlay from "./components/GuidedTour";
-import { AuthView, ForgotPasswordView, ResetPasswordView } from "./components/AuthViews";
+import { AuthView, ForgotPasswordView } from "./components/AuthViews";
 import DashboardView from "./components/DashboardView";
 import DetailView from "./components/DetailView";
 import { LearnView, QuizView } from "./components/LearningViews";
@@ -89,7 +89,6 @@ export default function StudyMate() {
   const [forkDescription, setForkDescription] = useState("");
   const [forkError, setForkError] = useState("");
   const [forkLoading, setForkLoading] = useState(false);
-  const recoveryMode = useRef(false);
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('sm_theme') || 'dark'; } catch (e) { return 'dark'; }
   });
@@ -213,12 +212,10 @@ export default function StudyMate() {
   }, [view, tourCompleted.profile, tourActive]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") { recoveryMode.current = true; setView("reset"); return; }
-      if (!session) { recoveryMode.current = false; setUser(null); setSets([]); setView("auth"); }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) { setUser(null); setSets([]); setView("auth"); }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (recoveryMode.current) { setAppInitializing(false); return; }
       if (session) initUser(session.user).finally(() => setAppInitializing(false));
       else { setView("dashboard"); fetchSets(null).finally(() => setAppInitializing(false)); }
     });
@@ -656,7 +653,7 @@ export default function StudyMate() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const showSidebar = !["auth", "forgot", "reset"].includes(view);
+  const showSidebar = !["auth", "forgot"].includes(view);
   const tourView = view === 'dashboard' && dashboardTab === 'discover' ? 'discover'
     : view === 'dashboard' && dashboardTab === 'mine' ? 'mine' : view;
 
@@ -758,7 +755,6 @@ export default function StudyMate() {
         {/* Views */}
         {view === "auth" && <AuthView onLogin={handleLogin} onRegister={handleRegister} onGuest={handleGuest} onForgotPassword={() => setView("forgot")} />}
         {view === "forgot" && <ForgotPasswordView onBack={() => setView("auth")} />}
-        {view === "reset" && <ResetPasswordView onDone={() => setView("auth")} />}
 
         {view === "dashboard" && (
           <DashboardView

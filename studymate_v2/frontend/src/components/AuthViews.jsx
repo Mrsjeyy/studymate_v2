@@ -93,12 +93,15 @@ export function AuthView({ onLogin, onRegister, onGuest, onForgotPassword }) {
 }
 
 export function ForgotPasswordView({ onBack }) {
+  const [step, setStep] = useState("request"); // "request" | "verify" | "done"
   const [username, setUsername] = useState("");
-  const [sent, setSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [pass, setPass] = useState("");
+  const [pass2, setPass2] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const handleSubmit = async () => {
+  const handleRequest = async () => {
     if (!username) { setErr("Bitte Benutzername eingeben."); return; }
     setLoading(true); setErr("");
     try {
@@ -107,16 +110,68 @@ export function ForgotPasswordView({ onBack }) {
       });
       if (!res.ok) throw new Error("Fehler beim Senden.");
     } catch (e) { setErr(e.message); setLoading(false); return; }
-    setLoading(false); setSent(true);
+    setLoading(false); setStep("verify");
   };
 
-  if (sent) return (
+  const handleVerify = async () => {
+    if (!otp || !pass || !pass2) { setErr("Bitte alle Felder ausfüllen."); return; }
+    if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
+    if (pass !== pass2) { setErr("Passwörter stimmen nicht überein."); return; }
+    setLoading(true); setErr("");
+    const fakeEmail = `${username.toLowerCase()}@studymate.local`;
+    const { error: verifyError } = await supabase.auth.verifyOtp({ email: fakeEmail, token: otp, type: "recovery" });
+    if (verifyError) { setLoading(false); setErr("Code ungültig oder abgelaufen."); return; }
+    const { error: updateError } = await supabase.auth.updateUser({ password: pass });
+    if (updateError) { setLoading(false); setErr(updateError.message); return; }
+    await supabase.auth.signOut();
+    setLoading(false); setStep("done");
+  };
+
+  if (step === "done") return (
     <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>📧</div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>Link gesendet!</h2>
-        <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Falls du eine Recovery-Email hinterlegt hast, prüfe dein Postfach (inkl. Spam).</p>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>Passwort geändert!</h2>
+        <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Du kannst dich jetzt mit deinem neuen Passwort anmelden.</p>
         <button className="sm-btn sm-btn-ghost" style={{ margin: "0 auto" }} onClick={onBack}><ArrowLeft size={14} /> Zurück zum Login</button>
+      </div>
+    </div>
+  );
+
+  if (step === "verify") return (
+    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div className="sm-glow sm-pulse" style={{ width: 400, height: 400, background: "rgba(0,212,170,.06)", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
+      <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ width: 56, height: 56, background: "linear-gradient(135deg, #00d4aa, #00b894)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Shield size={26} color="#080c18" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Code eingeben</h1>
+          <p style={{ color: "#64748b", fontSize: 14 }}>Wir haben einen 6-stelligen Code an deine Recovery-Email gesendet</p>
+        </div>
+        <div className="sm-panel" style={{ padding: 28 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Code</label>
+              <input className="sm-input sm-mono" placeholder="123456" value={otp} onChange={e => setOtp(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Neues Passwort</label>
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort wiederholen</label>
+              <input className="sm-input" type="password" placeholder="••••••••" value={pass2} onChange={e => setPass2(e.target.value)} onKeyDown={e => e.key === "Enter" && handleVerify()} />
+            </div>
+            {err && <div className="sm-alert" style={{ fontSize: 13 }}>{err}</div>}
+            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={handleVerify} disabled={loading}>
+              {loading ? <><Spinner size={14} color="#080c18" /> Speichern...</> : <><Check size={15} /> Passwort speichern</>}
+            </button>
+          </div>
+          <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center", marginTop: 12 }} onClick={() => setStep("request")}>
+            <ArrowLeft size={14} /> Zurück
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -130,83 +185,22 @@ export function ForgotPasswordView({ onBack }) {
             <Shield size={26} color="#080c18" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Passwort zurücksetzen</h1>
-          <p style={{ color: "#64748b", fontSize: 14 }}>Reset-Link wird an deine Recovery-Email gesendet</p>
+          <p style={{ color: "#64748b", fontSize: 14 }}>Reset-Code wird an deine Recovery-Email gesendet</p>
         </div>
         <div className="sm-panel" style={{ padding: 28 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
               <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Benutzername</label>
-              <input className="sm-input sm-mono" placeholder="dein_username" value={username} onChange={e => setUsername(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} />
+              <input className="sm-input sm-mono" placeholder="dein_username" value={username} onChange={e => setUsername(e.target.value)} onKeyDown={e => e.key === "Enter" && handleRequest()} />
             </div>
             {err && <div className="sm-alert" style={{ fontSize: 13 }}>{err}</div>}
-            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={handleSubmit} disabled={loading}>
-              {loading ? <><Spinner size={14} color="#080c18" /> Senden...</> : "Reset-Link senden"}
+            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={handleRequest} disabled={loading}>
+              {loading ? <><Spinner size={14} color="#080c18" /> Senden...</> : "Code senden"}
             </button>
           </div>
           <button className="sm-btn sm-btn-ghost" style={{ width: "100%", justifyContent: "center", marginTop: 12 }} onClick={onBack}>
             <ArrowLeft size={14} /> Zurück zum Login
           </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function ResetPasswordView({ onDone }) {
-  const [pass, setPass] = useState("");
-  const [pass2, setPass2] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-  const [done, setDone] = useState(false);
-
-  const handleReset = async () => {
-    if (!pass || !pass2) { setErr("Bitte beide Felder ausfüllen."); return; }
-    if (pass.length < 6) { setErr("Passwort mindestens 6 Zeichen."); return; }
-    if (pass !== pass2) { setErr("Passwörter stimmen nicht überein."); return; }
-    setLoading(true); setErr("");
-    const { error } = await supabase.auth.updateUser({ password: pass });
-    if (error) { setLoading(false); setErr(error.message); return; }
-    await supabase.auth.signOut();
-    setLoading(false); setDone(true);
-    setTimeout(onDone, 2000);
-  };
-
-  if (done) return (
-    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center" }}>
-      <div className="sm-z sm-fadeup" style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px" }}>Passwort geändert!</h2>
-        <p style={{ color: "#64748b", fontSize: 14 }}>Du wirst weitergeleitet...</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{ display: "flex", minHeight: 600, alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div className="sm-glow sm-pulse" style={{ width: 400, height: 400, background: "rgba(0,212,170,.06)", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
-      <div className="sm-z sm-fadeup" style={{ width: "100%", maxWidth: 400 }}>
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ width: 56, height: 56, background: "linear-gradient(135deg, #00d4aa, #00b894)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-            <Shield size={26} color="#080c18" strokeWidth={2.5} />
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Neues Passwort</h1>
-          <p style={{ color: "#64748b", fontSize: 14 }}>Gib dein neues Passwort ein</p>
-        </div>
-        <div className="sm-panel" style={{ padding: 28 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Neues Passwort</label>
-              <input className="sm-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 6 }}>Passwort wiederholen</label>
-              <input className="sm-input" type="password" placeholder="••••••••" value={pass2} onChange={e => setPass2(e.target.value)} onKeyDown={e => e.key === "Enter" && handleReset()} />
-            </div>
-            {err && <div className="sm-alert" style={{ fontSize: 13 }}>{err}</div>}
-            <button className="sm-btn sm-btn-primary" style={{ width: "100%", justifyContent: "center", marginTop: 4 }} onClick={handleReset} disabled={loading}>
-              {loading ? <><Spinner size={14} color="#080c18" /> Speichern...</> : <><Check size={15} /> Passwort speichern</>}
-            </button>
-          </div>
         </div>
       </div>
     </div>

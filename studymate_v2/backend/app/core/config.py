@@ -8,8 +8,6 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["*"]
     env: str = "development"
 
-    frontend_url: str = "http://localhost:5173"
-
     resend_api_key: str = ""
     resend_from: str = "StudyMate <onboarding@resend.dev>"
 
