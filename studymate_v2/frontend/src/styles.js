@@ -224,6 +224,16 @@ const styles = `
     .sm-hamburger { display: inline-flex !important; background: transparent; border: none; color: #cbd5e1; }
   }
 
+  /* Handy / kleine Viewports — Navbar kompakter skalieren, damit nichts überläuft */
+  @media (max-width: 600px) {
+    .sm-nav { padding: 10px 12px !important; }
+    .sm-logo { font-size: 14px; gap: 6px; }
+    .sm-logo-icon { width: 26px; height: 26px; }
+    .sm-nav-tagline, .sm-nav-label { display: none; }
+    .sm-nav .sm-btn { padding: 7px 9px !important; font-size: 12px !important; gap: 4px !important; }
+    .sm-avatar { width: 30px; height: 30px; }
+  }
+
   .sm-fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,.24); border-radius: 8px; padding: 6px; border: 1px solid rgba(255,255,255,.08); color: #cbd5e1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .12s ease; backdrop-filter: blur(8px); }
   .sm-fav-btn:hover { transform: scale(1.05); color: #ffd166; background: rgba(255,255,255,.08); }
   .sm-fav-btn.active { color: #ffd166; box-shadow: 0 6px 18px rgba(255,209,102,.18); }

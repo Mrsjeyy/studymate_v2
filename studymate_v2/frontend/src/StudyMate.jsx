@@ -673,7 +673,7 @@ export default function StudyMate() {
       {/* Navbar immer volle Breite — außerhalb von sm-main */}
       <NavBar
         user={user}
-        onHome={() => setView("dashboard")}
+        onHome={() => handleNavigate("dashboard")}
         onLogout={handleLogout}
         onProfile={() => setView('profile')}
         onGoToLogin={() => setView("auth")}

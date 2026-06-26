@@ -9,7 +9,7 @@ export default function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onT
             <Shield size={16} color="#080c18" strokeWidth={2.5} />
           </div>
           <span>Study<span style={{ color: "#00d4aa" }}>Mate</span></span>
-          <span className="sm-mono" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
+          <span className="sm-mono sm-nav-tagline" style={{ fontSize: 11, color: "#475569", marginLeft: 4 }}>// cyber</span>
         </div>
         <button className="sm-hamburger" aria-label="Menü öffnen" onClick={e => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('toggle-sidebar')); }} style={{ marginLeft: 6 }}>
           <Menu size={16} />
@@ -19,7 +19,7 @@ export default function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onT
         {currentViewHasTour && (
           <button className="sm-btn sm-btn-ghost" onClick={onTourRestart} title="Tour für diese Ansicht starten" style={{ padding: "7px 10px", fontSize: 13, color: "#00d4aa", gap: 5 }}>
             <HelpCircle size={14} />
-            <span style={{ fontSize: 12 }}>Tour</span>
+            <span className="sm-nav-label" style={{ fontSize: 12 }}>Tour</span>
           </button>
         )}
         <button className="sm-btn sm-btn-ghost" onClick={onToggleTheme} title="Theme umschalten" style={{ padding: "7px 10px", fontSize: 13 }}>
@@ -31,12 +31,12 @@ export default function NavBar({ user, onHome, onLogout, onGoToLogin, theme, onT
               {user.imageData ? <img src={user.imageData} alt="Profil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user.initial}
             </button>
             <button className="sm-btn sm-btn-ghost" style={{ padding: "7px 14px", fontSize: 13 }} onClick={onLogout}>
-              <LogOut size={14} /> Logout
+              <LogOut size={14} /> <span className="sm-nav-label">Logout</span>
             </button>
           </>
         ) : (
           <>
-            <span style={{ fontSize: 13, color: "#475569" }}>Gastmodus</span>
+            <span className="sm-nav-label" style={{ fontSize: 13, color: "#475569" }}>Gastmodus</span>
             <button className="sm-btn sm-btn-primary" style={{ padding: "7px 14px", fontSize: 13 }} onClick={onGoToLogin}>
               <LogIn size={14} /> Anmelden
             </button>
