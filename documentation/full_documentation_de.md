@@ -1,70 +1,161 @@
 # StudyMate v2 — Vollständige Projektdokumentation
 
-**Version:** 0.2.1  
-**Datum:** 2026-06-01  
-**Autoren:** StudyMate Entwicklerteam  
+**Version:** 0.3.2
+**Datum:** 2026-06-23
+**Autoren:** StudyMate Entwicklerteam
 **Modul:** Software Engineering WS 2025/26
 
 ---
 
 ## Inhaltsverzeichnis
 
-1. [Projektziel und Überblick](#1-projektziel-und-überblick)
-2. [User Stories](#2-user-stories)
-3. [Architekturübersicht](#3-architekturübersicht)
-4. [Projektstruktur](#4-projektstruktur)
-5. [Datenbankschema](#5-datenbankschema)
+1. [Projektüberblick](#1-projektüberblick)
+2. [Projektmanagement und Teamorganisation](#2-projektmanagement-und-teamorganisation)
+3. [Anforderungen und User Stories](#3-anforderungen-und-user-stories)
+4. [Architektur und Technologie-Stack](#4-architektur-und-technologie-stack)
+5. [Datenbankmodell](#5-datenbankmodell)
 6. [Backend — Komponenten und API-Referenz](#6-backend--komponenten-und-api-referenz)
 7. [Frontend — Komponenten und Funktionen](#7-frontend--komponenten-und-funktionen)
 8. [Authentifizierung und Sicherheit](#8-authentifizierung-und-sicherheit)
-9. [Feature-Dokumentation (chronologisch)](#9-feature-dokumentation-chronologisch)
-10. [Konfiguration und Umgebungsvariablen](#10-konfiguration-und-umgebungsvariablen)
-11. [Lokale Entwicklungsumgebung](#11-lokale-entwicklungsumgebung)
-12. [UI/UX — Design und Animationen](#12-uiux--design-und-animationen)
-13. [CI/CD und Deployment](#13-cicd-und-deployment)
-14. [Tests und Qualitätssicherung](#14-tests-und-qualitätssicherung)
-15. [Troubleshooting und FAQ](#15-troubleshooting-und-faq)
-16. [ChangeLog](#16-changelog)
-17. [Offene Aufgaben](#17-offene-aufgaben)
-18. [Anhänge](#18-anhänge)
+9. [Tests und Qualitätssicherung](#9-tests-und-qualitätssicherung)
+10. [Feature-Dokumentation (chronologisch)](#10-feature-dokumentation-chronologisch)
+11. [UI/UX — Design und Animationen](#11-uiux--design-und-animationen)
+12. [CI/CD und Deployment](#12-cicd-und-deployment)
+13. [Lokale Entwicklungsumgebung](#13-lokale-entwicklungsumgebung)
+14. [Troubleshooting und FAQ](#14-troubleshooting-und-faq)
+15. [Versionshistorie (ChangeLog)](#15-versionshistorie-changelog)
+16. [Offene Aufgaben und Ausblick](#16-offene-aufgaben-und-ausblick)
+17. [Anhang — Referenzen](#anhang--referenzen)
 
 ---
 
-## 1. Projektziel und Überblick
+## 1. Projektüberblick
 
-**StudyMate v2** ist eine vollständige, modern gestaltete Web-Lernplattform, die sich auf Karteikarten-basiertes Lernen spezialisiert. Das Projekt wurde im Rahmen des Software-Engineering-Moduls (WS 2025/26) als kollaboratives Teamprojekt entwickelt.
+StudyMate ist eine vollständige, modern gestaltete Web-Lernplattform mit Fokus auf karteikarten-basiertes Lernen. Das Projekt entstand im Rahmen des Moduls Software Engineering (WS 2025/26) als kollaboratives Teamprojekt und vereint agile Entwicklung, einen sauberen Git-Workflow und die Integration externer Cloud-Dienste.
 
 ### Kernziele
 
-- Bereitstellung einer leichtgewichtigen, erweiterbaren Plattform für Karteikarten-basiertes Lernen
-- Praxisnahe Anwendung moderner Software-Engineering-Methoden (agile Entwicklung, Git-Workflow, CI/CD)
-- Integration externer Dienste (Supabase, Groq KI, Resend E-Mail)
+- Leichtgewichtige, erweiterbare Plattform für karteikarten-basiertes Lernen bereitstellen.
+- Moderne Software-Engineering-Methoden praxisnah anwenden (agile Entwicklung, Git-Workflow, CI/CD).
+- Externe Dienste sinnvoll integrieren: Supabase (Auth & Datenbank), Groq KI (Quiz), Resend (E-Mail).
 
 ### Implementierte Hauptfunktionen
 
 | Funktion | Beschreibung | Implementiert am |
 |---|---|---|
-| Authentifizierung | Login, Registrierung, Gastmodus, Passwort-Reset | 2026-05-19 |
-| Lernset-Verwaltung | Erstellen, Bearbeiten (Titel, Beschreibung), Löschen, Sichtbarkeit umschalten | 2026-05-19 / 2026-05-26 |
-| Karteikarten-Verwaltung | Karten anlegen, bearbeiten, löschen, JSON-Import, Reihenfolge ändern | 2026-05-19 / 2026-06-02 |
+| Authentifizierung | Login, Registrierung, Gastmodus, Passwort-Reset (OTP) | 2026-05-19 |
+| Lernset-Verwaltung | Erstellen, bearbeiten, löschen, Sichtbarkeit umschalten | 2026-05-19 / 05-26 |
+| Karteikarten-Verwaltung | Anlegen, bearbeiten, löschen, JSON-Import, Reihenfolge | 2026-05-19 / 06-02 |
 | Lernmodus | Flip-Card-Ansicht mit Fortschrittsanzeige und Streak | 2026-05-19 |
 | Standard-Quiz | Multiple-Choice auf Basis vorhandener Karten | 2026-05-19 |
-| KI-Quiz | Quiz-Generierung via Groq API (Llama) mit Erklärungen | 2026-05-26 / 2026-06-02 |
-| Fork-Funktion | Öffentliche und eigene Sets kopieren (inkl. Priv-zu-Priv) | 2026-05-26 / 2026-06-02 |
-| Favoritensystem | Sets als Favorit markieren (auch als Gast), Migration bei Anmeldung | 2026-05-19 / 2026-06-02 |
-| Streak-Tracking | Tägliche Lernserie lokal im Browser gespeichert | 2026-05-26 |
-| Geführte Tour | Interaktive Erstbenutzerschulung (Dashboard, Set-Ansicht, Set-Erstellung) | 2026-05-26 / 2026-06-02 |
-| Profil-Overlay | Profilansicht mit Statistiken und Bearbeitungsmöglichkeit | 2026-05-26 |
-| Profilbild in NavBar/Sidebar | Hochgeladenes Profilbild erscheint im Avatar der Navbar und Sidebar-Fußzeile | 2026-06-01 |
-| Light/Dark-Mode | Umschaltbares Farbschema (gespeichert per localStorage) | 2026-05-26 |
+| KI-Quiz | Quiz-Generierung via Groq API (Llama) mit Erklärungen | 2026-05-26 / 06-02 |
+| Fork-Funktion | Öffentliche und eigene Sets kopieren (inkl. Priv-zu-Priv) | 2026-05-26 / 06-02 |
+| Favoritensystem | Sets als Favorit markieren (auch als Gast), Migration bei Login | 2026-05-19 / 06-02 |
+| Streak-Tracking | Tägliche Lernserie, persistiert im Browser | 2026-05-26 |
+| Soziale Funktionen | Freunde, Freundschaftsanfragen, öffentliche Profile | 2026-06-02 |
+| Geführte Tour | Interaktives Onboarding für Erstnutzer | 2026-05-26 / 06-02 |
+| Profilbild in NavBar/Sidebar | Hochgeladenes Profilbild erscheint im Avatar | 2026-06-01 |
+| Light/Dark-Mode | Umschaltbares Farbschema, gespeichert per localStorage | 2026-05-26 |
 
 ---
 
-## 2. User Stories
+## 2. Projektmanagement und Teamorganisation
 
-User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden als Grundlage für die Entwicklung verwendet und bilden die Basis der Akzeptanzkriterien.
+StudyMate wurde von einem vierköpfigen Studierendenteam nach agilen Prinzipien entwickelt. Als organisatorischer Rahmen diente das aus der Vorlesung bekannte Scrum-Framework in Kombination mit einem Kanban-Board zur Visualisierung des Arbeitsflusses. Das Team arbeitete selbstorganisiert und integrierte seine Ergebnisse über einen Git-Workflow mit Code-Reviews.
 
-### Epic 1: Benutzerverwaltung
+### Team-Aufbau
+
+Da es sich um ein gleichberechtigtes Studierendenteam handelt, wurden die klassischen Scrum-Rollen gemeinsam bzw. rollierend wahrgenommen. Der Dozent fungierte als Stakeholder und nahm die Ergebnisse ab.
+
+| Teammitglied | Arbeitsbranch |
+|---|---|
+| Selina Ickstadt | `Selina` |
+| Devi Müller | `devi` |
+| Michelle Schneider | `Michelle` |
+| Jennifer Hirt | `Jenny` |
+
+| Rolle | Umsetzung im Projekt |
+|---|---|
+| Product Owner | Backlog pflegen & User Stories priorisieren (gemeinsam) |
+| Scrum Master | Prozess & Board-Pflege sichern, Hindernisse beseitigen (rollierend) |
+| Entwicklerteam | Alle 4 Mitglieder; autonome, selbstorganisierte Umsetzung |
+| Stakeholder | Dozent (Auftraggeber, Feedback & Abnahme) |
+
+### Agiler Prozess: Meetings und Artefakte
+
+Das Vorgehen folgte dem Scrum-Prozess aus wiederkehrenden Iterationen (Sprints), die jeweils durch feste Meetings strukturiert waren.
+
+| Meeting | Zweck |
+|---|---|
+| Planning | Aufgaben auswählen, schätzen, Sprint-Ziel festlegen |
+| Daily | Tägliche Synchronisation (max. 15 min) |
+| Review | Ergebnisse zeigen, Feedback einholen |
+| Retrospektive | Zusammenarbeit reflektieren & verbessern |
+
+| Artefakt | Inhalt |
+|---|---|
+| Product Backlog | Alle User Stories, priorisiert |
+| Sprint Backlog | Für die Iteration zugesagte Aufgaben |
+| Increment | Lauffähiges, getestetes Ergebnis |
+
+### Kanban-Board
+
+Der Arbeitsfluss wurde auf einem Kanban-Board visualisiert. Aufgaben wandern nach dem Pull-Prinzip von links nach rechts; eine Aufgabe erreicht die Spalte „Done" erst, wenn sie die Definition of Done erfüllt. Die Spalte „Review / Testing" wurde im Projekt aktiv zur Nachverfolgung der Testfälle genutzt. WIP-Limits begrenzen die Anzahl paralleler Aufgaben pro Spalte und verhindern, dass zu viel gleichzeitig begonnen, aber nichts fertiggestellt wird.
+
+| Backlog | To Do (WIP 3) | In Progress (WIP 2) | Review / Testing | Done |
+|---|---|---|---|---|
+| US-033 KI-Quiz | US-014 Set forken | US-012 Sichtbarkeit | US-031 Streak | US-001 Registrierung |
+| US-042 Freunde | US-022 JSON-Import | | US-005 Profil | US-010 Set erstellen |
+| | | | US-024 Reihenfolge | US-030 Lernmodus |
+
+### Definition of Ready und Definition of Done
+
+**Definition of Ready (DoR)** — eine Story darf erst gezogen werden, wenn:
+- Titel, Beschreibung & Akzeptanzkriterien vorhanden sind,
+- der Nutzen klar formuliert ist,
+- Schätzung & Priorität gesetzt sind.
+
+**Definition of Done (DoD)** — eine Aufgabe gilt als erledigt, wenn:
+- alle Akzeptanzkriterien erfüllt sind,
+- der Code per Pull Request reviewt & nach `main` gemerged wurde,
+- der Fall manuell bzw. per E2E-Test geprüft ist.
+
+### Aufwandsschätzung
+
+Der Aufwand der User Stories wurde im Planning relativ in Story Points geschätzt. Als Methode diente Planning Poker: Alle Teammitglieder geben gleichzeitig eine Schätzung ab, wodurch gegenseitige Beeinflussung vermieden wird. Weichen die Schätzungen stark ab, deutet das auf ein unterschiedliches Verständnis der Aufgabe hin und wird im Team geklärt — die Diskussion ist dabei wertvoller als die exakte Zahl.
+
+### Iterationen im Projektverlauf
+
+| Iteration | Zeitraum | Schwerpunkt |
+|---|---|---|
+| Phase 1 | 19.05.2026 | Grundfunktionen (Auth, Sets, Karten, Lernmodus, KI-Quiz) |
+| Phase 2 | 26.05.2026 | Erweiterungen (Fork, Tour, Profil, Streak, Dark-Mode) |
+| Phase 3 | 26.05.–01.06.2026 | Bugfixes & Verbesserungen |
+| Phase 4 | 01.06.–09.06.2026 | Soziale Funktionen, KI-Anbieter-Wechsel, UI-Feinschliff |
+| Phase 5 | 23.06.2026 | Sicherheits-Fix Passwort-Reset (OTP) |
+
+### Git-Workflow
+
+Jedes Teammitglied arbeitete auf einem eigenen Feature-Branch. Fertige Arbeit wurde per Pull Request vorgeschlagen, im Team reviewt und nach Freigabe in den Produktionsstand `main` integriert. Dieser Ablauf bildet die DoD technisch ab und hält `main` stets lauffähig.
+
+---
+
+## 3. Anforderungen und User Stories
+
+Die Anforderungen wurden als User Stories aus Benutzerperspektive formuliert und bilden mit ihren Akzeptanzkriterien die Grundlage der Entwicklung.
+
+### Anforderungsarten und Story-Template
+
+In der Requirements-Phase werden Anforderungen klassisch in funktionale (was das System leisten soll) und nicht-funktionale Anforderungen (Qualitätseigenschaften wie Sicherheit, Performance, Usability) unterschieden. StudyMate formuliert die funktionalen Anforderungen durchgängig als User Stories; zentrale nicht-funktionale Anforderungen sind u. a. Schutz vor Username-Enumeration, responsive Bedienbarkeit und ein konsistentes Design-System.
+
+| Feld | Inhalt |
+|---|---|
+| Titel | Kurzbezeichnung (z. B. „Registrierung") |
+| Beschreibung | „Als \<Rolle\> möchte ich \<Ziel\>, damit \<Nutzen\>." |
+| Akzeptanzkriterien | Prüfbare Bedingungen für „erledigt" |
+| Schätzung & Priorität | Story Points und Reihenfolge im Backlog |
+
+### Epic 1 — Benutzerverwaltung
 
 ---
 
@@ -79,7 +170,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Bei bereits vergebenem Benutzernamen wird eine verständliche Fehlermeldung angezeigt
 - Nach erfolgreicher Registrierung wird der Benutzer automatisch eingeloggt und zum Dashboard weitergeleitet
 
-**Implementiert:** `2026-05-19` — Supabase Auth-Integration  
+**Implementiert:** `2026-05-19` — Supabase Auth-Integration
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `AuthView`, `handleRegister`)
 
 ---
@@ -93,7 +184,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Bei falschem Login erscheint eine benutzerfreundliche Fehlermeldung (kein technisches Detail)
 - Sitzung bleibt bis zum manuellen Logout oder Token-Ablauf aktiv
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleLogin`)
 
 ---
@@ -108,7 +199,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Aktionen wie Set-Erstellen leiten den Gast zur Anmeldeseite
 - Gäste können Sets als Favoriten markieren; diese werden bei der Anmeldung automatisch ins Benutzerkonto übernommen
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleGuest`)
 
 ---
@@ -123,7 +214,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Die Antwort des Servers gibt keine Information darüber, ob ein Benutzer existiert (Schutz vor Enumeration)
 - Der Code ist 1 Stunde gültig und wird direkt im Formular eingegeben (kein Klick-Link)
 
-**Implementiert:** `2026-05-19`; auf OTP-Code umgestellt: `2026-06-23`  
+**Implementiert:** `2026-05-19`; auf OTP-Code umgestellt: `2026-06-23`
 **Datei:** [backend/app/routers/auth.py](../studymate_v2/backend/app/routers/auth.py), [frontend/src/components/AuthViews.jsx](../studymate_v2/frontend/src/components/AuthViews.jsx) (Funktion `ForgotPasswordView`)
 
 > **Hinweis (2026-06-23):** Ursprünglich wurde ein klickbarer Magic-Link verwendet. In der Praxis verbrauchten E-Mail-Sicherheitsscanner (z. B. von Gmail/Antivirus-Software) den Einweg-Token bereits beim Öffnen der Mail, bevor der Nutzer selbst klickte — der Link landete dann ohne gültige Session auf der normalen Startseite. Die Umstellung auf einen manuell eingegebenen OTP-Code behebt das, da kein automatisierter Request den Code mehr „verbrauchen" kann.
@@ -141,12 +232,12 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Änderungen werden in Supabase (Anzeigename) und localStorage (Bio, Bild) gespeichert
 - Hochgeladenes Profilbild erscheint als Avatar in Navbar und Sidebar-Fußzeile
 
-**Implementiert:** `2026-05-26`; Profilbild in NavBar/Sidebar: `2026-06-01`  
+**Implementiert:** `2026-05-26`; Profilbild in NavBar/Sidebar: `2026-06-01`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `ProfileView`, `ProfileEditView`, `handleSaveProfile`)
 
 ---
 
-### Epic 2: Lernset-Verwaltung
+### Epic 2 — Lernset-Verwaltung
 
 ---
 
@@ -160,7 +251,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Sichtbarkeit kann zwischen „Privat" und „Öffentlich" gewählt werden
 - Nach Erstellung landet man direkt in der Set-Detailansicht
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleCreateSet`, `submitCreateSet`)
 
 ---
@@ -174,7 +265,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Titel und Beschreibung können geändert und gespeichert werden
 - Änderungen werden sofort in der Ansicht reflektiert
 
-**Implementiert:** `2026-05-26` (Commit: `9282ff3 set namen bearbeiten können`)  
+**Implementiert:** `2026-05-26` (Commit: `9282ff3 set namen bearbeiten können`)
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `saveEditTitle`, `handleUpdateSetTitle`)
 
 ---
@@ -189,7 +280,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Badge im Set zeigt aktuellen Status (Öffentlich/Privat)
 - Beim Veröffentlichen fragt ein Dialog, ob der Ersteller (Avatar/Name) auf dem Set sichtbar sein soll (`show_author`); Standard ist sichtbar
 
-**Implementiert:** `2026-05-19`; Autoren-Sichtbarkeits-Dialog: `2026-06-02`  
+**Implementiert:** `2026-05-19`; Autoren-Sichtbarkeits-Dialog: `2026-06-02`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleToggleSetVisibility`), [frontend/src/components/DetailView.jsx](../studymate_v2/frontend/src/components/DetailView.jsx) (`showAuthorDialog`)
 
 ---
@@ -203,12 +294,12 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Bestätigungsdialog vor dem Löschen
 - Nach dem Löschen wird zur Dashboard-Ansicht zurückgekehrt
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleDeleteSet`)
 
 ---
 
-**US-014 — Öffentliches Set forken**
+**US-014 — Öffentliches Set forken / kopieren**
 
 > *Als angemeldeter Benutzer möchte ich ein öffentliches Set in mein Konto kopieren (forken) können, damit ich es bearbeiten und an meine Bedürfnisse anpassen kann.*
 
@@ -219,12 +310,12 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Das geforkte/kopierte Set ist zunächst privat
 - Alle Karten des Original-Sets werden übernommen
 
-**Implementiert:** `2026-05-26` (Commits: `98d6cdf`, `4a41540`, `e46744c`); Priv-zu-Priv-Fork: `2026-06-02`  
+**Implementiert:** `2026-05-26` (Commits: `98d6cdf`, `4a41540`, `e46744c`); Priv-zu-Priv-Fork: `2026-06-02`
 **Dateien:** [backend/app/routers/sets.py](../studymate_v2/backend/app/routers/sets.py) (Funktion `fork_set`), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleForkSet`, `submitForkSet`)
 
 ---
 
-### Epic 3: Karteikarten-Verwaltung
+### Epic 3 — Karteikarten-Verwaltung
 
 ---
 
@@ -237,7 +328,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Karte erscheint sofort nach dem Speichern in der Liste
 - Fehler werden angezeigt, wenn Felder leer gelassen werden
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `addCard`, `handleAddCard`)
 
 ---
@@ -251,7 +342,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Inline-Formular mit vorausgefüllten Feldern
 - Änderungen werden sofort im State und in der UI reflektiert
 
-**Implementiert:** `2026-05-19` (Commit: `c2b967a feat: add card editing`)  
+**Implementiert:** `2026-05-19` (Commit: `c2b967a feat: add card editing`)
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `openEditCard`, `saveEditCard`, `handleEditCard`)
 
 ---
@@ -266,7 +357,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Ungültige Eingaben erzeugen eine verständliche Fehlermeldung
 - Nach Erfolg werden importierte Karten sofort angezeigt
 
-**Implementiert:** `2026-05-26` (Commit: `9282ff3`)  
+**Implementiert:** `2026-05-26` (Commit: `9282ff3`)
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `importCards`, `handleImportCards`)
 
 ---
@@ -280,7 +371,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Bestätigungsdialog vor dem Löschen
 - Karte verschwindet sofort aus der Ansicht
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `deleteCard`, `handleDeleteCard`)
 
 ---
@@ -295,16 +386,16 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Neue Reihenfolge wird dauerhaft in der Datenbank gespeichert (`position`-Feld)
 - Lern- und Quizmodus verwenden die aktualisierte Reihenfolge
 
-**Implementiert:** `2026-06-02`  
+**Implementiert:** `2026-06-02`
 **Dateien:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleMoveCard`), [frontend/src/components/DetailView.jsx](../studymate_v2/frontend/src/components/DetailView.jsx) (Buttons `ChevronUp`/`ChevronDown`)
 
 ---
 
-### Epic 4: Lernen und Quiz
+### Epic 4 — Lernen und Quiz
 
 ---
 
-**US-030 — Lernmodus**
+**US-030 — Lernmodus (Flip-Card)**
 
 > *Als Benutzer möchte ich meine Karteikarten im Flip-Card-Format durchgehen können, damit ich den Lernfortschritt tracken und mich selbst testen kann.*
 
@@ -316,7 +407,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Am Ende erscheint eine Zusammenfassung mit gewussten/nicht-gewussten Karten
 - Option, die Session zu wiederholen
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Komponente `LearnView`)
 
 ---
@@ -331,7 +422,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Wird an einem Tag nicht gelernt, setzt sich der Streak auf 0 zurück
 - Daten werden in localStorage gespeichert (persistiert über Browser-Sessions)
 
-**Implementiert:** `2026-05-26` (Commit: `28cf558 feat: enhance streak tracking`)  
+**Implementiert:** `2026-05-26` (Commit: `28cf558 feat: enhance streak tracking`)
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `awardDailyStreak`, `getStreakState`, `toISODate`, `getDaysSince`)
 
 ---
@@ -342,11 +433,11 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 
 **Akzeptanzkriterien:**
 - Quiz ist verfügbar, wenn das Set mindestens 4 Karten enthält
-- Falsche Antworten werden aus anderen Karten des Sets generiert
+- Falsche Antworten werden aus anderen Karten des Sets generiert (Distraktoren)
 - Nach der Auswahl wird die richtige Antwort grün, die falsche rot markiert
 - Am Ende erscheint die Auswertung (richtig/falsch)
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Komponente `QuizView`, Phase `quiz`)
 
 ---
@@ -361,12 +452,12 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Nach der Antwort wird die Erklärung angezeigt
 - Ist kein Groq-API-Key konfiguriert, erscheint eine Hinweismeldung (HTTP 503)
 
-**Implementiert:** `2026-05-19` (Commit: `db4dcbb`, initial mit Google Gemini); auf Groq (Llama) umgestellt: `2026-06-01` (Commit: `5e42b21 feat: update API keys and dependencies for quiz generation functionality`)  
+**Implementiert:** `2026-05-19` (Commit: `db4dcbb`, initial mit Google Gemini); auf Groq (Llama) umgestellt: `2026-06-01` (Commit: `5e42b21 feat: update API keys and dependencies for quiz generation functionality`)
 **Dateien:** [backend/app/routers/quiz.py](../studymate_v2/backend/app/routers/quiz.py), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `generateAIQuiz`, Phase `aiquiz`)
 
 ---
 
-### Epic 5: Entdecken und soziale Funktionen
+### Epic 5 — Entdecken und soziale Funktionen
 
 ---
 
@@ -379,7 +470,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Suchfeld filtert Sets nach Titel in Echtzeit
 - Vorgeschlagene Sets werden am Anfang der Liste angezeigt
 
-**Implementiert:** `2026-05-19`  
+**Implementiert:** `2026-05-19`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Komponente `DashboardView`, Tab `discover`)
 
 ---
@@ -394,7 +485,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Favoritenansicht zeigt ausschließlich markierte Sets (auch für Gäste sichtbar)
 - Beim Einloggen werden Gastfavoriten automatisch mit den Benutzerfavoriten zusammengeführt
 
-**Implementiert:** `2026-05-19`; Gastfavoriten-Migration: `2026-06-02`  
+**Implementiert:** `2026-05-19`; Gastfavoriten-Migration: `2026-06-02`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `toggleFavorite`, Komponente `FavoritesView`)
 
 ---
@@ -409,7 +500,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Bestehende Freundschaften können entfernt werden
 - Eingehende Anfragen werden in einem eigenen Tab mit Badge-Zähler in der Sidebar angezeigt
 
-**Implementiert:** `2026-06-02` (Commit: `a15800c feat: implement friends feature with friend requests and public profiles`)  
+**Implementiert:** `2026-06-02` (Commit: `a15800c feat: implement friends feature with friend requests and public profiles`)
 **Datei:** [frontend/src/components/FriendsView.jsx](../studymate_v2/frontend/src/components/FriendsView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `handleSendFriendRequest`, `handleAcceptFriend`, `handleDeclineFriend`, `handleRemoveFriend`, `handleSearchUsers`)
 
 ---
@@ -424,12 +515,12 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Zeigt den aktuellen Freundschaftsstatus mit passender Aktion (Anfrage senden / Annehmen / Ablehnen / Entfernen)
 - Zurück-Button führt zur ursprünglichen Ansicht zurück (Dashboard oder Freundesliste)
 
-**Implementiert:** `2026-06-02` (Commit: `a15800c`)  
+**Implementiert:** `2026-06-02` (Commit: `a15800c`)
 **Datei:** [frontend/src/components/PublicProfileView.jsx](../studymate_v2/frontend/src/components/PublicProfileView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktion `handleOpenUserProfile`)
 
 ---
 
-### Epic 6: Onboarding und UX
+### Epic 6 — Onboarding und UX
 
 ---
 
@@ -446,7 +537,7 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Abgeschlossene Tours werden in localStorage gespeichert (kein erneuter Autostart)
 - Ein Hilfe-Button in der Navbar ermöglicht das manuelle Neustarten der Tour
 
-**Implementiert:** `2026-05-26` (Commit: `322ab03`); Detail- & Erstellungs-Tour: `2026-06-02`  
+**Implementiert:** `2026-05-26` (Commit: `322ab03`); Detail- & Erstellungs-Tour: `2026-06-02`
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Komponente `GuidedTourOverlay`, Konstante `TOUR_STEPS`)
 
 ---
@@ -460,14 +551,30 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
 - Gewähltes Theme wird in localStorage gespeichert und beim nächsten Besuch wiederhergestellt
 - Alle UI-Elemente passen sich dem Theme an
 
-**Implementiert:** `2026-05-26` (Commit: `dcc0679 Light/Darkmode`)  
+**Implementiert:** `2026-05-26` (Commit: `dcc0679 Light/Darkmode`)
 **Datei:** [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (State `theme`, CSS-Klasse `.sm.light`)
 
 ---
 
-## 3. Architekturübersicht
+## 4. Architektur und Technologie-Stack
 
-### Schichtenarchitektur
+StudyMate folgt einer klassischen Drei-Schichten-Architektur, die eine klare Trennung zwischen Präsentation, Anwendungslogik und Datenhaltung herstellt. Die oberste Schicht ist ein React-Single-Page-Application-Client, der im Browser läuft und die gesamte Benutzeroberfläche rendert. Darunter liegt ein FastAPI-Backend, das als REST-Schnittstelle dient, eingehende Anfragen validiert, Berechtigungen prüft und die Geschäftslogik kapselt. Die unterste Schicht bildet Supabase (PostgreSQL) als Persistenz- und Authentifizierungsdienst. Externe Dienste — die Groq-API für die KI-Quiz-Generierung und die Resend-API für den E-Mail-Versand — werden ausschließlich serverseitig angesprochen, sodass keine sensiblen Schlüssel im Browser landen.
+
+Diese Schichtung erlaubt es, einzelne Bestandteile unabhängig voneinander weiterzuentwickeln oder auszutauschen: Das Frontend kann ohne Änderung am Backend umgestaltet werden, und der KI-Anbieter lässt sich (wie in Phase 4 geschehen) hinter der Backend-Schnittstelle wechseln, ohne dass der Client etwas davon merkt.
+
+### Architekturprinzip: Trennung der Belange (MVC)
+
+Die Architektur orientiert sich am Grundgedanken des MVC-Musters (Model-View-Controller): Daten, Darstellung und Steuerung werden in getrennte Verantwortlichkeiten aufgeteilt. Diese Trennung vereinfacht Wartung, Erweiterung und Testbarkeit, da Änderungen an einer Verantwortlichkeit die anderen möglichst wenig berühren. Die folgende Tabelle zeigt, wie sich die drei MVC-Rollen konkret auf die Bausteine von StudyMate abbilden:
+
+| MVC-Rolle | Umsetzung in StudyMate |
+|---|---|
+| Model | Supabase/PostgreSQL als Datenhaltung; Pydantic-Schemas als Datenmodell im Backend |
+| View | React-Komponenten (`DashboardView`, `DetailView`, `LearnView`, …) |
+| Controller | FastAPI-Router (Steuerlogik, Validierung) und die Event-Handler im Frontend |
+
+### Schichtenarchitektur (Abb. 1)
+
+Das folgende Diagramm zeigt die drei Schichten und ihre Kommunikationswege. Der Client spricht ausschließlich das Backend per REST an; das Backend kapselt sämtliche Zugriffe auf die Datenbank und die externen Dienste.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -478,50 +585,56 @@ User Stories beschreiben die Anforderungen aus Benutzerperspektive. Sie wurden a
                               │ HTTPS (REST)
 ┌─────────────────────────────▼────────────────────────────────┐
 │  Backend (FastAPI / Python 3.11+)                            │
-│  Routers: auth, sets, cards, quiz, health                   │
+│  Router: auth, sets, cards, quiz, health                     │
 │  Pydantic Schemas + Security Middleware                      │
-└──────────────┬───────────────────────────┬───────────────────┘
+└──────────────┬───────────────────────────┬────────────────────┘
                │ Supabase Python Client    │ Externe APIs
-┌──────────────▼──────────────┐   ┌───────▼───────────────────┐
+┌──────────────▼──────────────┐   ┌────────▼───────────────────┐
 │  Supabase (PostgreSQL + Auth)│   │  Groq API (Quiz)          │
-│  Tabellen: flashcard_sets,  │   │  Resend API (E-Mail)      │
-│  flashcards, profiles       │   └───────────────────────────┘
-└─────────────────────────────┘
+│  Tabellen: flashcard_sets,   │   │  Resend API (E-Mail)      │
+│  flashcards, profiles, …     │   └────────────────────────────┘
+└───────────────────────────────┘
 ```
+*Abb. 1: Drei-Schichten-Architektur von StudyMate mit Datenbank und serverseitigen Fremddiensten.*
 
 ### Technologie-Stack
 
-| Schicht | Technologie | Version |
+| Schicht | Technologie | Anmerkung |
 |---|---|---|
-| Frontend Framework | React | 18 |
-| Build Tool | Vite | aktuell |
-| Styling | Inline CSS + dynamische Styles | — |
-| Icon-Bibliothek | Lucide React | aktuell |
-| Backend Framework | FastAPI | aktuell |
-| Sprache Backend | Python | 3.11+ |
-| Validierung | Pydantic v2 | aktuell |
-| Datenbank & Auth | Supabase (PostgreSQL) | aktuell |
-| E-Mail | Resend API | — |
-| KI-Integration | Groq (Llama 3.1 8B Instant, OpenAI-kompatible API) | — |
-| Deployment | Vercel | — |
+| Frontend-Framework | React 18 | Single-Page-Application |
+| Build-Tool | Vite | Dev-Server & Production-Build |
+| Styling | Inline CSS + dynamische Styles | injiziert in `StudyMate.jsx` |
+| Icons | Lucide React | — |
+| Backend-Framework | FastAPI | REST-API |
+| Sprache (Backend) | Python 3.11+ | — |
+| Validierung | Pydantic v2 | typsichere Schemas |
+| Datenbank & Auth | Supabase (PostgreSQL) | inkl. Auth-Service |
+| E-Mail | Resend API | Passwort-Reset |
+| KI-Integration | Groq (Llama 3.1 8B Instant) | OpenAI-kompatible API |
+| Deployment | Vercel | Frontend & Backend |
 
----
+### Projektstruktur (vollständig)
 
-## 4. Projektstruktur
+Das Repository ist klar in Frontend, Backend und Dokumentation gegliedert. Der folgende Verzeichnisbaum zeigt die relevanten Dateien mit ihrer jeweiligen Aufgabe:
 
 ```
 studymate_v2/
 ├── documentation/
-│   └── full_documentation_de.md       ← Diese Datei
+│   ├── full_documentation_de.md       ← Diese Datei
+│   └── build_doc.py                   ← Generiert HTML/PDF aus dieser Datei
 ├── studymate_v2/
 │   ├── frontend/
 │   │   ├── src/
-│   │   │   ├── StudyMate.jsx          ← Gesamte App-Logik und alle Views
+│   │   │   ├── StudyMate.jsx          ← App-Logik und State-Management
 │   │   │   ├── main.jsx               ← React-Einstiegspunkt
+│   │   │   ├── components/            ← DetailView, FriendsView, PublicProfileView,
+│   │   │   │                            AuthViews, NavBar, Sidebar, Avatar, …
 │   │   │   └── supabase.js            ← Supabase-Client-Konfiguration
+│   │   ├── e2e/                       ← Playwright-E2E-Tests (auth, sets, cards, ui, mobile, features)
 │   │   ├── index.html
 │   │   ├── package.json
 │   │   ├── vite.config.js
+│   │   ├── playwright.config.js
 │   │   └── vercel.json
 │   ├── backend/
 │   │   ├── app/
@@ -549,11 +662,53 @@ studymate_v2/
 
 ---
 
-## 5. Datenbankschema
+## 5. Datenbankmodell
 
-Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabellen werden direkt über die Supabase-Dashboard-GUI oder via SQL angelegt.
+Die Persistenz erfolgt über Supabase (PostgreSQL). Das Datenmodell besteht aus vier Kerntabellen. `flashcard_sets` und `flashcards` werden über das FastAPI-Backend angesprochen, `profiles` und `friendships` hingegen direkt über den Supabase JS-Client im Frontend. Alle Benutzer referenzieren die von Supabase verwaltete Tabelle `auth.users`.
 
-### Tabellen
+### Entity-Relationship-Modell (Abb. 2)
+
+Das folgende ER-Diagramm zeigt die vier Kerntabellen samt der von Supabase verwalteten `auth.users` sowie die Beziehungen zwischen ihnen (Primärschlüssel PK, Fremdschlüssel FK). Ein Benutzer besitzt beliebig viele Lernsets, jedes Lernset enthält beliebig viele Karteikarten, und über `forked_from` referenziert ein geforktes Set sein Quell-Set.
+
+```
+auth.users (Supabase Auth)
+   │ 1                                  │ 1
+   │ id                                 │ owneruserid
+   ▼ N                                  ▼ N
+profiles                          flashcard_sets ───┐ forked_from
+ id (PK, FK→auth.users)             id (PK)          │ (FK → flashcard_sets,
+ username, displayname              title            │  self-reference, optional)
+ bio, image_data                    description     ◄┘
+ streak_count, activity_data        ispublic, show_author
+                                       │ 1
+auth.users          auth.users        │ setid
+   │ 1                 │ 1            ▼ N
+   │ user_id           │ friend_id  flashcards
+   ▼ N                 ▼ N            id (PK)
+        friendships                   question, answer
+         id (PK)                      position
+         status ("pending"|"accepted")
+```
+*Abb. 2: Entity-Relationship-Modell der StudyMate-Datenbank mit Primär- und Fremdschlüsselbeziehungen.*
+
+### Datenzugriffspfade (Abb. 3)
+
+StudyMate nutzt bewusst zwei unterschiedliche Zugriffswege auf die Datenbank: Lernsets und Karteikarten laufen über das FastAPI-Backend, das die Eigentümer-Prüfung übernimmt. Profile und Freundschaften werden dagegen direkt über den Supabase JS-Client aus dem Frontend gelesen und geschrieben — ohne eigenen Backend-Endpunkt.
+
+```
+React-Client (Browser)
+   │                                              │
+   │ REST über Bearer-Token                       │ Supabase JS-Client (direkt)
+   ▼                                              ▼
+FastAPI-Backend                              Supabase: profiles, friendships
+ (Eigentümer-Prüfung, Validierung)
+   │
+   ▼
+Supabase: flashcard_sets, flashcards
+```
+*Abb. 3: Die zwei Datenzugriffspfade — über das Backend (mit Eigentümer-Prüfung) bzw. direkt über den Supabase JS-Client.*
+
+### Tabellen im Detail
 
 #### `flashcard_sets` — Lernsets
 
@@ -564,8 +719,8 @@ Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabe
 | `title` | `text` | Titel des Sets (Pflichtfeld) |
 | `description` | `text` | Beschreibung (optional) |
 | `ispublic` | `boolean` | Öffentlich oder privat (Standard: `false`) |
-| `createdat` | `timestamptz` | Erstellungszeitpunkt |
-| `forked_from` | `uuid` (FK → flashcard_sets, optional) | Verweist auf das Quell-Set, falls dieses Set durch Forken entstanden ist |
+| `createdat` / `updatedat` | `timestamptz` | Erstellungs- / Änderungszeitpunkt |
+| `forked_from` | `uuid` (FK → flashcard_sets, optional) | Quell-Set bei Forks (self-reference) |
 | `show_author` | `boolean` | Ob bei öffentlichen Sets der Ersteller (Avatar/Name, anklickbar zum Profil) angezeigt wird (Standard: `true`) |
 
 #### `flashcards` — Karteikarten
@@ -576,18 +731,18 @@ Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabe
 | `setid` | `uuid` (FK → flashcard_sets) | Zugehöriges Set |
 | `question` | `text` | Frage (Pflichtfeld) |
 | `answer` | `text` | Antwort (Pflichtfeld) |
-| `position` | `integer` | Reihenfolge im Set (Sortierschlüssel für Lern-/Quiz-Modus) |
+| `position` | `integer` | Sortierschlüssel für Lern-/Quiz-Modus |
+| `createdat` / `updatedat` | `timestamptz` | Zeitstempel |
 
 #### `profiles` — Benutzerprofile
 
 | Spalte | Typ | Beschreibung |
 |---|---|---|
 | `id` | `uuid` (PK, FK → auth.users) | Supabase Auth User ID |
-| `username` | `text` | Benutzername (eindeutig, lowercase) |
+| `username` | `text` (unique) | Benutzername (eindeutig, lowercase) |
 | `displayname` | `text` | Anzeigename |
 | `recovery_email` | `text` | E-Mail für Passwort-Reset (optional) |
-| `bio` | `text` | Kurzbeschreibung im Profil (optional) |
-| `image_data` | `text` | Profilbild, Base64-kodiert (optional) |
+| `bio` / `image_data` | `text` | Kurzbeschreibung / Profilbild (Base64, optional) |
 | `streak_count` | `integer` | Aktueller Lern-Streak (Tage in Folge) |
 | `streak_last_date` | `text` | Datum (ISO) des letzten Streak-Updates |
 | `activity_data` | `jsonb` | Tägliche Lernaktivität für die Wochenansicht (`WeeklyActivityChart`) |
@@ -600,8 +755,9 @@ Das System nutzt **Supabase (PostgreSQL)** als Datenpersistenz-Schicht. Die Tabe
 | `user_id` | `uuid` (FK → auth.users) | Anfragender Benutzer |
 | `friend_id` | `uuid` (FK → auth.users) | Angefragter Benutzer |
 | `status` | `text` | `pending` (Anfrage offen) oder `accepted` (befreundet) |
+| `created_at` | `timestamptz` | Zeitpunkt der Anfrage |
 
-> **Hinweis:** `profiles` und `friendships` werden ausschließlich direkt über den Supabase JS Client im Frontend gelesen/geschrieben (kein eigener Backend-Endpunkt) — anders als `flashcard_sets`/`flashcards`, die über die FastAPI-Routen `sets.py`/`cards.py` laufen. Beide Tabellen sowie die Spalten `forked_from` und `show_author` fehlen aktuell in `sql_schema.sql` (siehe unten); das Referenzschema wurde nicht synchron zur Live-Datenbank gepflegt.
+> **Hinweis:** `profiles` und `friendships` werden ausschließlich direkt über den Supabase JS Client im Frontend gelesen/geschrieben (kein eigener Backend-Endpunkt) — anders als `flashcard_sets`/`flashcards`, die über die FastAPI-Routen `sets.py`/`cards.py` laufen.
 
 ### SQL-Referenzschema (aus `sql_schema.sql`)
 
@@ -625,15 +781,15 @@ CREATE TABLE IF NOT EXISTS public.flashcards (
 );
 ```
 
-> **Hinweis:** In der produktiven Supabase-Datenbank weichen die Spaltennamen leicht ab (z. B. `owneruserid` statt `owner_id`, `ispublic` statt `is_public`). Die Datei `sql_schema.sql` dient als Referenz.
+> **Schema-Pflege:** In der produktiven Supabase-Datenbank weichen einige Spaltennamen vom Referenz-SQL ab (z. B. `owneruserid` statt `owner_id`, `ispublic` statt `is_public`). Die Tabellen `profiles` / `friendships` sowie `forked_from` und `show_author` fehlen aktuell noch in `sql_schema.sql` — die Synchronisierung ist als offene Aufgabe vermerkt (siehe Kapitel 16).
 
 ---
 
 ## 6. Backend — Komponenten und API-Referenz
 
-### 6.1 `app/main.py` — Anwendungsinitialisierung
+Das Backend ist eine FastAPI-Anwendung. `main.py` erstellt die App, registriert die CORS-Middleware und bindet die Router ein. Geschützte Endpunkte validieren einen Bearer-Token über Supabase und prüfen die Eigentümerschaft.
 
-Erstellt die FastAPI-Anwendung, registriert CORS-Middleware und bindet alle Router ein.
+### 6.1 `app/main.py` — Anwendungsinitialisierung
 
 ```python
 app = FastAPI(title="StudyMate API", version="0.1.0")
@@ -677,7 +833,7 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 | `get_current_user(token)` | Wie oben, gibt vollständiges User-Objekt zurück |
 | `require_set_owner(set_id, user_id)` | Prüft, ob der User Eigentümer des Sets ist (HTTP 403 sonst) |
 | `require_set_access(set_id, user_id)` | Erlaubt Zugriff, wenn Set öffentlich oder User Eigentümer ist |
-| `require_card_owner(card_id, user_id)` | Prüft Eigentümerschaft über Set des der Karte |
+| `require_card_owner(card_id, user_id)` | Prüft Eigentümerschaft über Set der Karte |
 
 **Implementiert:** `2026-05-19`
 
@@ -685,34 +841,30 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 
 ### 6.4 API-Endpunkte — Vollständige Referenz
 
-#### Auth (`/auth`)
-
 | Methode | Pfad | Auth | Beschreibung |
 |---|---|---|---|
-| `POST` | `/auth/forgot-password` | Nein | Sendet 6-stelligen Passwort-Reset-Code per E-Mail |
-
-**Request:** `POST /auth/forgot-password`
-
-```json
-{ "username": "max_mustermann" }
-```
-
-**Response:** `{ "message": "ok" }` (immer, unabhängig ob Benutzer existiert — Schutz vor Username-Enumeration)
-
-**Implementierungsdetail:** Der Backend-Router sucht die Recovery-E-Mail aus der `profiles`-Tabelle. Falls vorhanden, wird über die Supabase Admin API (`generate_link`, Typ `recovery`) ein `email_otp`-Code erzeugt und via Resend versandt. Das Frontend ruft anschließend direkt `supabase.auth.verifyOtp({ email, token, type: "recovery" })` auf, um eine Session zu erhalten, und setzt darüber das neue Passwort via `supabase.auth.updateUser()`. Es gibt **keinen** klickbaren Link und keinen Redirect — der Code wird manuell im Formular eingegeben.
-
----
-
-#### Sets (`/sets`)
-
-| Methode | Pfad | Auth | Beschreibung |
-|---|---|---|---|
+| `POST` | `/auth/forgot-password` | Nein | Sendet 6-stelligen Reset-Code per E-Mail |
 | `GET` | `/sets/public` | Nein | Alle öffentlichen Sets |
 | `GET` | `/sets/my` | Ja | Eigene Sets des Benutzers |
 | `POST` | `/sets` | Ja | Neues Set erstellen |
-| `PUT` | `/sets/{set_id}` | Ja (Eigentümer) | Set aktualisieren |
-| `DELETE` | `/sets/{set_id}` | Ja (Eigentümer) | Set löschen |
-| `POST` | `/sets/{set_id}/fork` | Ja | Öffentliches Set forken |
+| `PUT` | `/sets/{set_id}` | Eigentümer | Set aktualisieren |
+| `DELETE` | `/sets/{set_id}` | Eigentümer | Set löschen |
+| `POST` | `/sets/{set_id}/fork` | Ja | Set forken (Kopie wird privat) |
+| `GET` | `/sets/{set_id}/cards` | Optional | Karten eines Sets (öffentlich ohne Auth) |
+| `POST` | `/sets/{set_id}/cards` | Eigentümer | Neue Karte erstellen |
+| `DELETE` | `/cards/{card_id}` | Eigentümer | Karte löschen |
+| `POST` | `/quiz/generate` | Nein | KI-Quiz generieren (Groq/Llama) |
+| `GET` | `/health` | Nein | Health-Check |
+
+**Passwort-Reset — `POST /auth/forgot-password`**
+
+**Response:** `{ "message": "ok" }` (immer, unabhängig davon, ob der Benutzer existiert — Schutz vor Username-Enumeration). Der Backend-Router sucht die Recovery-E-Mail aus der `profiles`-Tabelle. Falls vorhanden, wird über die Supabase Admin API (`generate_link`, Typ `recovery`) ein `email_otp`-Code erzeugt und via Resend versandt. Das Frontend ruft anschließend `supabase.auth.verifyOtp({ email, token, type: "recovery" })` auf, um eine Session zu erhalten, und setzt das neue Passwort via `supabase.auth.updateUser()`. Es gibt **keinen** klickbaren Link und keinen Redirect — der Code wird manuell im Formular eingegeben.
+
+**Fork-Logik — `POST /sets/{set_id}/fork`**
+
+- Prüft, ob das Quell-Set zugänglich ist; private fremde Sets → HTTP 403.
+- Erstellt eine Kopie mit `ispublic = false` und übernimmt alle Karten.
+- Karten werden nach `position` abgefragt und mit korrektem `position`-Feld kopiert, damit die Reihenfolge erhalten bleibt (Bugfix 06/2026, siehe Kapitel 9).
 
 **Request-Schema `StudySetCreate`:**
 
@@ -724,28 +876,11 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 }
 ```
 
-**Fork-Endpunkt `POST /sets/{set_id}/fork`:**
-- Prüft, ob das Quell-Set öffentlich ist (HTTP 403 sonst)
-- Erstellt eine Kopie des Sets mit `ispublic = false`
-- Kopiert alle Karteikarten in das neue Set
-- Gibt das neue Set mit Karten zurück (`select("*, flashcards(*)")`)
+**Karten — `GET /sets/{set_id}/cards`**
 
-**Implementiert:** Sets: `2026-05-19`, Fork: `2026-05-26`
-
----
-
-#### Cards (`/sets/{set_id}/cards`, `/cards/{card_id}`)
-
-| Methode | Pfad | Auth | Beschreibung |
-|---|---|---|---|
-| `GET` | `/sets/{set_id}/cards` | Optional | Karten eines Sets abrufen |
-| `POST` | `/sets/{set_id}/cards` | Ja (Eigentümer) | Neue Karte erstellen |
-| `DELETE` | `/cards/{card_id}` | Ja (Eigentümer) | Karte löschen |
-
-**Besonderheit `GET /sets/{set_id}/cards`:**
-- Öffentliche Sets sind ohne Auth abrufbar
-- Private Sets erfordern gültigen Bearer-Token des Eigentümers
-- HTTP 401 bei fehlendem Token, HTTP 403 bei falschem Benutzer
+- Öffentliche Sets sind ohne Auth abrufbar.
+- Private Sets erfordern gültigen Bearer-Token des Eigentümers.
+- HTTP 401 bei fehlendem Token, HTTP 403 bei falschem Benutzer.
 
 **Request-Schema `FlashcardCreate`:**
 
@@ -757,15 +892,9 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 }
 ```
 
-**Implementiert:** `2026-05-19`
+**KI-Quiz — `POST /quiz/generate`**
 
----
-
-#### Quiz (`/quiz`)
-
-| Methode | Pfad | Auth | Beschreibung |
-|---|---|---|---|
-| `POST` | `/quiz/generate` | Nein | KI-Quiz generieren (Groq/Llama) |
+Die KI (Groq, Modell `llama-3.1-8b-instant`, angesprochen über die OpenAI-kompatible Chat-Completions-API unter `https://api.groq.com/openai/v1`) generiert ausschließlich die drei falschen Antwortoptionen und eine Erklärung. Die richtige Antwort kommt direkt aus der Datenbank und wird an einer zufälligen Position eingefügt. Ohne konfigurierten `GROQ_API_KEY` antwortet der Endpunkt mit HTTP 503.
 
 **Request-Schema `QuizGenerateRequest`:**
 
@@ -793,15 +922,13 @@ Stellt FastAPI-Dependency-Funktionen bereit:
 }
 ```
 
-**Implementierungsdetail:** Die KI (Groq, Modell `llama-3.1-8b-instant`, angesprochen über die OpenAI-kompatible Chat-Completions-API unter `https://api.groq.com/openai/v1`) generiert ausschließlich die drei falschen Antwortoptionen und eine Erklärung. Die richtige Antwort kommt direkt aus der Datenbank und wird an einer zufälligen Position eingefügt.
-
-**Implementiert:** `2026-05-26` (Commit: `cb47bd8`); KI-Anbieter auf Groq umgestellt: `2026-06-01` (Commit: `5e42b21`)
+**Implementiert:** Sets/Cards/Auth: `2026-05-19`; Fork: `2026-05-26`; KI-Anbieter auf Groq umgestellt: `2026-06-01` (Commit: `5e42b21`)
 
 ---
 
 ## 7. Frontend — Komponenten und Funktionen
 
-Die gesamte Frontend-Logik befindet sich in einer einzigen Datei: [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx). Diese Entscheidung wurde bewusst getroffen, um die Komplexität der Projektkonfiguration zu minimieren.
+Die gesamte Frontend-Logik ist bewusst zentral in [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) gebündelt, um die Projektkonfiguration schlank zu halten; größere Teilansichten (`DetailView`, `FriendsView`, `PublicProfileView`, `AuthViews`, `Sidebar`) sind in `components/` ausgelagert.
 
 ### 7.1 Hilfsfunktionen
 
@@ -826,8 +953,8 @@ Die gesamte Frontend-Logik befindet sich in einer einzigen Datei: [frontend/src/
 | View-Name | Beschreibung | Komponente |
 |---|---|---|
 | `auth` | Login/Registrierung | `AuthView` |
-| `forgot` | Passwort-Reset (Benutzername → Code + neues Passwort, 2 Schritte intern) | `ForgotPasswordView` |
-| `dashboard` | Hauptansicht mit Tabs | `DashboardView` |
+| `forgot` | Passwort-Reset (Benutzername → Code + neues Passwort) | `ForgotPasswordView` |
+| `dashboard` | Hauptansicht mit Tabs & Statistiken | `DashboardView` |
 | `detail` | Set-Detailansicht | `DetailView` |
 | `learn` | Lernmodus | `LearnView` |
 | `quiz` | Quiz-Modus | `QuizView` |
@@ -842,84 +969,30 @@ Die gesamte Frontend-Logik befindet sich in einer einzigen Datei: [frontend/src/
 
 ### 7.3 Hauptkomponenten
 
-#### `NavBar` — Navigationsleiste
-
-Zeigt Logo, Tour-Button, Theme-Umschalter, Profil-Avatar und Logout-Button.
-
-**Props:** `user`, `onHome`, `onLogout`, `onGoToLogin`, `theme`, `onToggleTheme`, `onProfile`, `onTourRestart`, `currentViewHasTour`
-
-Zeigt im Avatar-Button das hochgeladene Profilbild (`user.imageData`) als `<img>`-Element — fällt auf den Anfangsbuchstaben zurück, wenn kein Bild vorhanden ist. Der Avatar-Container hat `overflow: hidden`, damit runde Bilder korrekt abgeschnitten werden.
-
+**`NavBar`** — Zeigt Logo, Tour-Button, Theme-Umschalter, Profil-Avatar und Logout-Button. Props: `user`, `onHome`, `onLogout`, `onGoToLogin`, `theme`, `onToggleTheme`, `onProfile`, `onTourRestart`, `currentViewHasTour`. Zeigt im Avatar-Button das hochgeladene Profilbild (`user.imageData`) als `<img>` — fällt auf den Anfangsbuchstaben zurück, wenn kein Bild vorhanden ist.
 **Implementiert:** `2026-05-19`; Tour-Button: `2026-05-26`; Profilbild-Anzeige: `2026-06-01` (`cf603c0`)
 
----
+**`Sidebar`** — Kollabierbare Navigation (Dashboard, Meine Sets, Entdecken, Favoriten, Freunde); auf Mobilgeräten als Overlay, auf Desktop als feste Leiste. Die Fußzeile zeigt seit `2026-06-01` einen kleinen Avatar neben dem Benutzernamen — konsistent mit dem NavBar-Avatar. Eigenständige Komponente seit `2026-06-01` (`a52e919`).
 
-#### `Sidebar` — Seitennavigation
-
-Collapsible Sidebar mit Links zu Dashboard, Meine Sets, Entdecken, Favoriten, Freunde. Auf Mobilgeräten als Overlay, auf Desktop als feste Leiste.
-
-Die Fußzeile der Sidebar zeigt seit `2026-06-01` einen kleinen Avatar (Profilbild oder Anfangsbuchstabe) neben dem Benutzernamen — konsistent mit dem NavBar-Avatar.
-
-**Implementiert:** `2026-05-19`; Profilbild in Footer: `2026-06-01` (`cf603c0`)
-
----
-
-#### `AuthView` — Authentifizierung
-
-Tabs für Login und Registrierung. Validierung der Eingaben (Benutzername: min. 3 Zeichen, alphanumerisch; Passwort: min. 6 Zeichen). Recovery-E-Mail als optionales Feld bei Registrierung.
-
+**`AuthView`** — Tabs für Login und Registrierung. Validierung der Eingaben (Benutzername: min. 3 Zeichen, alphanumerisch; Passwort: min. 6 Zeichen). Recovery-E-Mail als optionales Feld bei Registrierung.
 **Implementiert:** `2026-05-19`
 
----
-
-#### `DashboardView` — Dashboard
-
-Drei Tabs: Dashboard (Statistiken), Entdecken (öffentliche Sets), Meine Sets. Enthält Suchfeld, Statistikkarten (Sets, Karten, Streak), Vorschlagskarussell für öffentliche Sets und das `WeeklyActivityChart` (Lernaktivität der letzten 7 Tage, aus `profiles.activity_data`). Auf öffentlichen Set-Karten wird bei aktiviertem `show_author` der Ersteller mit Avatar/Name angezeigt und ist anklickbar (öffnet `public_profile`).
-
+**`DashboardView`** — Drei Tabs (Dashboard/Entdecken/Meine Sets), Statistikkarten (Sets, Karten, Streak), Vorschlagskarussell und `WeeklyActivityChart` (Lernaktivität der letzten 7 Tage aus `profiles.activity_data`). Bei aktiviertem `show_author` wird der Ersteller mit Avatar/Name angezeigt und ist anklickbar (öffnet `public_profile`).
 **Implementiert:** `2026-05-19`; `WeeklyActivityChart`: `2026-06-01`, responsives Feintuning: `2026-06-02`
 
----
+**`DetailView`** — Karten verwalten (hinzufügen, bearbeiten, löschen, JSON-Import), Set-Titel/-Beschreibung bearbeiten, Sichtbarkeit umschalten, Set löschen, Fork-Button bei fremden öffentlichen Sets.
 
-#### `DetailView` — Set-Detailansicht
-
-Zeigt alle Karten eines Sets mit Nummern. Eigentümer können:
-- Karten hinzufügen (Inline-Formular)
-- Karten bearbeiten (Inline-Formular mit Vorausfüllung)
-- Karten löschen
-- Karten per JSON importieren
-- Set-Titel und -Beschreibung bearbeiten
-- Sichtbarkeit umschalten
-- Set löschen
-
-Fremde Sets (öffentlich) zeigen den Fork-Button.
-
-> **Verhaltensänderung (`cf603c0`, 2026-06-01):** Die „Lernen starten"- und „Quiz starten"-Buttons sind nicht mehr bei leeren Sets deaktiviert. Die zugehörige Hinweismeldung („Noch keine Karten – füge welche hinzu") wurde entfernt. Der LearnView-Guard für leere Sets wurde ebenfalls entfernt — die Logik für leere Sets wird damit implizit durch die Set-Erstellung gesteuert.
+> **Verhaltensänderung (`cf603c0`, 2026-06-01):** Die „Lernen starten"- und „Quiz starten"-Buttons sind nicht mehr bei leeren Sets deaktiviert. Die zugehörige Hinweismeldung wurde entfernt; der `LearnView`-Guard für leere Sets entfiel ebenfalls.
 
 **Implementiert:** `2026-05-19`; Bearbeiten/Import: `2026-05-26`; Button-Guard entfernt: `2026-06-01`
 
----
-
-#### `LearnView` — Lernmodus
-
-Flip-Card-Ansicht mit CSS-3D-Transformation. Benutzer markiert jede Karte als gewusst oder nicht gewusst. Am Ende: Zusammenfassung + Option zum Wiederholen. Beim Abschließen wird `handleCompleteSet()` aufgerufen, der den Streak aktualisiert.
-
+**`LearnView`** — Flip-Card mit CSS-3D-Transformation. Benutzer markiert jede Karte als gewusst/nicht gewusst; am Ende Zusammenfassung + Wiederholen. Beim Abschließen wird `handleCompleteSet()` aufgerufen, der den Streak aktualisiert.
 **Implementiert:** `2026-05-19`
 
----
-
-#### `QuizView` — Quiz-Modus
-
-Unterstützt zwei Modi:
-- **Standard-Quiz:** Multiple-Choice aus vorhandenen Karten (mind. 4 Karten erforderlich)
-- **KI-Quiz:** Groq-generierte Fragen (Llama 3.1) mit Erklärung nach jeder Antwort
-
+**`QuizView`** — Standard-Quiz (Multiple-Choice aus vorhandenen Karten, mind. 4) und KI-Quiz (Groq/Llama 3.1) mit Erklärung nach jeder Antwort.
 **Implementiert:** Standard: `2026-05-19`; KI: `2026-05-26`
 
----
-
-#### `GuidedTourOverlay` — Geführte Tour
-
-Overlay-Komponente, die UI-Elemente per CSS-Highlight hervorhebt und Erklärungen in einem Popup anzeigt. Schritte sind in `TOUR_STEPS` pro View definiert.
+**`GuidedTourOverlay`** — Overlay-Komponente, die UI-Elemente per CSS-Highlight hervorhebt und Erklärungen in einem Popup anzeigt. Schritte sind in `TOUR_STEPS` pro View definiert. Tour-Status wird in `localStorage` unter `sm_tour_completed` gespeichert.
 
 ```javascript
 const TOUR_STEPS = {
@@ -936,37 +1009,16 @@ const TOUR_STEPS = {
 };
 ```
 
-Tour-Status wird in `localStorage` unter `sm_tour_completed` gespeichert.
-
 **Implementiert:** `2026-05-26` (Commit: `322ab03`)
 
----
-
-#### `ProfileView` und `ProfileEditView` — Profil
-
-`ProfileView`: Zeigt Avatar, Name, Bio, Statistiken (Karten, Sets, Streak), Vorschau der letzten Sets.
-
-`ProfileEditView`: Formular zum Ändern von Anzeigename, Bio und Profilbild. Anzeigename, Bio und Profilbild (Base64) werden in Supabase (`profiles.displayname`, `profiles.bio`, `profiles.image_data`) aktualisiert. Aus einer früheren, rein lokalen Version existiert noch eine einmalige Migration: Beim Login werden alte `localStorage`-Profildaten (`readProfileSettings`) in die Supabase-Spalten übernommen, falls dort noch nichts hinterlegt ist.
-
+**`ProfileView` und `ProfileEditView`** — `ProfileView`: Zeigt Avatar, Name, Bio, Statistiken (Karten, Sets, Streak), Vorschau der letzten Sets. `ProfileEditView`: Formular zum Ändern von Anzeigename, Bio und Profilbild. Änderungen werden in Supabase (`profiles.displayname`, `.bio`, `.image_data`) gespeichert. Aus einer früheren, rein lokalen Version existiert noch eine einmalige Migration: Beim Login werden alte `localStorage`-Profildaten in die Supabase-Spalten übernommen, falls dort noch nichts hinterlegt ist.
 **Implementiert:** `2026-05-26` (Commits: `3d4d234`, `184d550`)
 
----
+**`FriendsView`** — Drei Tabs: Freunde (akzeptierte Freundschaften), Anfragen (eingehende Freundschaftsanfragen mit Annehmen/Ablehnen), Suchen (Benutzersuche nach Username/Anzeigename). Lädt und schreibt direkt über den Supabase-Client auf die Tabelle `friendships` (kein Backend-Endpunkt).
+**Implementiert:** `2026-06-02` (Commit: `a15800c`)
 
-#### `FriendsView` — Freunde
-
-Drei Tabs: Freunde (akzeptierte Freundschaften), Anfragen (eingehende Freundschaftsanfragen mit Annehmen/Ablehnen), Suchen (Benutzersuche nach Username/Anzeigename). Lädt und schreibt direkt über den Supabase-Client auf die Tabelle `friendships` (kein Backend-Endpunkt).
-
-**Implementiert:** `2026-06-02` (Commit: `a15800c feat: implement friends feature with friend requests and public profiles`)  
-**Datei:** [frontend/src/components/FriendsView.jsx](../studymate_v2/frontend/src/components/FriendsView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `fetchFriends`, `handleSendFriendRequest`, `handleAcceptFriend`, `handleDeclineFriend`, `handleRemoveFriend`, `handleSearchUsers`)
-
----
-
-#### `PublicProfileView` — Öffentliches Profil
-
-Zeigt Avatar, Name, Bio und öffentliche Sets eines anderen Benutzers sowie den aktuellen Freundschaftsstatus mit passender Aktion (Anfrage senden/Annehmen/Ablehnen/Entfernen). Erreichbar über einen Klick auf den Autorennamen eines öffentlichen Sets (Dashboard) oder aus der Freundesliste. Merkt sich die aufrufende View (`publicProfileFrom`), um beim Zurück-Button korrekt zu navigieren.
-
-**Implementiert:** `2026-06-02` (Commit: `a15800c`)  
-**Datei:** [frontend/src/components/PublicProfileView.jsx](../studymate_v2/frontend/src/components/PublicProfileView.jsx), [frontend/src/StudyMate.jsx](../studymate_v2/frontend/src/StudyMate.jsx) (Funktionen `handleOpenUserProfile`, `getFriendStatus`, `getFriendshipId`)
+**`PublicProfileView`** — Zeigt Avatar, Name, Bio und öffentliche Sets eines anderen Benutzers sowie den aktuellen Freundschaftsstatus mit passender Aktion (Anfrage senden/Annehmen/Ablehnen/Entfernen). Merkt sich die aufrufende View (`publicProfileFrom`), um beim Zurück-Button korrekt zu navigieren.
+**Implementiert:** `2026-06-02` (Commit: `a15800c`)
 
 ---
 
@@ -999,239 +1051,15 @@ const toFakeEmail = (username) => `${username.toLowerCase()}@studymate.local`;
 | CORS | Konfiguriert in `CORSMiddleware`; in Produktion auf Frontend-URL einschränken |
 | Sensible Daten | `.env`-Dateien sind in `.gitignore` (Commit: `6d2b4ad`) |
 
----
-
-## 9. Feature-Dokumentation (chronologisch)
-
-### Phase 1 — Grundfunktionen (2026-05-19)
-
-| Datum | Commit | Feature |
-|---|---|---|
-| 2026-05-19 | `8cea6d6` | Supabase-Integration: Auth + Datenbankanbindung |
-| 2026-05-19 | `048da9b` | Passwort-Reset-Flow mit E-Mail via Resend |
-| 2026-05-19 | `db4dcbb` | KI-Quiz-Integration (Google Gemini) |
-| 2026-05-19 | `81b7561` | Flip-Card-Animation (Performance-Optimierung) |
-| 2026-05-19 | `fa7c4df` | Kartensets erstellen |
-| 2026-05-19 | `c2b967a` | Karten bearbeiten und importieren |
-| 2026-05-19 | `7038f50` | Verlinkung zur Anmeldeseite im Gastmodus |
-
-### Phase 2 — Erweiterungen (2026-05-26)
-
-| Datum | Commit | Feature |
-|---|---|---|
-| 2026-05-26 | `28cf558` | Streak-Tracking mit Datum-Parsing und Reset-Logik |
-| 2026-05-26 | `cb47bd8` | Migration auf google-genai SDK; CORS-Fix |
-| 2026-05-26 | `dcc0679` | Light/Dark-Mode |
-| 2026-05-26 | `9282ff3` | Set-Name bearbeiten, Import-Funktion |
-| 2026-05-26 | `98d6cdf` | Fork-Feature: Öffentliche Sets kopieren |
-| 2026-05-26 | `4a41540` | Fork-UX: Dialog, bessere Ausrichtung |
-| 2026-05-26 | `409a1e3` | Fork-Feature-Dokumentation |
-| 2026-05-26 | `322ab03` | Geführte Tour mit localStorage und Restart-Button |
-| 2026-05-26 | `3d4d234` | Profil-Overlay |
-| 2026-05-26 | `e46744c` | `onForkSet`-Prop zur DetailView-Komponente |
-
-### Phase 3 — Bugfixes und Verbesserungen (2026-05-26 — 2026-06-01)
-
-| Datum | Commit | Beschreibung |
-|---|---|---|
-| 2026-05-26 | `b332a07` | Favoriten nur für eingeloggte Nutzer anzeigen |
-| 2026-05-26 | `f0e33f0` | Benutzer-Feedback bei leeren Kartensets (Quiz/Lernen) |
-| 2026-05-26 | `0657acb` | Edit-Icon in StudyMate-Komponente |
-| 2026-05-26 | `1a10046` | Supabase-Version in requirements.txt fixiert |
-| 2026-05-26 | `184d550` | Profil-Bug behoben |
-| 2026-06-01 | `cf603c0` | Profilbild in NavBar-Avatar und Sidebar-Footer; Learn/Quiz-Button-Guard bei leeren Sets entfernt; `handleAddCard`-State-Duplizierung gefixt |
-
-### Phase 4 — Soziale Funktionen, KI-Anbieter-Wechsel, UI-Feinschliff (2026-06-01 — 2026-06-09)
-
-| Datum | Commit | Beschreibung |
-|---|---|---|
-| 2026-06-01 | `5e42b21` | KI-Anbieter von Google Gemini auf Groq (Llama 3.1) umgestellt — Bibliothek, Modellname und Env-Var (`GEMINI_API_KEY` → `GROQ_API_KEY`) geändert |
-| 2026-06-01 | `70bb322` | Aktivitäts-Tracking + neue Komponente `WeeklyActivityChart` (Lernaktivität der letzten 7 Tage im Dashboard) |
-| 2026-06-01 | `a52e919` | Eigenständige `Sidebar`-Komponente mit Navigation und Profilanzeige (vorher Teil von `StudyMate.jsx`) |
-| 2026-06-01 | `596b27b` | Playwright-E2E-Testframework eingeführt (erste Testdateien) |
-| 2026-06-02 | `a15800c` | Neues Freunde-Feature: Freundschaftsanfragen, öffentliche Profile (`FriendsView`, `PublicProfileView`, Tabelle `friendships`); Autoren-Sichtbarkeits-Dialog (`show_author`) beim Veröffentlichen eines Sets |
-| 2026-06-02 | `4ceec09` | Neue `Avatar`-Komponente, Modal-Styling überarbeitet |
-| 2026-06-02 – 06-08 | mehrere | UI-Feinschliff: Sidebar-Einklapp-Button, Light/Dark-Mode-Korrekturen, NavBar/Logo-Positionierung, Pfeil-Buttons-Layout in der Detailansicht |
-| 2026-06-08 | `fd41c1e` | Globaler Exception-Handler im Backend; verbessertes Fehlerhandling bei KI-Quiz-Antworten |
-| 2026-06-08 | `06fea88` | Hinweistext bei leerem Kartenset im Quiz-Modus |
-| 2026-06-08 | `5d401d4` | Ladezustand für Freundesliste; geführte Tour um die Views `learn`, `quiz`, `friends`, `profile` erweitert |
-| 2026-06-09 | `a50d7d1` | Set-Detailansicht: Karten-Update-Logik überarbeitet, Spalte `forked_from` zur Nachverfolgung des Quell-Sets bei Forks ergänzt |
-| 2026-06-09 | `18b6bcc`, `4ddf635` | `WeeklyActivityChart`: responsives Layout, Schriftgrößen-Skalierung, Farbschema für vergangene/zukünftige Aktivitätspunkte |
+> **Sicherheits-Fix (06/2026):** Der Passwort-Reset wurde von einem klickbaren Magic-Link auf einen manuell eingegebenen OTP-Code umgestellt. Grund: E-Mail-Sicherheitsscanner konsumierten den Einweg-Token des Links bereits vor dem Klick des Nutzers, wodurch der Reset clientseitig nie auf einer gültigen Session ankam.
 
 ---
 
-### Phase 5 — Sicherheits-Fix Passwort-Reset (2026-06-23)
+## 9. Tests und Qualitätssicherung
 
-| Datum | Commit | Beschreibung |
-|---|---|---|
-| 2026-06-23 | — | Passwort-Reset von Magic-Link auf OTP-Code umgestellt. Grund: E-Mail-Sicherheitsscanner konsumierten den Einweg-Link-Token bereits vor dem Klick des Nutzers, wodurch der Reset clientseitig nie ankam (User landete ohne Session auf der normalen Startseite). `ResetPasswordView` und der `PASSWORD_RECOVERY`-Auth-Event-Handler in `StudyMate.jsx` wurden entfernt, `FRONTEND_URL` ist dadurch kein benötigter Konfigurationswert mehr. |
-
----
-
-## 10. Konfiguration und Umgebungsvariablen
-
-### Backend (`.env` in `backend/`)
-
-| Variable | Pflicht | Beschreibung |
-|---|---|---|
-| `SUPABASE_URL` | Ja | URL des Supabase-Projekts |
-| `SUPABASE_ANON_KEY` | Ja | Supabase Anon/Public Key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Ja | Supabase Service Role Key (nur Backend!) |
-| `RESEND_API_KEY` | Empfohlen | Resend API Key für E-Mail-Versand |
-| `RESEND_FROM` | Nein | Absenderadresse (Standard: `StudyMate <onboarding@resend.dev>`) |
-| `GROQ_API_KEY` | Optional | Groq API Key für KI-Quiz (Llama 3.1) |
-
-### Frontend (`.env.local` in `frontend/`)
-
-| Variable | Pflicht | Beschreibung |
-|---|---|---|
-| `VITE_SUPABASE_URL` | Ja | Supabase URL (öffentlich) |
-| `VITE_SUPABASE_ANON_KEY` | Ja | Supabase Anon Key (öffentlich) |
-| `VITE_API_URL` | Ja | Backend-URL (z. B. `http://localhost:8000`) |
-
-> **Sicherheitshinweis:** `SUPABASE_SERVICE_ROLE_KEY` darf **niemals** im Frontend verwendet werden. Er gewährt vollständigen Datenbankzugriff ohne RLS-Einschränkungen.
-
----
-
-## 11. Lokale Entwicklungsumgebung
-
-### 11.1 Backend starten
-
-**Voraussetzungen:** Python 3.11+, pip
-
-```bash
-# 1. In den Backend-Ordner wechseln
-cd studymate_v2/backend
-
-# 2. Virtuelle Umgebung erstellen und aktivieren
-python -m venv .venv
-source .venv/bin/activate      # macOS / Linux
-# .venv\Scripts\activate       # Windows
-
-# 3. Abhängigkeiten installieren
-pip install -r requirements.txt
-
-# 4. Umgebungsvariablen konfigurieren
-cp .env.local.example .env.local   # Vorlage kopieren
-# Datei .env.local mit eigenen Werten befüllen
-
-# 5. Server starten
-uvicorn app.main:app --reload --port 8000
-```
-
-API-Dokumentation verfügbar unter: `http://localhost:8000/docs` (Swagger UI)
-
-### 11.2 Frontend starten
-
-**Voraussetzungen:** Node.js 18+, npm
-
-```bash
-# 1. In den Frontend-Ordner wechseln
-cd studymate_v2/frontend
-
-# 2. Abhängigkeiten installieren
-npm install
-
-# 3. Umgebungsvariablen konfigurieren
-# .env.local mit VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL befüllen
-
-# 4. Entwicklungsserver starten
-npm run dev
-# Läuft standardmäßig auf http://localhost:5173
-```
-
----
-
-## 12. UI/UX — Design und Animationen
-
-### Design-System
-
-StudyMate verwendet ein konsistentes Design-System, das vollständig in `StudyMate.jsx` als injiziertes CSS definiert ist.
-
-| Farbpalette | Wert | Verwendung |
-|---|---|---|
-| Primärfarbe | `#00d4aa` | Buttons, Akzente, aktive Zustände |
-| Hintergrund (Dark) | `#080c18` | App-Hintergrund |
-| Text (primär) | `#f1f5f9` | Überschriften |
-| Text (sekundär) | `#64748b` | Untertitel, Metadaten |
-| Akzent violett | `#8b5cf6` | Quiz, KI-Features |
-| Fehlerfarbe | `#ef4444` | Fehler, Löschen |
-
-**Schriftarten:** Sora (Interface), JetBrains Mono (Code, Zahlen)
-
-### Flip-Card-Animation
-
-Die Lernkarten verwenden CSS-3D-Transformation. Wichtige CSS-Eigenschaften:
-
-```css
-.sm-flip-scene     { perspective: 1200px; }
-.sm-flip-card      { transform-style: preserve-3d; transition: transform .55s cubic-bezier(.4,0,.2,1); }
-.sm-flip-card.flipped { transform: rotateY(180deg); }
-.sm-flip-face      { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.sm-flip-back      { transform: rotateY(180deg) translateZ(1px); }
-```
-
-> **Bugfix-Hinweis (Firefox):** `backface-visibility: hidden` muss auf **beiden** Seiten der Karte gesetzt sein, sonst kann in Firefox die Rückseite durchscheinen.
-
-### Responsive Design
-
-- Desktop (≥880px): Sidebar dauerhaft sichtbar, Content verschoben (`margin-left: 260px`)
-- Mobil (<880px): Hamburger-Menu öffnet Sidebar als Overlay
-
----
-
-## 13. CI/CD und Deployment
-
-### Deployment-Konfiguration
-
-Beide Services können auf **Vercel** deployed werden:
-
-**Frontend `vercel.json`:**
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
-}
-```
-(SPA-Routing: alle Pfade werden auf `index.html` umgeleitet)
-
-**Backend `vercel.json`:**
-Konfiguriert das Python-Backend als Vercel Serverless Functions.
-
-### Empfohlener CI/CD-Workflow
-
-```
-1. Push to Feature Branch
-2. Linting (ESLint, flake8/ruff)
-3. Unit Tests (pytest, vitest)
-4. Build Frontend (npm run build)
-5. Deploy to Staging
-6. PR Review + Merge to main
-7. Deploy to Production
-```
-
-### Branching-Strategie (Aktuell)
-
-| Branch | Beschreibung |
-|---|---|
-| `main` | Produktionsstand |
-| `devi` | Persönlicher Arbeitsbranch (Devi) |
-| `Selina` | Persönlicher Arbeitsbranch (Selina) |
-| `Jenny` | Persönlicher Arbeitsbranch (Jenny) |
-| `Michelle` | Persönlicher Arbeitsbranch (Michelle) |
-
-Pull Requests werden nach Code-Review in `main` gemerged.
-
----
-
-## 14. Tests und Qualitätssicherung
-
-### Aktueller Stand
-
-Die Qualitätssicherung erfolgt durch zwei Ebenen: strukturiertes manuelles Testen (Projektboard) sowie automatisierte E2E-Tests mit Playwright, die alle manuell geprüften Szenarien reproduzierbar abdecken.
+Die Qualitätssicherung erfolgt zweistufig: strukturiertes manuelles Testen (nachverfolgt im Projektboard, Spalte „Review / Testing") und automatisierte End-to-End-Tests mit Playwright, die alle manuell geprüften Szenarien reproduzierbar abdecken. Getestet wurde im Browser (Chrome und Firefox) sowie auf mobilen Viewports.
 
 ### Durchgeführte manuelle Tests
-
-Alle Tests wurden manuell im Browser (Chrome und Firefox) sowie auf mobilen Viewports (Responsive Design) durchgeführt. Die Ergebnisse wurden im Projektboard (Spalte „Review / Testing") nachverfolgt.
 
 #### Authentifizierung
 
@@ -1253,18 +1081,13 @@ Alle Tests wurden manuell im Browser (Chrome und Firefox) sowie auf mobilen View
 | Lernsets löschen | ✅ Erfolgreich, Set verschwindet aus der Liste |
 | Private Lernsets | ✅ Nur für Eigentümer sichtbar |
 
-#### Infrastruktur & Deployment
+#### Infrastruktur, Deployment & Gamification
 
 | Testfall | Ergebnis |
 |---|---|
 | Supabase-Verbindung prüfen | ✅ Datenbankabfragen funktionieren korrekt |
 | Deployment (Vercel/Production) | ✅ Produktivumgebung erreichbar und funktionsfähig |
 | Mobile Ansicht | ✅ Layout passt sich korrekt an kleine Bildschirme an |
-
-#### Gamification
-
-| Testfall | Ergebnis |
-|---|---|
 | Streaks | ✅ Lernserie wird korrekt gezählt und angezeigt |
 | Guided Tour | ✅ Tour startet bei Erstnutzung und kann übersprungen werden |
 
@@ -1275,7 +1098,7 @@ Alle Tests wurden manuell im Browser (Chrome und Firefox) sowie auf mobilen View
 | Sterne-Favoriten-Icon überlappt den „Karten"-Text in der Set-Karte | Offen |
 | Startseite leitet in Firefox nicht auf das Dashboard weiter | Offen |
 
-### Bugfix: Fork-Funktion kopiert Karten ohne Position (2026-06-01)
+### Beispiel-Bugfix: Fork-Funktion kopiert Karten ohne Position (2026-06-01)
 
 **Problem:** Beim Forken eines öffentlichen Sets wurden die Karteikarten ohne das `position`-Feld in die neue Kopie eingefügt. Dadurch verloren die Karten ihre Reihenfolge, da `GET /sets/{set_id}/cards` nach `position` sortiert.
 
@@ -1369,57 +1192,274 @@ def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered
 
 ---
 
-## 15. Troubleshooting und FAQ
+## 10. Feature-Dokumentation (chronologisch)
+
+Die folgende Aufstellung dokumentiert die Entwicklung commit-genau, gegliedert nach den fünf Projektphasen. Jede Phase entspricht grob einer Iteration und bündelt thematisch zusammengehörige Commits, sodass der Entwicklungsverlauf von den Grundfunktionen bis zum abschließenden Sicherheits-Fix nachvollziehbar bleibt.
+
+### Phase 1 — Grundfunktionen (2026-05-19)
+
+Die erste Phase legte das Fundament der Anwendung: Authentifizierung über Supabase, die Datenbankanbindung sowie die Kernfunktionen rund um Kartensets, den Flip-Card-Lernmodus und eine erste KI-Quiz-Integration auf Basis von Google Gemini.
+
+| Datum | Commit | Feature |
+|---|---|---|
+| 2026-05-19 | `8cea6d6` | Supabase-Integration: Auth + Datenbankanbindung |
+| 2026-05-19 | `048da9b` | Passwort-Reset-Flow mit E-Mail via Resend |
+| 2026-05-19 | `db4dcbb` | KI-Quiz-Integration (Google Gemini) |
+| 2026-05-19 | `81b7561` | Flip-Card-Animation (Performance-Optimierung) |
+| 2026-05-19 | `fa7c4df` | Kartensets erstellen |
+| 2026-05-19 | `c2b967a` | Karten bearbeiten und importieren |
+| 2026-05-19 | `7038f50` | Verlinkung zur Anmeldeseite im Gastmodus |
+
+### Phase 2 — Erweiterungen (2026-05-26)
+
+In der zweiten Phase kamen zahlreiche Erweiterungen hinzu, die StudyMate von einer reinen Lern-App zu einer interaktiven Plattform ausbauten: Streak-Tracking zur Motivation, ein Light/Dark-Mode, die Fork-Funktion zum Kopieren öffentlicher Sets, eine geführte Tour für neue Nutzer sowie ein Profil-Overlay.
+
+| Datum | Commit | Feature |
+|---|---|---|
+| 2026-05-26 | `28cf558` | Streak-Tracking mit Datum-Parsing und Reset-Logik |
+| 2026-05-26 | `cb47bd8` | Migration auf google-genai SDK; CORS-Fix |
+| 2026-05-26 | `dcc0679` | Light/Dark-Mode |
+| 2026-05-26 | `9282ff3` | Set-Name bearbeiten, Import-Funktion |
+| 2026-05-26 | `98d6cdf` | Fork-Feature: Öffentliche Sets kopieren |
+| 2026-05-26 | `4a41540` | Fork-UX: Dialog, bessere Ausrichtung |
+| 2026-05-26 | `409a1e3` | Fork-Feature-Dokumentation |
+| 2026-05-26 | `322ab03` | Geführte Tour mit localStorage und Restart-Button |
+| 2026-05-26 | `3d4d234` | Profil-Overlay |
+| 2026-05-26 | `e46744c` | `onForkSet`-Prop zur DetailView-Komponente |
+
+### Phase 3 — Bugfixes und Verbesserungen (2026-05-26 – 2026-06-01)
+
+Die dritte Phase diente der Stabilisierung. Im Fokus standen das Beheben gemeldeter Fehler, kleinere UX-Korrekturen sowie das Fixieren von Abhängigkeitsversionen, um einen reproduzierbaren Build sicherzustellen.
+
+| Datum | Commit | Beschreibung |
+|---|---|---|
+| 2026-05-26 | `b332a07` | Favoriten nur für eingeloggte Nutzer anzeigen |
+| 2026-05-26 | `f0e33f0` | Benutzer-Feedback bei leeren Kartensets (Quiz/Lernen) |
+| 2026-05-26 | `0657acb` | Edit-Icon in StudyMate-Komponente |
+| 2026-05-26 | `1a10046` | Supabase-Version in requirements.txt fixiert |
+| 2026-05-26 | `184d550` | Profil-Bug behoben |
+| 2026-06-01 | `cf603c0` | Profilbild in NavBar-Avatar und Sidebar-Footer; Learn/Quiz-Button-Guard bei leeren Sets entfernt; `handleAddCard`-State-Duplizierung gefixt |
+
+### Phase 4 — Soziale Funktionen, KI-Anbieter-Wechsel, UI-Feinschliff (2026-06-01 – 2026-06-09)
+
+Die vierte Phase brachte die größten funktionalen Sprünge: ein vollständiges Freunde-System mit öffentlichen Profilen, den Wechsel des KI-Anbieters von Google Gemini auf Groq, die Einführung des Playwright-E2E-Testframeworks sowie umfangreichen UI-Feinschliff.
+
+| Datum | Commit | Beschreibung |
+|---|---|---|
+| 2026-06-01 | `5e42b21` | KI-Anbieter von Google Gemini auf Groq (Llama 3.1) umgestellt — Bibliothek, Modellname und Env-Var (`GEMINI_API_KEY` → `GROQ_API_KEY`) geändert |
+| 2026-06-01 | `70bb322` | Aktivitäts-Tracking + neue Komponente `WeeklyActivityChart` (Lernaktivität der letzten 7 Tage im Dashboard) |
+| 2026-06-01 | `a52e919` | Eigenständige `Sidebar`-Komponente mit Navigation und Profilanzeige (vorher Teil von `StudyMate.jsx`) |
+| 2026-06-01 | `596b27b` | Playwright-E2E-Testframework eingeführt (erste Testdateien) |
+| 2026-06-02 | `a15800c` | Neues Freunde-Feature: Freundschaftsanfragen, öffentliche Profile (`FriendsView`, `PublicProfileView`, Tabelle `friendships`); Autoren-Sichtbarkeits-Dialog (`show_author`) beim Veröffentlichen eines Sets |
+| 2026-06-02 | `4ceec09` | Neue `Avatar`-Komponente, Modal-Styling überarbeitet |
+| 2026-06-02 – 06-08 | mehrere | UI-Feinschliff: Sidebar-Einklapp-Button, Light/Dark-Mode-Korrekturen, NavBar/Logo-Positionierung, Pfeil-Buttons-Layout in der Detailansicht |
+| 2026-06-08 | `fd41c1e` | Globaler Exception-Handler im Backend; verbessertes Fehlerhandling bei KI-Quiz-Antworten |
+| 2026-06-08 | `06fea88` | Hinweistext bei leerem Kartenset im Quiz-Modus |
+| 2026-06-08 | `5d401d4` | Ladezustand für Freundesliste; geführte Tour um die Views `learn`, `quiz`, `friends`, `profile` erweitert |
+| 2026-06-09 | `a50d7d1` | Set-Detailansicht: Karten-Update-Logik überarbeitet, Spalte `forked_from` zur Nachverfolgung des Quell-Sets bei Forks ergänzt |
+| 2026-06-09 | `18b6bcc`, `4ddf635` | `WeeklyActivityChart`: responsives Layout, Schriftgrößen-Skalierung, Farbschema für vergangene/zukünftige Aktivitätspunkte |
+
+### Phase 5 — Sicherheits-Fix Passwort-Reset (2026-06-23)
+
+Die fünfte Phase bestand aus einem gezielten Sicherheits-Fix: Der Passwort-Reset wurde von einem klickbaren Magic-Link auf einen manuell einzugebenden OTP-Code umgestellt, nachdem E-Mail-Sicherheitsscanner die Einweg-Links vorzeitig entwertet hatten.
+
+| Datum | Commit | Beschreibung |
+|---|---|---|
+| 2026-06-23 | — | Passwort-Reset von Magic-Link auf OTP-Code umgestellt. Grund: E-Mail-Sicherheitsscanner konsumierten den Einweg-Link-Token bereits vor dem Klick des Nutzers, wodurch der Reset clientseitig nie ankam (User landete ohne Session auf der normalen Startseite). `ResetPasswordView` und der `PASSWORD_RECOVERY`-Auth-Event-Handler in `StudyMate.jsx` wurden entfernt, `FRONTEND_URL` ist dadurch kein benötigter Konfigurationswert mehr. |
+
+---
+
+## 11. UI/UX — Design und Animationen
+
+StudyMate verwendet ein konsistentes Design-System, das vollständig in `StudyMate.jsx` als injiziertes CSS definiert ist.
+
+### Design-System — Farbpalette
+
+| Farbe | Wert | Verwendung |
+|---|---|---|
+| Primärfarbe | `#00d4aa` | Buttons, Akzente, aktive Zustände |
+| Hintergrund (Dark) | `#080c18` | App-Hintergrund |
+| Text (primär) | `#f1f5f9` | Überschriften |
+| Text (sekundär) | `#64748b` | Untertitel, Metadaten |
+| Akzent violett | `#8b5cf6` | Quiz, KI-Features |
+| Fehlerfarbe | `#ef4444` | Fehler, Löschen |
+
+**Schriftarten:** Sora (Interface), JetBrains Mono (Code, Zahlen)
+
+### Flip-Card-Animation
+
+Die Lernkarten verwenden CSS-3D-Transformation. Wichtige CSS-Eigenschaften:
+
+```css
+.sm-flip-scene     { perspective: 1200px; }
+.sm-flip-card      { transform-style: preserve-3d; transition: transform .55s cubic-bezier(.4,0,.2,1); }
+.sm-flip-card.flipped { transform: rotateY(180deg); }
+.sm-flip-face      { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.sm-flip-back      { transform: rotateY(180deg) translateZ(1px); }
+```
+
+> **Bugfix-Hinweis (Firefox):** `backface-visibility: hidden` muss auf **beiden** Seiten der Karte gesetzt sein, sonst kann in Firefox die Rückseite durchscheinen.
+
+### Responsive Design
+
+- Desktop (≥880px): Sidebar dauerhaft sichtbar, Content verschoben (`margin-left: 260px`)
+- Mobil (<880px): Hamburger-Menü öffnet die Sidebar als Overlay
+
+---
+
+## 12. CI/CD und Deployment
+
+Frontend und Backend werden auf **Vercel** deployed. Das Frontend nutzt SPA-Routing (alle Pfade → `index.html`), das Backend läuft als Vercel Serverless Functions.
+
+### Deployment-Konfiguration
+
+**Frontend `vercel.json`:**
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+}
+```
+(SPA-Routing: alle Pfade werden auf `index.html` umgeleitet)
+
+**Backend `vercel.json`:**
+Konfiguriert das Python-Backend als Vercel Serverless Functions.
+
+### Empfohlener CI/CD-Workflow
+
+```
+1. Push to Feature Branch
+2. Linting (ESLint, flake8/ruff)
+3. Unit Tests (pytest, vitest)
+4. Build Frontend (npm run build)
+5. Deploy to Staging
+6. PR Review + Merge to main
+7. Deploy to Production
+```
+
+### Branching-Strategie
+
+| Branch | Beschreibung |
+|---|---|
+| `main` | Produktionsstand |
+| `devi` | Persönlicher Arbeitsbranch (Devi) |
+| `Selina` | Persönlicher Arbeitsbranch (Selina) |
+| `Jenny` | Persönlicher Arbeitsbranch (Jenny) |
+| `Michelle` | Persönlicher Arbeitsbranch (Michelle) |
+
+Pull Requests werden nach Code-Review in `main` gemerged.
+
+---
+
+## 13. Lokale Entwicklungsumgebung
+
+### Backend starten
+
+**Voraussetzungen:** Python 3.11+, pip
+
+```bash
+cd studymate_v2/backend
+
+python -m venv .venv
+source .venv/bin/activate      # macOS / Linux
+# .venv\Scripts\activate       # Windows
+
+pip install -r requirements.txt
+
+cp .env.local.example .env.local   # Vorlage kopieren, Werte eintragen
+
+uvicorn app.main:app --reload --port 8000
+# Swagger-UI: http://localhost:8000/docs
+```
+
+### Frontend starten
+
+**Voraussetzungen:** Node.js 18+, npm
+
+```bash
+cd studymate_v2/frontend
+
+npm install
+
+# .env.local mit VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL füllen
+
+npm run dev
+# Läuft standardmäßig auf http://localhost:5173
+```
+
+### Umgebungsvariablen — Backend (`.env` in `backend/`)
+
+| Variable | Pflicht | Beschreibung |
+|---|---|---|
+| `SUPABASE_URL` | Ja | URL des Supabase-Projekts |
+| `SUPABASE_ANON_KEY` | Ja | Supabase Anon/Public Key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Ja | Supabase Service Role Key (nur Backend!) |
+| `RESEND_API_KEY` | Empfohlen | Resend API Key für E-Mail-Versand (Passwort-Reset) |
+| `RESEND_FROM` | Nein | Absenderadresse (Standard: `StudyMate <onboarding@resend.dev>`) |
+| `GROQ_API_KEY` | Optional | Groq API Key für KI-Quiz (Llama 3.1) |
+
+### Umgebungsvariablen — Frontend (`.env.local` in `frontend/`)
+
+| Variable | Pflicht | Beschreibung |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Ja | Supabase URL (öffentlich) |
+| `VITE_SUPABASE_ANON_KEY` | Ja | Supabase Anon Key (öffentlich) |
+| `VITE_API_URL` | Ja | Backend-URL (z. B. `http://localhost:8000`) |
+
+> **Sicherheitshinweis:** `SUPABASE_SERVICE_ROLE_KEY` darf **niemals** im Frontend verwendet werden. Er gewährt vollständigen Datenbankzugriff ohne RLS-Einschränkungen.
+
+---
+
+## 14. Troubleshooting und FAQ
 
 ### Problem: CORS-Fehler beim API-Aufruf
 
-**Ursache:** Backend-URL falsch oder CORS nicht konfiguriert.  
+**Ursache:** Backend-URL falsch oder CORS nicht konfiguriert.
 **Lösung:** `VITE_API_URL` im Frontend und `CORS_ORIGINS` im Backend prüfen. Backend neu starten nach `.env`-Änderung.
 
 ---
 
 ### Problem: Supabase Token-Fehler (401)
 
-**Ursache:** Abgelaufene Session oder falsche Keys.  
+**Ursache:** Abgelaufene Session oder falsche Keys.
 **Lösung:** `SUPABASE_URL` und `SUPABASE_ANON_KEY` prüfen.
 
 ---
 
 ### Problem: Passwort-Reset-Code wird abgelehnt ("Code ungültig oder abgelaufen")
 
-**Ursache:** Code falsch eingegeben, älter als 1 Stunde, oder bereits einmal verwendet (jeder Code ist Einweg).  
+**Ursache:** Code falsch eingegeben, älter als 1 Stunde, oder bereits einmal verwendet (jeder Code ist Einweg).
 **Lösung:** Neuen Code über „Passwort vergessen?" anfordern. Bei wiederholtem Auftreten: Supabase Dashboard → Authentication → Logs prüfen, ob der Code z. B. durch einen automatisierten Request (Mail-Scanner) bereits verbraucht wurde, bevor der Nutzer ihn eingegeben hat.
 
 ---
 
 ### Problem: Flip-Card zeigt Vor- und Rückseite gleichzeitig (Firefox)
 
-**Lösung:** CSS aus Abschnitt 12 verwenden. Sicherstellen, dass `backface-visibility: hidden` auf **beiden** `.sm-flip-face`-Elementen gesetzt ist.
+**Lösung:** CSS aus Kapitel 11 verwenden. Sicherstellen, dass `backface-visibility: hidden` auf **beiden** `.sm-flip-face`-Elementen gesetzt ist.
 
 ---
 
 ### Problem: KI-Quiz schlägt fehl
 
-**Ursache:** `GROQ_API_KEY` nicht konfiguriert.  
+**Ursache:** `GROQ_API_KEY` nicht konfiguriert.
 **Lösung:** API-Key in Backend `.env` setzen. Die Antwort `503 KI nicht konfiguriert.` bestätigt fehlendes Key.
 
 ---
 
 ### Problem: Passwort-Reset E-Mail kommt nicht an
 
-**Ursache:** `RESEND_API_KEY` fehlt oder Recovery-E-Mail im Profil nicht hinterlegt.  
+**Ursache:** `RESEND_API_KEY` fehlt oder Recovery-E-Mail im Profil nicht hinterlegt.
 **Lösung:** Key in Backend `.env` setzen. Benutzer muss bei Registrierung eine Recovery-E-Mail angegeben haben.
 
 ---
 
 ### Problem: Fork-Funktion gibt Fehler zurück
 
-**Ursache:** Benutzer ist nicht eingeloggt oder versucht ein privates Set zu forken.  
-**Lösung:** Nur öffentliche Sets können geforkt werden. Authentifizierungstoken muss gültig sein.
+**Ursache:** Benutzer ist nicht eingeloggt oder versucht ein privates fremdes Set zu forken.
+**Lösung:** Nur öffentliche (oder eigene) Sets können geforkt werden. Authentifizierungstoken muss gültig sein.
 
 ---
 
-## 16. ChangeLog
+## 15. Versionshistorie (ChangeLog)
 
 ### Version 0.3.2 (2026-06-23) — Aktuelle Version
 
@@ -1428,7 +1468,7 @@ def test_fork_preserves_card_order(client, auth_headers, public_set_with_ordered
 - `ResetPasswordView` und der `PASSWORD_RECOVERY`-Event-Handler (`onAuthStateChange`) in `StudyMate.jsx` entfernt, da nicht mehr benötigt.
 - Konfigurationsvariable `FRONTEND_URL` entfernt (war nur für den Redirect des alten Magic-Links nötig).
 
-**Aktualisierte Dokumentationsabschnitte:** US-004, Abschnitt 6.2, 6.4, 7.2, 8, 10, 15, ChangeLog
+**Aktualisierte Dokumentationsabschnitte:** US-004, Abschnitt 6.2, 6.4, 7.2, 8, 10, 14, ChangeLog
 
 ### Version 0.3.1 (2026-06-09)
 
@@ -1446,7 +1486,7 @@ Schließt die Dokumentationslücke zwischen `cf603c0` (2026-06-02) und `18b6bcc`
 **Breaking Change:**
 - KI-Anbieter von Google Gemini auf Groq (Llama 3.1 8B Instant) umgestellt — Env-Var `GEMINI_API_KEY` existiert nicht mehr, ersetzt durch `GROQ_API_KEY`; Bibliothek `google-genai` durch `openai` (mit Groqs OpenAI-kompatiblem Endpunkt) ersetzt
 
-**Aktualisierte Dokumentationsabschnitte:** US-012, US-042, US-043, Abschnitt 3, 5, 6.2, 6.4, 7.2, 7.3, 9, 10, 14, 15, ChangeLog
+**Aktualisierte Dokumentationsabschnitte:** US-012, US-042, US-043, Abschnitt 4, 5, 6.2, 6.4, 7.2, 7.3, 9, 13, 14, ChangeLog
 
 ### Version 0.3.0 (2026-06-02)
 
@@ -1468,7 +1508,7 @@ Schließt die Dokumentationslücke zwischen `cf603c0` (2026-06-02) und `18b6bcc`
 
 **Änderungen gegenüber v0.2.1:**
 - Bugfix: Fork-Funktion kopiert Karteikarten jetzt mit korrektem `position`-Feld — Karten behalten ihre Reihenfolge im geforkten Set
-- Manuelle Testdokumentation in Abschnitt 14 ergänzt
+- Manuelle Testdokumentation in Kapitel 9 ergänzt
 
 ### Version 0.2.1 (2026-06-01)
 
@@ -1508,22 +1548,22 @@ Vollständige Überarbeitung der Dokumentation, basierend auf dem Stand der `mai
 
 ---
 
-## 17. Offene Aufgaben
+## 16. Offene Aufgaben und Ausblick
 
 | Priorität | Aufgabe |
 |---|---|
-| Hoch | Automatisierte Tests (Unit + E2E) implementieren |
+| Hoch | Automatisierte Tests (Unit + E2E) weiter ausbauen |
 | Hoch | Row Level Security (RLS) in Supabase konfigurieren |
 | Mittel | Einstellungen-View vollständig implementieren |
+| Mittel | `sql_schema.sql` an die Live-Datenbank synchronisieren (`profiles`-Erweiterungen, `friendships`, `forked_from`, `show_author` fehlen) |
 | Mittel | OpenAPI-Export in `docs/` ablegen |
-| Niedrig | Browser-Fallbacks für CSS-Features ergänzen |
 | Niedrig | Profilbild-Speicherung zu Supabase Storage migrieren |
-| Niedrig | Karteikarten-Bearbeitung via Backend-API (statt direkt Supabase) |
-| Mittel | `sql_schema.sql` an Live-Datenbank synchronisieren — `profiles`-Erweiterungen, `friendships`, `flashcard_sets.forked_from`/`show_author` fehlen aktuell im Referenzschema |
+| Niedrig | Karteikarten-Bearbeitung über Backend-API statt direkt Supabase |
+| Niedrig | Browser-Fallbacks für CSS-Features ergänzen |
 
 ---
 
-## 18. Anhänge
+## Anhang — Referenzen
 
 ### A) Vollständiges SQL-Referenzschema
 
@@ -1628,5 +1668,4 @@ curl -X POST http://localhost:8000/auth/forgot-password \
 
 ---
 
-*Dokumentation zuletzt aktualisiert: 2026-06-23*  
-*Basierend auf git-Stand: `18b6bcc` (main branch, PR #63) + ungecommitteter Passwort-Reset-Umstellung auf OTP-Code*
+*Gesamtdokumentation des Projekts StudyMate · Stand 2026-06-23 · git main (PR #63).*
